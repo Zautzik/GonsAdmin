@@ -14,16 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      jobs: {
+        Row: {
+          assigned_machine_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          status: Database["public"]["Enums"]["job_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_machine_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          status?: Database["public"]["Enums"]["job_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_machine_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          status?: Database["public"]["Enums"]["job_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_assigned_machine_id_fkey"
+            columns: ["assigned_machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      machines: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["machine_status"]
+          type: Database["public"]["Enums"]["machine_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["machine_status"]
+          type: Database["public"]["Enums"]["machine_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["machine_status"]
+          type?: Database["public"]["Enums"]["machine_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "supervisor" | "manager"
+      job_status: "pending" | "in_progress" | "completed" | "delivered"
+      machine_status: "idle" | "running" | "maintenance" | "offline"
+      machine_type:
+        | "offset_printer"
+        | "die_cutter"
+        | "guillotine"
+        | "digital_printer"
+        | "pre_press"
+        | "manual_workshop"
+        | "delivery"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +251,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["supervisor", "manager"],
+      job_status: ["pending", "in_progress", "completed", "delivered"],
+      machine_status: ["idle", "running", "maintenance", "offline"],
+      machine_type: [
+        "offset_printer",
+        "die_cutter",
+        "guillotine",
+        "digital_printer",
+        "pre_press",
+        "manual_workshop",
+        "delivery",
+      ],
+    },
   },
 } as const
