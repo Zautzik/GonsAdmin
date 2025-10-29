@@ -22,7 +22,9 @@ const Login = () => {
 
   useEffect(() => {
     if (user && role) {
-      navigate(role === 'supervisor' ? '/supervisor' : '/manager');
+      if (role === 'admin') navigate('/admin');
+      else if (role === 'supervisor') navigate('/supervisor');
+      else navigate('/manager');
     }
   }, [user, role, navigate]);
 
