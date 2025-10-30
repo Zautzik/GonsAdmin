@@ -7,6 +7,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { LogOut, TrendingUp, CheckCircle, Clock, Package } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CostReport from '@/components/manager/CostReport';
+import TraceabilityReport from '@/components/manager/TraceabilityReport';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
 const ManagerDashboard = () => {
@@ -139,65 +142,83 @@ const ManagerDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="border-manager/20">
-            <CardHeader>
-              <CardTitle className="text-manager">{t('machines')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {machines.map(machine => (
-                  <div
-                    key={machine.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                  >
-                    <div>
-                      <p className="font-medium">{machine.name}</p>
-                      <p className="text-sm text-muted-foreground">{t(machine.type)}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      machine.status === 'running' ? 'bg-supervisor/20 text-supervisor' :
-                      machine.status === 'maintenance' ? 'bg-accent/20 text-accent' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
-                      {t(machine.status)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
+            <TabsTrigger value="costs">{t('costReport')}</TabsTrigger>
+            <TabsTrigger value="traceability">{t('traceabilityReport')}</TabsTrigger>
+          </TabsList>
 
-          <Card className="border-manager/20">
-            <CardHeader>
-              <CardTitle className="text-manager">{t('jobs')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {jobs.map(job => (
-                  <div
-                    key={job.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium truncate">{job.description}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {job.machines?.name || t('machine')}
-                      </p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      job.status === 'completed' || job.status === 'delivered' ? 'bg-supervisor/20 text-supervisor' :
-                      job.status === 'in_progress' ? 'bg-primary/20 text-primary' :
-                      'bg-accent/20 text-accent'
-                    }`}>
-                      {t(job.status)}
-                    </span>
+          <TabsContent value="overview" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="border-manager/20">
+                <CardHeader>
+                  <CardTitle className="text-manager">{t('machines')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {machines.map(machine => (
+                      <div
+                        key={machine.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                      >
+                        <div>
+                          <p className="font-medium">{machine.name}</p>
+                          <p className="text-sm text-muted-foreground">{t(machine.type)}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          machine.status === 'running' ? 'bg-supervisor/20 text-supervisor' :
+                          machine.status === 'maintenance' ? 'bg-accent/20 text-accent' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {t(machine.status)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-manager/20">
+                <CardHeader>
+                  <CardTitle className="text-manager">{t('jobs')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {jobs.map(job => (
+                      <div
+                        key={job.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium truncate">{job.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {job.machines?.name || t('machine')}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          job.status === 'completed' || job.status === 'delivered' ? 'bg-supervisor/20 text-supervisor' :
+                          job.status === 'in_progress' ? 'bg-primary/20 text-primary' :
+                          'bg-accent/20 text-accent'
+                        }`}>
+                          {t(job.status)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="costs">
+            <CostReport />
+          </TabsContent>
+
+          <TabsContent value="traceability">
+            <TraceabilityReport />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

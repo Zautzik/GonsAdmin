@@ -10,6 +10,7 @@ import { LogOut, Plus } from 'lucide-react';
 import MachineList from '@/components/supervisor/MachineList';
 import JobList from '@/components/supervisor/JobList';
 import AddJobDialog from '@/components/supervisor/AddJobDialog';
+import OTManagement from '@/components/supervisor/OTManagement';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
 const SupervisorDashboard = () => {
@@ -81,6 +82,8 @@ const SupervisorDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
+        <OTManagement />
+        
         <Card className="border-supervisor/20">
           <CardHeader>
             <CardTitle className="text-supervisor">{t('machines')}</CardTitle>

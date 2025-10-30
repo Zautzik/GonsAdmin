@@ -98,18 +98,65 @@ const translations: Translations = {
   // Actions
   addJob: { en: 'Add Job', es: 'Agregar Trabajo' },
   updateStatus: { en: 'Update Status', es: 'Actualizar Estado' },
-  description: { en: 'Description', es: 'Descripción' },
-  status: { en: 'Status', es: 'Estado' },
-  machine: { en: 'Machine', es: 'Máquina' },
-  createdAt: { en: 'Created At', es: 'Creado el' },
-  submit: { en: 'Submit', es: 'Enviar' },
-  cancel: { en: 'Cancel', es: 'Cancelar' },
+  addOT: { en: 'Add OT', es: 'Agregar OT' },
+  addBatch: { en: 'Add Batch', es: 'Agregar Lote' },
+  viewTraceability: { en: 'View Traceability', es: 'Ver Trazabilidad' },
+  exportPDF: { en: 'Export PDF', es: 'Exportar PDF' },
+  assignWorker: { en: 'Assign Worker', es: 'Asignar Trabajador' },
+  assignBatch: { en: 'Assign Batch', es: 'Asignar Lote' },
+  
+  // OT
+  ot: { en: 'Work Order', es: 'Orden de Trabajo' },
+  otNumber: { en: 'OT Number', es: 'Número de OT' },
+  otList: { en: 'Work Orders', es: 'Órdenes de Trabajo' },
+  createOT: { en: 'Create Work Order', es: 'Crear Orden de Trabajo' },
+  
+  // Batches & Materials
+  batch: { en: 'Batch', es: 'Lote' },
+  batches: { en: 'Batches', es: 'Lotes' },
+  batchNumber: { en: 'Batch Number', es: 'Número de Lote' },
+  paperType: { en: 'Paper Type', es: 'Tipo de Papel' },
+  quantityRemaining: { en: 'Quantity Remaining', es: 'Cantidad Disponible' },
+  certifications: { en: 'Certifications', es: 'Certificaciones' },
+  
+  // Costs
+  totalJobCost: { en: 'Total Job Cost', es: 'Costo Total del Trabajo' },
+  materialCost: { en: 'Material Cost', es: 'Costo de Material' },
+  laborCost: { en: 'Labor Cost', es: 'Costo de Mano de Obra' },
+  machineCost: { en: 'Machine Cost', es: 'Costo de Máquina' },
+  costBreakdown: { en: 'Cost Breakdown', es: 'Desglose de Costos' },
   
   // Reports
+  costReport: { en: 'Cost Report', es: 'Reporte de Costos' },
+  efficiencyReport: { en: 'Efficiency Report', es: 'Reporte de Eficiencia' },
+  traceabilityReport: { en: 'Traceability Report', es: 'Reporte de Trazabilidad' },
+  
+  // Stats
   totalJobs: { en: 'Total Jobs', es: 'Total de Trabajos' },
   completedJobs: { en: 'Completed Jobs', es: 'Trabajos Completados' },
   pendingJobs: { en: 'Pending Jobs', es: 'Trabajos Pendientes' },
   efficiency: { en: 'Efficiency', es: 'Eficiencia' },
+  totalOTs: { en: 'Total OTs', es: 'Total de OTs' },
+  
+  // Process flow
+  processFlow: { en: 'Process Flow', es: 'Flujo de Proceso' },
+  timeline: { en: 'Timeline', es: 'Línea de Tiempo' },
+  
+  // Other
+  description: { en: 'Description', es: 'Descripción' },
+  status: { en: 'Status', es: 'Estado' },
+  machine: { en: 'Machine', es: 'Máquina' },
+  worker: { en: 'Worker', es: 'Trabajador' },
+  submit: { en: 'Submit', es: 'Enviar' },
+  cancel: { en: 'Cancel', es: 'Cancelar' },
+  save: { en: 'Save', es: 'Guardar' },
+  edit: { en: 'Edit', es: 'Editar' },
+  delete: { en: 'Delete', es: 'Eliminar' },
+  view: { en: 'View', es: 'Ver' },
+  overview: { en: 'Overview', es: 'Resumen' },
+  noData: { en: 'No data available', es: 'No hay datos disponibles' },
+  search: { en: 'Search', es: 'Buscar' },
+  createdAt: { en: 'Created At', es: 'Creado el' },
   jobsPerDay: { en: 'Jobs per Day', es: 'Trabajos por día' },
 };
 
