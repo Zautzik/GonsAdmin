@@ -10,6 +10,7 @@ import { LogOut, TrendingUp, CheckCircle, Clock, Package } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CostReport from '@/components/manager/CostReport';
 import TraceabilityReport from '@/components/manager/TraceabilityReport';
+import WorkerStatsReport from '@/components/manager/WorkerStatsReport';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
 const ManagerDashboard = () => {
@@ -143,9 +144,10 @@ const ManagerDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
             <TabsTrigger value="costs">{t('costReport')}</TabsTrigger>
+            <TabsTrigger value="workers">{t('workerStats')}</TabsTrigger>
             <TabsTrigger value="traceability">{t('traceabilityReport')}</TabsTrigger>
           </TabsList>
 
@@ -213,6 +215,10 @@ const ManagerDashboard = () => {
 
           <TabsContent value="costs">
             <CostReport />
+          </TabsContent>
+
+          <TabsContent value="workers">
+            <WorkerStatsReport />
           </TabsContent>
 
           <TabsContent value="traceability">

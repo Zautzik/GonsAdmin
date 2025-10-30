@@ -158,6 +158,36 @@ const translations: Translations = {
   search: { en: 'Search', es: 'Buscar' },
   createdAt: { en: 'Created At', es: 'Creado el' },
   jobsPerDay: { en: 'Jobs per Day', es: 'Trabajos por día' },
+  
+  // Worker management
+  workerRoster: { en: 'Worker Roster', es: 'Plantilla de Trabajadores' },
+  createRoster: { en: 'Create Roster', es: 'Crear Plantilla' },
+  rosterName: { en: 'Roster Name', es: 'Nombre de Plantilla' },
+  addToRoster: { en: 'Add to Roster', es: 'Agregar a Plantilla' },
+  removeFromRoster: { en: 'Remove from Roster', es: 'Quitar de Plantilla' },
+  
+  // Task types
+  detachment: { en: 'Detachment', es: 'Desmontaje' },
+  revision: { en: 'Revision', es: 'Revisión' },
+  packaging: { en: 'Packaging', es: 'Empaque' },
+  printing: { en: 'Printing', es: 'Impresión' },
+  cutting: { en: 'Cutting', es: 'Corte' },
+  
+  // Worker stats
+  performance: { en: 'Performance', es: 'Rendimiento' },
+  avgTime: { en: 'Avg Time', es: 'Tiempo Promedio' },
+  rating: { en: 'Rating', es: 'Calificación' },
+  efficiencyScore: { en: 'Efficiency', es: 'Eficiencia' },
+  totalTasks: { en: 'Total Tasks', es: 'Tareas Totales' },
+  logTask: { en: 'Log Task', es: 'Registrar Tarea' },
+  taskType: { en: 'Task Type', es: 'Tipo de Tarea' },
+  timeSpent: { en: 'Time Spent (min)', es: 'Tiempo (min)' },
+  notes: { en: 'Notes', es: 'Notas' },
+  workerStats: { en: 'Worker Statistics', es: 'Estadísticas de Trabajadores' },
+  viewStats: { en: 'View Stats', es: 'Ver Estadísticas' },
+  allWorkers: { en: 'All Workers', es: 'Todos los Trabajadores' },
+  filterByDept: { en: 'Filter by Department', es: 'Filtrar por Departamento' },
+  sortBy: { en: 'Sort by', es: 'Ordenar por' },
 };
 
 interface LanguageContextType {
