@@ -75,11 +75,14 @@ const ManagerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-manager/5 to-background">
-      <header className="bg-card border-b border-manager/20 shadow-sm">
+      <header className="bg-card border-b border-manager/20 shadow-lg sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={gonsaLogo} alt="Gonsa" className="h-12" />
-            <h1 className="text-2xl font-bold text-manager">{t('managerDashboard')}</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-manager">{t('managerDashboard')}</h1>
+              <p className="text-xs text-muted-foreground">Analytics & Reports</p>
+            </div>
           </div>
           <Button
             onClick={handleLogout}
@@ -93,52 +96,64 @@ const ManagerDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-manager/20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border-manager/20 hover:border-manager/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('totalJobs')}
               </CardTitle>
-              <Package className="h-4 w-4 text-manager" />
+              <div className="p-2 rounded-lg bg-manager/10">
+                <Package className="h-5 w-5 text-manager" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-manager">{stats.total}</div>
+              <div className="text-4xl font-bold text-manager">{stats.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">All time</p>
             </CardContent>
           </Card>
 
-          <Card className="border-manager/20">
+          <Card className="border-supervisor/20 hover:border-supervisor/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('completedJobs')}
               </CardTitle>
-              <CheckCircle className="h-4 w-4 text-supervisor" />
+              <div className="p-2 rounded-lg bg-supervisor/10">
+                <CheckCircle className="h-5 w-5 text-supervisor" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-supervisor">{stats.completed}</div>
+              <div className="text-4xl font-bold text-supervisor">{stats.completed}</div>
+              <p className="text-xs text-muted-foreground mt-1">Successfully delivered</p>
             </CardContent>
           </Card>
 
-          <Card className="border-manager/20">
+          <Card className="border-accent/20 hover:border-accent/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('pendingJobs')}
               </CardTitle>
-              <Clock className="h-4 w-4 text-accent" />
+              <div className="p-2 rounded-lg bg-accent/10">
+                <Clock className="h-5 w-5 text-accent" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent">{stats.pending}</div>
+              <div className="text-4xl font-bold text-accent">{stats.pending}</div>
+              <p className="text-xs text-muted-foreground mt-1">Awaiting start</p>
             </CardContent>
           </Card>
 
-          <Card className="border-manager/20">
+          <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('efficiency')}
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-primary" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">{efficiencyRate}%</div>
+              <div className="text-4xl font-bold text-primary">{efficiencyRate}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Completion rate</p>
             </CardContent>
           </Card>
         </div>

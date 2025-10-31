@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut, Plus, Package, FileText } from 'lucide-react';
 import MachineList from '@/components/supervisor/MachineList';
 import JobList from '@/components/supervisor/JobList';
 import AddJobDialog from '@/components/supervisor/AddJobDialog';
@@ -65,11 +65,14 @@ const SupervisorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-supervisor/5 to-background">
-      <header className="bg-card border-b border-supervisor/20 shadow-sm">
+      <header className="bg-card border-b border-supervisor/20 shadow-lg sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={gonsaLogo} alt="Gonsa" className="h-12" />
-            <h1 className="text-2xl font-bold text-supervisor">{t('supervisorDashboard')}</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-supervisor">{t('supervisorDashboard')}</h1>
+              <p className="text-xs text-muted-foreground">Production Management</p>
+            </div>
           </div>
           <Button
             onClick={handleLogout}
@@ -87,18 +90,24 @@ const SupervisorDashboard = () => {
         
         <WorkerRoster showActions={true} />
         
-        <Card className="border-supervisor/20">
+        <Card className="border-supervisor/20 hover:shadow-lg transition-all">
           <CardHeader>
-            <CardTitle className="text-supervisor">{t('machines')}</CardTitle>
+            <CardTitle className="text-supervisor flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {t('machines')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <MachineList machines={machines} onUpdate={fetchMachines} />
           </CardContent>
         </Card>
 
-        <Card className="border-supervisor/20">
+        <Card className="border-supervisor/20 hover:shadow-lg transition-all">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-supervisor">{t('jobs')}</CardTitle>
+            <CardTitle className="text-supervisor flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {t('jobs')}
+            </CardTitle>
             <Button
               onClick={() => setShowAddJob(true)}
               className="bg-supervisor hover:bg-supervisor/90"

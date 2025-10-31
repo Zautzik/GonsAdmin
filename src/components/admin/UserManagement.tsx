@@ -53,15 +53,25 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
   }, []);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const { data: roles, error } = await supabase
       .from('user_roles')
-      .select('*, email:user_id');
+      .select('*');
     
     if (error) {
       toast.error('Error loading users');
-    } else {
-      setUsers(data || []);
+      return;
     }
+    
+    const usersWithEmails = (roles || []).map((role: any) => {
+      const authUser = authUsers?.users.find((u: any) => u.id === role.user_id);
+      return {
+        ...role,
+        email: authUser?.email || 'Unknown',
+      };
+    });
+    
+    setUsers(usersWithEmails);
   };
 
   const handleSubmit = async () => {
@@ -159,76 +169,114 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
     setShowDialog(true);
   };
 
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'bg-primary text-primary-foreground';
+      case 'manager': return 'bg-manager text-manager-foreground';
+      case 'supervisor': return 'bg-supervisor text-supervisor-foreground';
+      default: return 'bg-secondary text-secondary-foreground';
+    }
+  };
+
   return (
     <Card className="border-primary/20">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-primary">{t('userManagement')}</CardTitle>
-        <Button onClick={() => setShowDialog(true)} className="bg-primary hover:bg-primary/90">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+        <div>
+          <CardTitle className="text-2xl">{t('userManagement')}</CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage user accounts and assign roles
+          </p>
+        </div>
+        <Button 
+          onClick={() => setShowDialog(true)} 
+          className="bg-primary hover:bg-primary/90"
+        >
           <Plus className="mr-2 h-4 w-4" />
           {t('addUser')}
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('email')}</TableHead>
-              <TableHead>{t('role')}</TableHead>
-              <TableHead>{t('department')}</TableHead>
-              <TableHead>{t('actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.user_id}</TableCell>
-                <TableCell>{t(user.role)}</TableCell>
-                <TableCell>{user.department ? t(user.department) : '-'}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openEditDialog(user)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDelete(user.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="font-semibold">{t('email')}</TableHead>
+                <TableHead className="font-semibold">{t('role')}</TableHead>
+                <TableHead className="font-semibold">{t('department')}</TableHead>
+                <TableHead className="text-right font-semibold">{t('actions')}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    No users found. Add your first user to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-medium">{user.email}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
+                        {user.role}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{user.department || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(user)}
+                          className="hover:bg-primary/10 hover:text-primary hover:border-primary"
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(user.id)}
+                          className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-2xl">
               {editingUser ? t('editUser') : t('addUser')}
             </DialogTitle>
-            <DialogDescription>
-              {editingUser ? t('editUserDescription') : t('addUserDescription')}
+            <DialogDescription className="text-base">
+              {editingUser ? 'Update user role and details' : 'Create a new user account with role assignment'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-6 py-4">
             {!editingUser && (
-              <>
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <h4 className="font-semibold text-sm">Account Credentials</h4>
                 <div className="space-y-2">
                   <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
+                    placeholder="user@gonsa.cl"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -236,23 +284,52 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
                   <Input
                     id="password"
                     type="password"
+                    placeholder="Minimum 6 characters"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
                   />
                 </div>
-              </>
+              </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="role">{t('role')}</Label>
-              <Select value={formData.role} onValueChange={(value: any) => setFormData({ ...formData, role: value })}>
-                <SelectTrigger>
+              <Label htmlFor="role" className="text-base font-semibold">User Role *</Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value })}
+              >
+                <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">{t('admin')}</SelectItem>
-                  <SelectItem value="manager">{t('manager')}</SelectItem>
-                  <SelectItem value="supervisor">{t('supervisor')}</SelectItem>
+                  <SelectItem value="supervisor">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-supervisor" />
+                      <div>
+                        <div className="font-medium">Supervisor</div>
+                        <div className="text-xs text-muted-foreground">Manages workers, jobs, and production</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="manager">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-manager" />
+                      <div>
+                        <div className="font-medium">Manager</div>
+                        <div className="text-xs text-muted-foreground">Views reports and analytics</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-primary" />
+                      <div>
+                        <div className="font-medium">Admin</div>
+                        <div className="text-xs text-muted-foreground">Full system access and user management</div>
+                      </div>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -262,7 +339,7 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
                 <Label htmlFor="department">{t('department')}</Label>
                 <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="press">{t('press')}</SelectItem>
@@ -280,7 +357,7 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
                 <Label htmlFor="manager_domain">{t('managerDomain')}</Label>
                 <Select value={formData.manager_domain} onValueChange={(value) => setFormData({ ...formData, manager_domain: value })}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select domain" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cost">{t('cost')}</SelectItem>
@@ -298,7 +375,7 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
               {t('cancel')}
             </Button>
             <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90">
-              {editingUser ? t('update') : t('create')}
+              {editingUser ? t('saveChanges') : t('createUser')}
             </Button>
           </DialogFooter>
         </DialogContent>
