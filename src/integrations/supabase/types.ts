@@ -79,6 +79,134 @@ export type Database = {
         }
         Relationships: []
       }
+      roster_workers: {
+        Row: {
+          created_at: string | null
+          id: string
+          roster_id: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          roster_id: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          roster_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_workers_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "worker_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rosters: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          department: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      task_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          job_id: string | null
+          notes: string | null
+          ot_id: string | null
+          performance_rating: number
+          task_type: Database["public"]["Enums"]["task_type"]
+          time_spent_minutes: number
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          notes?: string | null
+          ot_id?: string | null
+          performance_rating?: number
+          task_type: Database["public"]["Enums"]["task_type"]
+          time_spent_minutes?: number
+          worker_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          notes?: string | null
+          ot_id?: string | null
+          performance_rating?: number
+          task_type?: Database["public"]["Enums"]["task_type"]
+          time_spent_minutes?: number
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_logs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_logs_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "worker_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_logs_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -100,9 +228,44 @@ export type Database = {
         }
         Relationships: []
       }
+      workers: {
+        Row: {
+          created_at: string | null
+          department: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      worker_stats: {
+        Row: {
+          avg_rating: number | null
+          avg_time_minutes: number | null
+          department: string | null
+          efficiency_score: number | null
+          id: string | null
+          name: string | null
+          total_tasks: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -114,7 +277,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "supervisor" | "manager"
+      app_role: "supervisor" | "manager" | "admin"
       job_status: "pending" | "in_progress" | "completed" | "delivered"
       machine_status: "idle" | "running" | "maintenance" | "offline"
       machine_type:
@@ -124,6 +287,13 @@ export type Database = {
         | "digital_printer"
         | "pre_press"
         | "manual_workshop"
+        | "delivery"
+      task_type:
+        | "detachment"
+        | "revision"
+        | "packaging"
+        | "printing"
+        | "cutting"
         | "delivery"
     }
     CompositeTypes: {
@@ -252,7 +422,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["supervisor", "manager"],
+      app_role: ["supervisor", "manager", "admin"],
       job_status: ["pending", "in_progress", "completed", "delivered"],
       machine_status: ["idle", "running", "maintenance", "offline"],
       machine_type: [
@@ -262,6 +432,14 @@ export const Constants = {
         "digital_printer",
         "pre_press",
         "manual_workshop",
+        "delivery",
+      ],
+      task_type: [
+        "detachment",
+        "revision",
+        "packaging",
+        "printing",
+        "cutting",
         "delivery",
       ],
     },
