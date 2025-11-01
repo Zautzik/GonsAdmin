@@ -24,10 +24,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .single();
+      .limit(1)
+      .maybeSingle();
     
     if (data && !error) {
       setRole(data.role);
+    } else {
+      setRole(null);
     }
   };
 
