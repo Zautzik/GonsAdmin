@@ -149,6 +149,30 @@ export type Database = {
         }
         Relationships: []
       }
+      shifts: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          name: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          name: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          name?: string
+          start_time?: string
+        }
+        Relationships: []
+      }
       task_logs: {
         Row: {
           created_at: string | null
@@ -228,26 +252,152 @@ export type Database = {
         }
         Relationships: []
       }
+      worker_assignments: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          ot_id: string | null
+          role: string
+          shift_id: string
+          updated_at: string | null
+          worker_id: string
+          workstation_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          ot_id?: string | null
+          role: string
+          shift_id: string
+          updated_at?: string | null
+          worker_id: string
+          workstation_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          ot_id?: string | null
+          role?: string
+          shift_id?: string
+          updated_at?: string | null
+          worker_id?: string
+          workstation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_assignments_ot_id_fkey"
+            columns: ["ot_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_assignments_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_assignments_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "worker_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_assignments_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_assignments_workstation_id_fkey"
+            columns: ["workstation_id"]
+            isOneToOne: false
+            referencedRelation: "workstations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workers: {
         Row: {
+          attendance_score: number | null
           created_at: string | null
           department: string
           id: string
+          lateness_minutes: number | null
           name: string
+          overall_rating: number | null
+          overtime_availability: boolean | null
+          quality_score: number | null
+          sheets_per_hour: number | null
+          speed_score: number | null
+          teamwork_rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          attendance_score?: number | null
+          created_at?: string | null
+          department: string
+          id?: string
+          lateness_minutes?: number | null
+          name: string
+          overall_rating?: number | null
+          overtime_availability?: boolean | null
+          quality_score?: number | null
+          sheets_per_hour?: number | null
+          speed_score?: number | null
+          teamwork_rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          attendance_score?: number | null
+          created_at?: string | null
+          department?: string
+          id?: string
+          lateness_minutes?: number | null
+          name?: string
+          overall_rating?: number | null
+          overtime_availability?: boolean | null
+          quality_score?: number | null
+          sheets_per_hour?: number | null
+          speed_score?: number | null
+          teamwork_rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      workstations: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_workers: number
+          name: string
+          status: string
+          type: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          department: string
           id?: string
+          max_workers?: number
           name: string
+          status?: string
+          type: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          department?: string
           id?: string
+          max_workers?: number
           name?: string
+          status?: string
+          type?: string
           updated_at?: string | null
         }
         Relationships: []

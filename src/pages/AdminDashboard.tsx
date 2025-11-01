@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, Users, Package, FileText, DollarSign } from 'lucide-react';
+import { LogOut, Users, Package, FileText, DollarSign, Factory } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserManagement from '@/components/admin/UserManagement';
 import WorkersManagement from '@/components/admin/WorkersManagement';
@@ -66,14 +66,24 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground">System Administration</p>
             </div>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="border-primary/30 text-primary hover:bg-primary/10"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            {t('logout')}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate('/workflow')}
+              variant="default"
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              <Factory className="mr-2 h-4 w-4" />
+              Workflow Management
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('logout')}
+            </Button>
+          </div>
         </div>
       </header>
 

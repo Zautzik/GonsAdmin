@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import WorkflowDashboard from "./pages/WorkflowDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
                 <Route path="/supervisor" element={<SupervisorDashboard />} />
                 <Route path="/manager" element={<ManagerDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/workflow" element={<WorkflowDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
