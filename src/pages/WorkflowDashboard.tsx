@@ -6,8 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkstationLayout } from "@/components/workflow/WorkstationLayout";
 import { WorkerStatsPanel } from "@/components/workflow/WorkerStatsPanel";
 import { ShiftManagement } from "@/components/workflow/ShiftManagement";
-import { Users, Factory, Clock, BarChart3 } from "lucide-react";
+import { OTManagement } from "@/components/workflow/OTManagement";
+import { Users, Factory, Clock, BarChart3, ClipboardList } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 
 /**
  * WorkflowDashboard - Main dashboard for managing workshop workflow
@@ -16,10 +18,12 @@ import { useToast } from "@/hooks/use-toast";
  */
 export default function WorkflowDashboard() {
   const [selectedWorker, setSelectedWorker] = useState<any>(null);
+  const [selectedOT, setSelectedOT] = useState<any>(null);
   const [workers, setWorkers] = useState<any[]>([]);
   const [workstations, setWorkstations] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [selectedShift, setSelectedShift] = useState<string>("morning");
+  const [activeId, setActiveId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch all data on component mount
@@ -77,8 +81,82 @@ export default function WorkflowDashboard() {
     setSelectedWorker(worker);
   };
 
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const workerData = active.data.current;
+    const workstationData = over.data.current;
+
+    if (!workerData || !workstationData) return;
+
+    const worker = workerData.worker;
+    const assignmentId = workerData.assignmentId;
+    const workstation = workstationData.workstation;
+
+    // Check capacity
+    const currentAssignments = assignments.filter(a => a.workstation_id === workstation.id);
+    if (currentAssignments.length >= workstation.max_workers) {
+      toast({
+        title: "Workstation at capacity",
+        description: `${workstation.name} is already at maximum capacity`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // If worker is already assigned, update the assignment
+      if (assignmentId) {
+        const { error } = await supabase
+          .from("worker_assignments")
+          .update({ 
+            workstation_id: workstation.id,
+            ot_id: selectedOT?.id || null
+          })
+          .eq("id", assignmentId);
+
+        if (error) throw error;
+      } else {
+        // Create new assignment
+        const { error } = await supabase
+          .from("worker_assignments")
+          .insert({
+            worker_id: worker.id,
+            workstation_id: workstation.id,
+            shift_id: selectedShift,
+            date: new Date().toISOString().split("T")[0],
+            role: "operator",
+            ot_id: selectedOT?.id || null
+          });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Worker assigned successfully",
+        description: `${worker.name} assigned to ${workstation.name}`
+      });
+
+      fetchAssignments();
+    } catch (error: any) {
+      toast({
+        title: "Error assigning worker",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -101,9 +179,33 @@ export default function WorkflowDashboard() {
         </div>
       </div>
 
+      {/* Selected OT Banner */}
+      {selectedOT && (
+        <Card className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-500/40 backdrop-blur-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-white">Active OT: {selectedOT.ot_number}</h3>
+              <p className="text-sm text-blue-200">{selectedOT.client_name} - {selectedOT.quantity} units</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setSelectedOT(null)}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              Clear Selection
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Main Content */}
-      <Tabs defaultValue="layout" className="w-full">
+      <Tabs defaultValue="ots" className="w-full">
         <TabsList className="bg-white/10 border-white/20 backdrop-blur-sm">
+          <TabsTrigger value="ots" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+            <ClipboardList className="w-4 h-4 mr-2" />
+            Work Orders
+          </TabsTrigger>
           <TabsTrigger value="layout" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
             <Factory className="w-4 h-4 mr-2" />
             Layout
@@ -118,15 +220,20 @@ export default function WorkflowDashboard() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="ots" className="mt-4">
+          <OTManagement onOTSelect={setSelectedOT} />
+        </TabsContent>
+
         <TabsContent value="layout" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Workstation Layout - Left Side (2/3) */}
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Workstation Layout - Left Side (3/4) */}
+            <div className="lg:col-span-3">
               <WorkstationLayout
                 workstations={workstations}
                 assignments={assignments}
                 workers={workers}
                 selectedShift={selectedShift}
+                selectedOT={selectedOT}
                 onWorkerSelect={handleWorkerSelect}
                 onAssignmentChange={fetchAssignments}
               />
@@ -154,6 +261,15 @@ export default function WorkflowDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <DragOverlay>
+        {activeId ? (
+          <div className="bg-white/20 rounded p-2 backdrop-blur-sm">
+            <div className="text-white font-medium">Dragging...</div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </div>
+    </DndContext>
   );
 }

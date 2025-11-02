@@ -79,6 +79,59 @@ export type Database = {
         }
         Relationships: []
       }
+      ots: {
+        Row: {
+          client_name: string
+          completed_at: string | null
+          created_at: string
+          current_workstation_id: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          ot_number: string
+          priority: number
+          quantity: number
+          status: Database["public"]["Enums"]["ot_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          completed_at?: string | null
+          created_at?: string
+          current_workstation_id?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          ot_number: string
+          priority?: number
+          quantity?: number
+          status?: Database["public"]["Enums"]["ot_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          completed_at?: string | null
+          created_at?: string
+          current_workstation_id?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          ot_number?: string
+          priority?: number
+          quantity?: number
+          status?: Database["public"]["Enums"]["ot_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ots_current_workstation_id_fkey"
+            columns: ["current_workstation_id"]
+            isOneToOne: false
+            referencedRelation: "workstations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_workers: {
         Row: {
           created_at: string | null
@@ -438,6 +491,18 @@ export type Database = {
         | "pre_press"
         | "manual_workshop"
         | "delivery"
+      ot_status:
+        | "paper_purchase"
+        | "paper_received"
+        | "in_storage"
+        | "guillotine_first_cut"
+        | "offset_printing"
+        | "die_cutting"
+        | "guillotine_final_cut"
+        | "workshop_revision"
+        | "ready_for_delivery"
+        | "in_delivery"
+        | "completed"
       task_type:
         | "detachment"
         | "revision"
@@ -583,6 +648,19 @@ export const Constants = {
         "pre_press",
         "manual_workshop",
         "delivery",
+      ],
+      ot_status: [
+        "paper_purchase",
+        "paper_received",
+        "in_storage",
+        "guillotine_first_cut",
+        "offset_printing",
+        "die_cutting",
+        "guillotine_final_cut",
+        "workshop_revision",
+        "ready_for_delivery",
+        "in_delivery",
+        "completed",
       ],
       task_type: [
         "detachment",
