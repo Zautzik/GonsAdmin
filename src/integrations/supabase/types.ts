@@ -478,6 +478,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_own_worker_record: { Args: { _worker_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "supervisor" | "manager" | "admin"
