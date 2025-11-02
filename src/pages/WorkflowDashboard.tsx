@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,9 @@ import { WorkstationLayout } from "@/components/workflow/WorkstationLayout";
 import { WorkerStatsPanel } from "@/components/workflow/WorkerStatsPanel";
 import { ShiftManagement } from "@/components/workflow/ShiftManagement";
 import { OTManagement } from "@/components/workflow/OTManagement";
-import { Users, Factory, Clock, BarChart3, ClipboardList } from "lucide-react";
+import { Users, Factory, Clock, BarChart3, ClipboardList, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 
 /**
@@ -25,6 +27,17 @@ export default function WorkflowDashboard() {
   const [selectedShift, setSelectedShift] = useState<string>("morning");
   const [activeId, setActiveId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { role } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBackToDashboard = () => {
+    const dashboardRoutes = {
+      supervisor: '/supervisor',
+      manager: '/manager',
+      admin: '/admin'
+    };
+    navigate(dashboardRoutes[role || 'supervisor']);
+  };
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -159,9 +172,20 @@ export default function WorkflowDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Workshop Management</h1>
-          <p className="text-blue-200">Dynamic Workflow & Performance Tracking</p>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={handleBackToDashboard}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Workshop Management</h1>
+            <p className="text-blue-200">Dynamic Workflow & Performance Tracking</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Card className="bg-white/10 border-white/20 backdrop-blur-sm p-4">
