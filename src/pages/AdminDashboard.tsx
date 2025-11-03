@@ -68,6 +68,14 @@ const AdminDashboard = () => {
           </div>
           <div className="flex gap-2">
             <Button
+              onClick={() => navigate('/financial')}
+              variant="outline"
+              className="border-green-500/30 text-green-500 hover:bg-green-500/10"
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Financial Report
+            </Button>
+            <Button
               onClick={() => navigate('/workflow')}
               variant="default"
               className="bg-blue-500 hover:bg-blue-600"

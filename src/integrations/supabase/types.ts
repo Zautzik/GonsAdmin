@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      equipment_investments: {
+        Row: {
+          created_at: string | null
+          equipment_name: string
+          estimated_annual_savings: number | null
+          estimated_roi_months: number | null
+          id: string
+          machine_id: string | null
+          notes: string | null
+          payback_period_months: number | null
+          purchase_cost: number
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          equipment_name: string
+          estimated_annual_savings?: number | null
+          estimated_roi_months?: number | null
+          id?: string
+          machine_id?: string | null
+          notes?: string | null
+          payback_period_months?: number | null
+          purchase_cost: number
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          equipment_name?: string
+          estimated_annual_savings?: number | null
+          estimated_roi_months?: number | null
+          id?: string
+          machine_id?: string | null
+          notes?: string | null
+          payback_period_months?: number | null
+          purchase_cost?: number
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_investments_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           assigned_machine_id: string | null
@@ -52,6 +102,62 @@ export type Database = {
           },
         ]
       }
+      machine_costs: {
+        Row: {
+          created_at: string | null
+          energy_cost: number | null
+          id: string
+          labor_cost: number | null
+          machine_id: string
+          maintenance_cost: number | null
+          month: string
+          notes: string | null
+          outsourcing_cost: number | null
+          revenue_generated: number | null
+          spare_parts_cost: number | null
+          total_operating_cost: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          energy_cost?: number | null
+          id?: string
+          labor_cost?: number | null
+          machine_id: string
+          maintenance_cost?: number | null
+          month: string
+          notes?: string | null
+          outsourcing_cost?: number | null
+          revenue_generated?: number | null
+          spare_parts_cost?: number | null
+          total_operating_cost?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          energy_cost?: number | null
+          id?: string
+          labor_cost?: number | null
+          machine_id?: string
+          maintenance_cost?: number | null
+          month?: string
+          notes?: string | null
+          outsourcing_cost?: number | null
+          revenue_generated?: number | null
+          spare_parts_cost?: number | null
+          total_operating_cost?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_costs_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       machines: {
         Row: {
           created_at: string | null
@@ -78,6 +184,59 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ot_financials: {
+        Row: {
+          created_at: string | null
+          id: string
+          labor_cost: number | null
+          machine_cost: number | null
+          material_cost: number | null
+          notes: string | null
+          ot_id: string
+          overhead_cost: number | null
+          profit: number | null
+          revenue: number | null
+          total_cost: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          labor_cost?: number | null
+          machine_cost?: number | null
+          material_cost?: number | null
+          notes?: string | null
+          ot_id: string
+          overhead_cost?: number | null
+          profit?: number | null
+          revenue?: number | null
+          total_cost?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          labor_cost?: number | null
+          machine_cost?: number | null
+          material_cost?: number | null
+          notes?: string | null
+          ot_id?: string
+          overhead_cost?: number | null
+          profit?: number | null
+          revenue?: number | null
+          total_cost?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_financials_ot_id_fkey"
+            columns: ["ot_id"]
+            isOneToOne: true
+            referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ots: {
         Row: {

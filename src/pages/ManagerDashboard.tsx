@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, TrendingUp, CheckCircle, Clock, Package } from 'lucide-react';
+import { LogOut, TrendingUp, CheckCircle, Clock, Package, DollarSign } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CostReport from '@/components/manager/CostReport';
 import TraceabilityReport from '@/components/manager/TraceabilityReport';
@@ -84,14 +84,24 @@ const ManagerDashboard = () => {
               <p className="text-xs text-muted-foreground">Analytics & Reports</p>
             </div>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="border-manager/30 text-manager hover:bg-manager/10"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            {t('logout')}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate('/financial')}
+              variant="outline"
+              className="border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Financial Report
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="border-manager/30 text-manager hover:bg-manager/10"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('logout')}
+            </Button>
+          </div>
         </div>
       </header>
 
