@@ -249,6 +249,36 @@ export default function WorkflowDashboard() {
         </TabsContent>
 
         <TabsContent value="layout" className="mt-4">
+          {/* Shift Selection */}
+          <Card className="bg-white/10 border-white/20 backdrop-blur-sm p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-white" />
+                <h3 className="text-lg font-bold text-white">Select Shift</h3>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setSelectedShift("morning")}
+                  variant={selectedShift === "morning" ? "default" : "outline"}
+                  className={selectedShift === "morning" 
+                    ? "bg-blue-500 hover:bg-blue-600 text-white" 
+                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
+                >
+                  Morning Shift
+                </Button>
+                <Button
+                  onClick={() => setSelectedShift("evening")}
+                  variant={selectedShift === "evening" ? "default" : "outline"}
+                  className={selectedShift === "evening" 
+                    ? "bg-blue-500 hover:bg-blue-600 text-white" 
+                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
+                >
+                  Evening Shift
+                </Button>
+              </div>
+            </div>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Workstation Layout - Left Side (3/4) */}
             <div className="lg:col-span-3">

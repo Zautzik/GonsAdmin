@@ -188,12 +188,15 @@ export type Database = {
       ot_financials: {
         Row: {
           created_at: string | null
+          energy_cost: number | null
+          hours_spent: number | null
           id: string
           labor_cost: number | null
           machine_cost: number | null
           material_cost: number | null
           notes: string | null
           ot_id: string
+          outsourcing_cost: number | null
           overhead_cost: number | null
           profit: number | null
           revenue: number | null
@@ -202,12 +205,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          energy_cost?: number | null
+          hours_spent?: number | null
           id?: string
           labor_cost?: number | null
           machine_cost?: number | null
           material_cost?: number | null
           notes?: string | null
           ot_id: string
+          outsourcing_cost?: number | null
           overhead_cost?: number | null
           profit?: number | null
           revenue?: number | null
@@ -216,12 +222,15 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          energy_cost?: number | null
+          hours_spent?: number | null
           id?: string
           labor_cost?: number | null
           machine_cost?: number | null
           material_cost?: number | null
           notes?: string | null
           ot_id?: string
+          outsourcing_cost?: number | null
           overhead_cost?: number | null
           profit?: number | null
           revenue?: number | null

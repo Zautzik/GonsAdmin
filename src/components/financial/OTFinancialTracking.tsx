@@ -15,7 +15,10 @@ interface OTFinancial {
   material_cost: number;
   labor_cost: number;
   machine_cost: number;
+  energy_cost: number;
+  outsourcing_cost: number;
   overhead_cost: number;
+  hours_spent: number;
   total_cost: number;
   revenue: number;
   profit: number;
@@ -34,7 +37,10 @@ export const OTFinancialTracking = () => {
     material_cost: 0,
     labor_cost: 0,
     machine_cost: 0,
+    energy_cost: 0,
+    outsourcing_cost: 0,
     overhead_cost: 0,
+    hours_spent: 0,
     revenue: 0,
     notes: ''
   });
@@ -107,7 +113,10 @@ export const OTFinancialTracking = () => {
       material_cost: 0,
       labor_cost: 0,
       machine_cost: 0,
+      energy_cost: 0,
+      outsourcing_cost: 0,
       overhead_cost: 0,
+      hours_spent: 0,
       revenue: 0,
       notes: ''
     });
@@ -120,7 +129,10 @@ export const OTFinancialTracking = () => {
       material_cost: financial.material_cost,
       labor_cost: financial.labor_cost,
       machine_cost: financial.machine_cost,
+      energy_cost: financial.energy_cost,
+      outsourcing_cost: financial.outsourcing_cost,
       overhead_cost: financial.overhead_cost,
+      hours_spent: financial.hours_spent,
       revenue: financial.revenue,
       notes: financial.notes || ''
     });
@@ -208,42 +220,84 @@ export const OTFinancialTracking = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Material Cost ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.material_cost}
-                  onChange={(e) => setFormData({ ...formData, material_cost: parseFloat(e.target.value) || 0 })}
-                />
+            {/* Time-based costs section */}
+            <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950/20">
+              <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                ⏱️ Time-Based Costs
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Hours Spent</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={formData.hours_spent}
+                    onChange={(e) => setFormData({ ...formData, hours_spent: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Labor Cost ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.labor_cost}
+                    onChange={(e) => setFormData({ ...formData, labor_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Energy Cost / Electricity ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.energy_cost}
+                    onChange={(e) => setFormData({ ...formData, energy_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Machine Usage Cost ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.machine_cost}
+                    onChange={(e) => setFormData({ ...formData, machine_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
-              <div>
-                <Label>Labor Cost ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.labor_cost}
-                  onChange={(e) => setFormData({ ...formData, labor_cost: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Machine Cost ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.machine_cost}
-                  onChange={(e) => setFormData({ ...formData, machine_cost: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Overhead Cost ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.overhead_cost}
-                  onChange={(e) => setFormData({ ...formData, overhead_cost: parseFloat(e.target.value) || 0 })}
-                />
+            </div>
+
+            {/* Supply-based costs section */}
+            <div className="border rounded-lg p-4 bg-purple-50 dark:bg-purple-950/20">
+              <h4 className="font-semibold mb-3 text-purple-700 dark:text-purple-300 flex items-center gap-2">
+                📦 Supply-Based Costs
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Materials (Ink, Paper, etc.) ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.material_cost}
+                    onChange={(e) => setFormData({ ...formData, material_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Outsourced Services ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.outsourcing_cost}
+                    onChange={(e) => setFormData({ ...formData, outsourcing_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Overhead Cost ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.overhead_cost}
+                    onChange={(e) => setFormData({ ...formData, overhead_cost: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
             </div>
 
@@ -286,8 +340,11 @@ export const OTFinancialTracking = () => {
                 <tr className="border-b">
                   <th className="text-left py-2 px-4 font-medium">OT Number</th>
                   <th className="text-left py-2 px-4 font-medium">Client</th>
-                  <th className="text-right py-2 px-4 font-medium">Revenue</th>
+                  <th className="text-right py-2 px-4 font-medium">Hours</th>
+                  <th className="text-right py-2 px-4 font-medium text-blue-600">Time Costs</th>
+                  <th className="text-right py-2 px-4 font-medium text-purple-600">Supply Costs</th>
                   <th className="text-right py-2 px-4 font-medium">Total Cost</th>
+                  <th className="text-right py-2 px-4 font-medium">Revenue</th>
                   <th className="text-right py-2 px-4 font-medium">Profit</th>
                   <th className="text-right py-2 px-4 font-medium">Margin %</th>
                   <th className="text-center py-2 px-4 font-medium">Actions</th>
@@ -296,15 +353,27 @@ export const OTFinancialTracking = () => {
               <tbody>
                 {financials.map((financial) => {
                   const margin = financial.revenue > 0 ? ((financial.profit / financial.revenue) * 100).toFixed(1) : 0;
+                  const timeCosts = (financial.labor_cost || 0) + (financial.energy_cost || 0) + (financial.machine_cost || 0);
+                  const supplyCosts = (financial.material_cost || 0) + (financial.outsourcing_cost || 0) + (financial.overhead_cost || 0);
+                  
                   return (
                     <tr key={financial.id} className="border-b hover:bg-muted/50">
                       <td className="py-2 px-4">{financial.ot?.ot_number}</td>
                       <td className="py-2 px-4">{financial.ot?.client_name}</td>
-                      <td className="py-2 px-4 text-right font-semibold text-primary">
-                        ${financial.revenue.toFixed(2)}
+                      <td className="py-2 px-4 text-right font-medium text-blue-600">
+                        {financial.hours_spent || 0}h
+                      </td>
+                      <td className="py-2 px-4 text-right font-semibold text-blue-600">
+                        ${timeCosts.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-4 text-right font-semibold text-purple-600">
+                        ${supplyCosts.toFixed(2)}
                       </td>
                       <td className="py-2 px-4 text-right font-semibold text-destructive">
                         ${financial.total_cost.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-4 text-right font-semibold text-primary">
+                        ${financial.revenue.toFixed(2)}
                       </td>
                       <td className={`py-2 px-4 text-right font-bold ${financial.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         ${financial.profit.toFixed(2)}
