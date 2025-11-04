@@ -3,10 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Package, ArrowRight } from "lucide-react";
+import { Plus, Package, ArrowRight, Edit2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CreateOTDialog } from "./CreateOTDialog";
+import { EditOTDialog } from "./EditOTDialog";
 
 interface OTManagementProps {
   onOTSelect: (ot: any) => void;
@@ -29,6 +31,8 @@ const STATUS_FLOW = [
 export function OTManagement({ onOTSelect }: OTManagementProps) {
   const [ots, setOts] = useState<any[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingOT, setEditingOT] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
@@ -85,8 +89,23 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
     return null;
   };
 
+  const handleEditOT = (ot: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingOT(ot);
+    setShowEditDialog(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Instructions */}
+      <Alert className="bg-blue-500/20 border-blue-500/40">
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-white">
+          <strong>How to use:</strong> Click on an OT card to select it for assignment. Use the Edit button to modify details. 
+          Click the status advancement button to move OTs through the workflow stages.
+        </AlertDescription>
+      </Alert>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -126,13 +145,23 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-bold text-white text-lg">{ot.ot_number}</h4>
                       <p className="text-sm text-blue-200">{ot.client_name}</p>
                     </div>
-                    <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/40">
-                      P{ot.priority}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/40">
+                        P{ot.priority}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 hover:bg-white/20"
+                        onClick={(e) => handleEditOT(ot, e)}
+                      >
+                        <Edit2 className="h-4 w-4 text-white" />
+                      </Button>
+                    </div>
                   </div>
 
                   {ot.description && (
@@ -204,6 +233,15 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
         onOpenChange={setShowCreateDialog}
         onSuccess={fetchOTs}
       />
+
+      {editingOT && (
+        <EditOTDialog
+          ot={editingOT}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={fetchOTs}
+        />
+      )}
     </div>
   );
 }

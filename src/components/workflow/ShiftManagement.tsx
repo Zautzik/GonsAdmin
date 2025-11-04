@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { Factory, Package, Clock, AlertCircle } from "lucide-react";
+import { Factory, Package, Clock, AlertCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -139,14 +140,24 @@ export function ShiftManagement({ onShiftChange }: ShiftManagementProps) {
   }
 
   return (
-    <Card className="bg-white/10 border-white/20 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <Factory className="w-6 h-6" />
-          Machine Schedule - Gantt View
-        </CardTitle>
-        <p className="text-sm text-blue-200">Real-time view of machines and their assigned work orders</p>
-      </CardHeader>
+    <div className="space-y-4">
+      {/* Instructions */}
+      <Alert className="bg-blue-500/20 border-blue-500/40">
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-white">
+          <strong>How to use:</strong> This Gantt view shows each machine and its currently assigned work order. 
+          OTs are automatically assigned to machines based on their current workflow status. The timeline shows real-time machine utilization.
+        </AlertDescription>
+      </Alert>
+
+      <Card className="bg-white/10 border-white/20 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Factory className="w-6 h-6" />
+            Machine Schedule - Gantt View
+          </CardTitle>
+          <p className="text-sm text-blue-200">Real-time view of machines and their assigned work orders</p>
+        </CardHeader>
       <CardContent>
         <ScrollArea className="h-[600px] pr-4">
           <div className="space-y-4">
@@ -206,8 +217,9 @@ export function ShiftManagement({ onShiftChange }: ShiftManagementProps) {
               </div>
             ))}
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
