@@ -190,20 +190,21 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
         <Button 
           onClick={() => setShowDialog(true)} 
           className="bg-primary hover:bg-primary/90"
+          aria-label="Add new user"
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           {t('addUser')}
         </Button>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border">
-          <Table>
+          <Table aria-label="User management table">
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">{t('email')}</TableHead>
-                <TableHead className="font-semibold">{t('role')}</TableHead>
-                <TableHead className="font-semibold">{t('department')}</TableHead>
-                <TableHead className="text-right font-semibold">{t('actions')}</TableHead>
+                <TableHead className="font-semibold" scope="col">{t('email')}</TableHead>
+                <TableHead className="font-semibold" scope="col">{t('role')}</TableHead>
+                <TableHead className="font-semibold" scope="col">{t('department')}</TableHead>
+                <TableHead className="text-right font-semibold" scope="col">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -230,8 +231,9 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
                           size="sm"
                           onClick={() => openEditDialog(user)}
                           className="hover:bg-primary/10 hover:text-primary hover:border-primary"
+                          aria-label={`Edit user ${user.email}`}
                         >
-                          <Pencil className="h-4 w-4 mr-1" />
+                          <Pencil className="h-4 w-4 mr-1" aria-hidden="true" />
                           Edit
                         </Button>
                         <Button
@@ -239,8 +241,9 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
                           size="sm"
                           onClick={() => handleDelete(user.id)}
                           className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+                          aria-label={`Delete user ${user.email}`}
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
+                          <Trash2 className="h-4 w-4 mr-1" aria-hidden="true" />
                           Delete
                         </Button>
                       </div>
@@ -254,12 +257,12 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
       </CardContent>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" aria-describedby="user-dialog-description">
           <DialogHeader>
             <DialogTitle className="text-2xl">
               {editingUser ? t('editUser') : t('addUser')}
             </DialogTitle>
-            <DialogDescription className="text-base">
+            <DialogDescription id="user-dialog-description" className="text-base">
               {editingUser ? 'Update user role and details' : 'Create a new user account with role assignment'}
             </DialogDescription>
           </DialogHeader>
@@ -272,23 +275,34 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
                   <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="user@gonsa.cl"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
+                    aria-required="true"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">{t('password')}</Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
                     placeholder="Minimum 6 characters"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
+                    aria-required="true"
+                    autoComplete="new-password"
+                    minLength={6}
+                    aria-describedby="password-requirements"
                   />
+                  <p id="password-requirements" className="text-xs text-muted-foreground sr-only">
+                    Password must be at least 6 characters long
+                  </p>
                 </div>
               </div>
             )}
@@ -298,8 +312,10 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
               <Select
                 value={formData.role}
                 onValueChange={(value) => setFormData({ ...formData, role: value })}
+                required
+                aria-required="true"
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger className="h-11" id="role" aria-label="Select user role">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -338,7 +354,7 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
               <div className="space-y-2">
                 <Label htmlFor="department">{t('department')}</Label>
                 <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="department" aria-label="Select department">
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
@@ -356,7 +372,7 @@ const UserManagement = ({ onUpdate }: UserManagementProps) => {
               <div className="space-y-2">
                 <Label htmlFor="manager_domain">{t('managerDomain')}</Label>
                 <Select value={formData.manager_domain} onValueChange={(value) => setFormData({ ...formData, manager_domain: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="manager_domain" aria-label="Select manager domain">
                     <SelectValue placeholder="Select domain" />
                   </SelectTrigger>
                   <SelectContent>

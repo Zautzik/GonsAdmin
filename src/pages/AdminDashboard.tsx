@@ -57,57 +57,60 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background">
-      <header className="bg-card border-b border-primary/20 shadow-lg sticky top-0 z-50 backdrop-blur-sm bg-card/95">
+      <header className="bg-card border-b border-primary/20 shadow-lg sticky top-0 z-50 backdrop-blur-sm bg-card/95" role="banner">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={gonsaLogo} alt="Gonsa" className="h-12" />
+            <img src={gonsaLogo} alt="Gonsa Impresores Company Logo" className="h-12" />
             <div>
               <h1 className="text-2xl font-bold text-primary">{t('adminDashboard')}</h1>
               <p className="text-xs text-muted-foreground">System Administration</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <nav aria-label="Main navigation" className="flex gap-2">
             <Button
               onClick={() => navigate('/financial')}
               variant="outline"
               className="border-green-500/30 text-green-500 hover:bg-green-500/10"
+              aria-label="Navigate to Financial Report"
             >
-              <DollarSign className="mr-2 h-4 w-4" />
+              <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
               Financial Report
             </Button>
             <Button
               onClick={() => navigate('/workflow')}
               variant="default"
               className="bg-blue-500 hover:bg-blue-600"
+              aria-label="Navigate to Workflow Management"
             >
-              <Factory className="mr-2 h-4 w-4" />
+              <Factory className="mr-2 h-4 w-4" aria-hidden="true" />
               Workflow Management
             </Button>
             <Button
               onClick={handleLogout}
               variant="outline"
               className="border-primary/30 text-primary hover:bg-primary/10"
+              aria-label="Logout from admin dashboard"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
               {t('logout')}
             </Button>
-          </div>
+          </nav>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <main className="container mx-auto px-4 py-8 space-y-8" role="main">
+        <section aria-label="Dashboard statistics" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-primary/20 hover:border-primary/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('totalUsers')}
               </CardTitle>
-              <div className="p-2 rounded-lg bg-primary/10">
+              <div className="p-2 rounded-lg bg-primary/10" aria-hidden="true">
                 <Users className="h-5 w-5 text-primary" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-primary">{stats.totalUsers}</div>
+              <div className="text-4xl font-bold text-primary" aria-label={`Total users: ${stats.totalUsers}`}>{stats.totalUsers}</div>
               <p className="text-xs text-muted-foreground mt-1">Active accounts</p>
             </CardContent>
           </Card>
@@ -117,12 +120,12 @@ const AdminDashboard = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('totalWorkers')}
               </CardTitle>
-              <div className="p-2 rounded-lg bg-supervisor/10">
+              <div className="p-2 rounded-lg bg-supervisor/10" aria-hidden="true">
                 <Users className="h-5 w-5 text-supervisor" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-supervisor">{stats.totalWorkers}</div>
+              <div className="text-4xl font-bold text-supervisor" aria-label={`Total workers: ${stats.totalWorkers}`}>{stats.totalWorkers}</div>
               <p className="text-xs text-muted-foreground mt-1">Production staff</p>
             </CardContent>
           </Card>
@@ -132,12 +135,12 @@ const AdminDashboard = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('machines')}
               </CardTitle>
-              <div className="p-2 rounded-lg bg-accent/10">
+              <div className="p-2 rounded-lg bg-accent/10" aria-hidden="true">
                 <Package className="h-5 w-5 text-accent" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-accent">{stats.totalMachines}</div>
+              <div className="text-4xl font-bold text-accent" aria-label={`Total machines: ${stats.totalMachines}`}>{stats.totalMachines}</div>
               <p className="text-xs text-muted-foreground mt-1">Equipment units</p>
             </CardContent>
           </Card>
@@ -147,33 +150,33 @@ const AdminDashboard = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {t('totalJobs')}
               </CardTitle>
-              <div className="p-2 rounded-lg bg-manager/10">
+              <div className="p-2 rounded-lg bg-manager/10" aria-hidden="true">
                 <FileText className="h-5 w-5 text-manager" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-manager">{stats.totalJobs}</div>
+              <div className="text-4xl font-bold text-manager" aria-label={`Total jobs: ${stats.totalJobs}`}>{stats.totalJobs}</div>
               <p className="text-xs text-muted-foreground mt-1">All time</p>
             </CardContent>
           </Card>
-        </div>
+        </section>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="users">
-              <Users className="mr-2 h-4 w-4" />
+          <TabsList className="grid w-full grid-cols-4" role="tablist" aria-label="Admin management sections">
+            <TabsTrigger value="users" aria-label="User management tab">
+              <Users className="mr-2 h-4 w-4" aria-hidden="true" />
               {t('users')}
             </TabsTrigger>
-            <TabsTrigger value="workers">
-              <Users className="mr-2 h-4 w-4" />
+            <TabsTrigger value="workers" aria-label="Worker management tab">
+              <Users className="mr-2 h-4 w-4" aria-hidden="true" />
               {t('workers')}
             </TabsTrigger>
-            <TabsTrigger value="inventory">
-              <Package className="mr-2 h-4 w-4" />
+            <TabsTrigger value="inventory" aria-label="Inventory management tab">
+              <Package className="mr-2 h-4 w-4" aria-hidden="true" />
               {t('inventory')}
             </TabsTrigger>
-            <TabsTrigger value="purchases">
-              <DollarSign className="mr-2 h-4 w-4" />
+            <TabsTrigger value="purchases" aria-label="Purchases management tab">
+              <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
               {t('purchases')}
             </TabsTrigger>
           </TabsList>
