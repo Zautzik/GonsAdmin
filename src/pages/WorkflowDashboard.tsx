@@ -8,10 +8,12 @@ import { WorkstationLayout } from "@/components/workflow/WorkstationLayout";
 import { WorkerStatsPanel } from "@/components/workflow/WorkerStatsPanel";
 import { ShiftManagement } from "@/components/workflow/ShiftManagement";
 import { OTManagement } from "@/components/workflow/OTManagement";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Users, Factory, Clock, BarChart3, ClipboardList, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import { useTranslation } from "react-i18next";
 
 /**
  * WorkflowDashboard - Main dashboard for managing workshop workflow
@@ -29,6 +31,7 @@ export default function WorkflowDashboard() {
   const { toast } = useToast();
   const { role } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleBackToDashboard = () => {
     const dashboardRoutes = {
@@ -183,11 +186,12 @@ export default function WorkflowDashboard() {
             Back to Dashboard
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Workshop Management</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">{t('workflow.title')}</h1>
             <p className="text-blue-200">Dynamic Workflow & Performance Tracking</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <LanguageSwitcher />
           <Card className="bg-white/10 border-white/20 backdrop-blur-sm p-4">
             <div className="flex items-center gap-2 text-white">
               <Users className="w-5 h-5" />
@@ -228,19 +232,19 @@ export default function WorkflowDashboard() {
         <TabsList className="bg-white/10 border-white/20 backdrop-blur-sm">
           <TabsTrigger value="ots" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
             <ClipboardList className="w-4 h-4 mr-2" />
-            Work Orders
+            {t('workflow.workOrders')}
           </TabsTrigger>
           <TabsTrigger value="layout" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
             <Factory className="w-4 h-4 mr-2" />
-            Layout
+            {t('workflow.layout')}
           </TabsTrigger>
           <TabsTrigger value="shifts" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
             <Clock className="w-4 h-4 mr-2" />
-            Shifts
+            {t('workflow.shifts')}
           </TabsTrigger>
           <TabsTrigger value="stats" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Statistics
+            {t('workflow.statistics')}
           </TabsTrigger>
         </TabsList>
 

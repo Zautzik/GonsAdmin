@@ -37,17 +37,17 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
       style={style}
       {...listeners}
       {...attributes}
-      className="relative bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-blue-400 rounded-lg p-3 hover:from-blue-500/50 hover:to-purple-500/50 hover:border-yellow-400 hover:scale-105 transition-all cursor-grab active:cursor-grabbing shadow-xl hover:shadow-yellow-500/50 animate-pulse"
+      className="relative bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-primary/60 rounded-lg p-3 hover:from-blue-500/50 hover:to-purple-500/50 hover:border-primary hover:scale-105 transition-all cursor-grab active:cursor-grabbing shadow-xl hover:shadow-primary/30"
     >
       {!assignmentId && (
-        <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full p-1 animate-bounce">
-          <Hand className="w-4 h-4 text-gray-900" />
+        <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1">
+          <Hand className="w-4 h-4 text-primary-foreground" />
         </div>
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GripVertical className="w-5 h-5 text-yellow-300 animate-pulse" />
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-yellow-400">
+          <GripVertical className="w-5 h-5 text-primary/80" />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-primary/40">
             {worker.name.charAt(0)}
           </div>
           <div>
@@ -56,7 +56,7 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xl font-bold text-yellow-400">{worker.overall_rating}</div>
+          <div className="text-xl font-bold text-accent">{worker.overall_rating}</div>
           <p className="text-xs text-blue-200">OVR</p>
         </div>
       </div>
@@ -83,7 +83,7 @@ function DroppableWorkstation({
     <Card
       ref={setNodeRef}
       className={`${getWorkstationColor(station.type)} border-3 p-4 transition-all duration-300 ${
-        isOver ? 'ring-4 ring-yellow-400 scale-105 bg-yellow-500/20 border-yellow-400 shadow-2xl shadow-yellow-500/50' : 'hover:scale-102 hover:shadow-lg'
+        isOver ? 'ring-4 ring-primary scale-105 bg-primary/10 border-primary shadow-2xl shadow-primary/40' : 'hover:scale-102 hover:shadow-lg'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
@@ -124,7 +124,7 @@ function DroppableWorkstation({
       </div>
 
       <div className={`space-y-2 mb-3 min-h-[140px] rounded-lg border-3 border-dashed p-3 transition-all duration-300 ${
-        isOver ? 'border-yellow-400 bg-yellow-500/20 animate-pulse' : 'border-white/30 bg-white/5'
+        isOver ? 'border-primary bg-primary/10' : 'border-white/30 bg-white/5'
       }`}>
         {assignedWorkers.length > 0 ? (
           assignedWorkers.map((assignment: any) => (
@@ -135,9 +135,9 @@ function DroppableWorkstation({
             />
           ))
         ) : (
-          <div className={`text-center py-8 transition-all ${isOver ? 'text-yellow-300' : 'text-blue-200'}`}>
-            <Users className={`w-12 h-12 mx-auto mb-2 ${isOver ? 'opacity-100 animate-bounce scale-125' : 'opacity-50'}`} />
-            <p className={`text-sm font-bold ${isOver ? 'text-yellow-300' : ''}`}>
+          <div className={`text-center py-8 transition-all ${isOver ? 'text-primary' : 'text-blue-200'}`}>
+            <Users className={`w-12 h-12 mx-auto mb-2 ${isOver ? 'opacity-100 scale-110' : 'opacity-50'}`} />
+            <p className={`text-sm font-bold ${isOver ? 'text-primary' : ''}`}>
               {isOver ? '📌 Release to assign!' : 'Drop workers here'}
             </p>
           </div>
@@ -218,42 +218,19 @@ export function WorkstationLayout({
   return (
     <div className="space-y-6">
       {/* Enhanced Instructions */}
-      <Alert className="bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400/60 shadow-lg">
-        <Hand className="h-5 w-5 text-yellow-300 animate-bounce" />
+      <Alert className="bg-gradient-to-r from-primary/20 to-supervisor/20 border-2 border-primary/40 shadow-lg">
+        <Hand className="h-5 w-5 text-primary" />
         <AlertDescription className="text-white">
-          <strong className="text-yellow-300 text-lg">🎯 Quick Guide:</strong>
+          <strong className="text-primary text-lg">🎯 Quick Guide:</strong>
           <ol className="mt-2 space-y-1 text-sm">
-            <li>1️⃣ <strong>Grab</strong> a worker card from the "Available Workers" section below (look for the pulsing cards with hand icons)</li>
-            <li>2️⃣ <strong>Drag</strong> the worker over any workstation (the box will glow yellow when ready)</li>
+            <li>1️⃣ <strong>Grab</strong> a worker card from the "Available Workers" section below</li>
+            <li>2️⃣ <strong>Drag</strong> the worker over any workstation (the box will glow when ready)</li>
             <li>3️⃣ <strong>Drop</strong> to assign! You can also move assigned workers between workstations</li>
           </ol>
         </AlertDescription>
       </Alert>
 
-      {/* Unassigned Workers Pool - MOVED TO TOP */}
-      {unassignedWorkers.length > 0 && (
-        <Card className="bg-gradient-to-br from-yellow-500/20 via-blue-500/20 to-purple-500/20 border-3 border-yellow-400/60 backdrop-blur-sm p-6 shadow-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-yellow-400 rounded-full p-2 animate-pulse">
-              <Hand className="w-6 h-6 text-gray-900" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-yellow-300">👥 Available Workers - Drag These!</h3>
-              <p className="text-sm text-blue-200">Click and hold any card, then drag to a workstation below</p>
-            </div>
-            <Badge className="bg-yellow-500/30 text-yellow-200 border-yellow-400 ml-auto text-lg px-3 py-1">
-              {unassignedWorkers.length} Ready
-            </Badge>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {unassignedWorkers.map((worker) => (
-              <DraggableWorker key={worker.id} worker={worker} />
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Workshop Floor - Grouped by Machine Type */}
+      {/* Workshop Floor - Grouped by Machine Type - MOVED BEFORE WORKERS */}
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <h2 className="text-3xl font-bold text-white">🏭 Workshop Floor</h2>
@@ -296,6 +273,29 @@ export function WorkstationLayout({
           </Card>
         ))}
       </div>
+
+      {/* Unassigned Workers Pool - MOVED TO BOTTOM */}
+      {unassignedWorkers.length > 0 && (
+        <Card className="bg-gradient-to-br from-primary/10 via-blue-500/10 to-purple-500/10 border-3 border-primary/40 backdrop-blur-sm p-6 shadow-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-primary/20 rounded-full p-2 border-2 border-primary">
+              <Hand className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-primary">👥 Available Workers</h3>
+              <p className="text-sm text-blue-200">Click and hold any card, then drag to a workstation above</p>
+            </div>
+            <Badge className="bg-primary/20 text-primary border-primary ml-auto text-lg px-3 py-1">
+              {unassignedWorkers.length} Ready
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {unassignedWorkers.map((worker) => (
+              <DraggableWorker key={worker.id} worker={worker} />
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

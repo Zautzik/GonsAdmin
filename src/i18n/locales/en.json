@@ -1,0 +1,93 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "actions": "Actions",
+    "status": "Status",
+    "priority": "Priority",
+    "date": "Date",
+    "name": "Name",
+    "description": "Description"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "email": "Email",
+    "password": "Password",
+    "welcomeBack": "Welcome back",
+    "signInToContinue": "Sign in to continue to Gonsa Production System"
+  },
+  "workflow": {
+    "title": "Workshop Management",
+    "workOrders": "Work Orders",
+    "layout": "Layout",
+    "shifts": "Shifts",
+    "statistics": "Statistics",
+    "assignWorkers": "Assign Workers",
+    "availableWorkers": "Available Workers",
+    "dragThese": "Drag These!",
+    "workshopFloor": "Workshop Floor",
+    "liveView": "Live View",
+    "dropWorkersHere": "Drop workers here",
+    "releaseToAssign": "Release to assign!",
+    "capacity": "Capacity",
+    "quickGuide": "Quick Guide",
+    "grabWorker": "Grab a worker card from the Available Workers section",
+    "dragWorker": "Drag the worker over any workstation",
+    "dropWorker": "Drop to assign! You can also move assigned workers between workstations"
+  },
+  "ot": {
+    "title": "Work Orders (OT)",
+    "new": "New OT",
+    "otNumber": "OT Number",
+    "client": "Client",
+    "quantity": "Quantity",
+    "units": "units",
+    "active": "Active Work Orders",
+    "completed": "Completed",
+    "priority": "Priority",
+    "deadline": "Deadline",
+    "due": "Due",
+    "searchPlaceholder": "Search by OT number or client..."
+  },
+  "machines": {
+    "offsetPrinters": "Offset Printers",
+    "guillotineCutters": "Guillotine Cutters",
+    "dieCutters": "Die Cutters",
+    "workshopStations": "Workshop Stations",
+    "station": "Station",
+    "stations": "Stations"
+  },
+  "status": {
+    "paperPurchase": "Paper Purchase",
+    "paperReceived": "Paper Received",
+    "inStorage": "In Storage",
+    "firstCut": "First Cut",
+    "printing": "Printing",
+    "dieCutting": "Die Cutting",
+    "finalCut": "Final Cut",
+    "revision": "Revision",
+    "ready": "Ready",
+    "inDelivery": "In Delivery",
+    "completed": "Completed",
+    "active": "Active",
+    "idle": "Idle"
+  },
+  "financial": {
+    "invoice": "Invoice",
+    "revenue": "Revenue",
+    "costs": "Costs",
+    "profit": "Profit",
+    "expenses": "Expenses",
+    "laborCost": "Labor Cost",
+    "materialCost": "Material Cost",
+    "machineCost": "Machine Cost",
+    "energyCost": "Energy Cost",
+    "outsourcingCost": "Outsourcing Cost",
+    "overheadCost": "Overhead Cost"
+  }
+}
