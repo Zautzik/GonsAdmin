@@ -218,9 +218,9 @@ export function WorkstationLayout({
   return (
     <div className="space-y-6">
       {/* Enhanced Instructions */}
-      <Alert className="bg-gradient-to-r from-primary/20 to-supervisor/20 border-2 border-primary/40 shadow-lg">
+      <Alert className="bg-card/80 border-2 border-border backdrop-blur-sm shadow-lg">
         <Hand className="h-5 w-5 text-primary" />
-        <AlertDescription className="text-white">
+        <AlertDescription className="text-foreground">
           <strong className="text-primary text-lg">🎯 Quick Guide:</strong>
           <ol className="mt-2 space-y-1 text-sm">
             <li>1️⃣ <strong>Grab</strong> a worker card from the "Available Workers" section below</li>
@@ -233,18 +233,18 @@ export function WorkstationLayout({
       {/* Workshop Floor - Grouped by Machine Type - MOVED BEFORE WORKERS */}
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <h2 className="text-3xl font-bold text-white">🏭 Workshop Floor</h2>
-          <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/40 text-sm">
+          <h2 className="text-3xl font-bold text-foreground">🏭 Workshop Floor</h2>
+          <Badge variant="outline" className="bg-supervisor/20 text-supervisor border-supervisor/40 text-sm">
             Live View
           </Badge>
         </div>
 
         {Object.entries(groupedWorkstations).map(([type, stations]: [string, any]) => (
-          <Card key={type} className="bg-white/5 border-white/10 backdrop-blur-sm p-6">
+          <Card key={type} className="bg-card/50 border-border backdrop-blur-sm p-6">
             <div className="flex items-center gap-3 mb-4">
               {getWorkstationIcon(type)}
-              <h3 className="text-xl font-bold text-white">{getTypeLabel(type)}</h3>
-              <Badge className="bg-blue-500/20 text-blue-200 border-blue-500/40">
+              <h3 className="text-xl font-bold text-foreground">{getTypeLabel(type)}</h3>
+              <Badge className="bg-primary/20 text-primary border-primary/40">
                 {(stations as any[]).length} {(stations as any[]).length === 1 ? 'Station' : 'Stations'}
               </Badge>
             </div>
@@ -276,14 +276,14 @@ export function WorkstationLayout({
 
       {/* Unassigned Workers Pool - MOVED TO BOTTOM */}
       {unassignedWorkers.length > 0 && (
-        <Card className="bg-gradient-to-br from-primary/10 via-blue-500/10 to-purple-500/10 border-3 border-primary/40 backdrop-blur-sm p-6 shadow-xl">
+        <Card className="bg-card/80 border-2 border-primary/40 backdrop-blur-sm p-6 shadow-xl">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-primary/20 rounded-full p-2 border-2 border-primary">
               <Hand className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h3 className="text-2xl font-bold text-primary">👥 Available Workers</h3>
-              <p className="text-sm text-blue-200">Click and hold any card, then drag to a workstation above</p>
+              <p className="text-sm text-muted-foreground">Click and hold any card, then drag to a workstation above</p>
             </div>
             <Badge className="bg-primary/20 text-primary border-primary ml-auto text-lg px-3 py-1">
               {unassignedWorkers.length} Ready

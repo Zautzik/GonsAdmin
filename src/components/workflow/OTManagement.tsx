@@ -140,23 +140,23 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
   return (
     <div className="space-y-6">
       {/* Instructions */}
-      <Alert className="bg-blue-500/20 border-blue-500/40">
-        <Info className="h-4 w-4" />
-        <AlertDescription className="text-white">
-          <strong>How to use:</strong> This grid shows your work orders organized by machine columns. 
-          Orders are sorted by priority and timing. Click Edit to modify details or use status buttons to advance workflow.
+      <Alert className="bg-card/80 border-2 border-border backdrop-blur-sm">
+        <Info className="h-4 w-4 text-primary" />
+        <AlertDescription className="text-foreground">
+          <strong className="text-primary">How to use:</strong> This queue shows your work orders organized by priority and timing. 
+          Track OTs as they move through different machines. Completed OTs are automatically stored for financial analysis.
         </AlertDescription>
       </Alert>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">{t('ot.title')}</h2>
-          <p className="text-blue-200">Production workflow organized by machines</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('ot.title')}</h2>
+          <p className="text-muted-foreground">Production queue - {activeOTs.length} active orders</p>
         </div>
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+          className="bg-primary hover:bg-primary/90"
         >
           <Plus className="w-4 h-4 mr-2" />
           {t('ot.new')}
@@ -168,7 +168,7 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
         placeholder={t('ot.searchPlaceholder')}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+        className="bg-input border-border text-foreground placeholder:text-muted-foreground"
       />
 
       {/* Grid Layout - Machines as Columns, OTs as Rows */}
@@ -177,17 +177,17 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
           {/* Column Headers - Machine Groups */}
           <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `200px repeat(${machines.length}, minmax(200px, 1fr))` }}>
             <div className="bg-primary/20 border-2 border-primary/40 rounded-lg p-3">
-              <h3 className="font-bold text-white text-center">OT Details</h3>
+              <h3 className="font-bold text-foreground text-center">OT Queue</h3>
             </div>
             {Object.entries(machinesByType).map(([type, typeMachines]: [string, any]) => (
               <div key={type} className="space-y-2">
                 <div className="bg-supervisor/20 border-2 border-supervisor/40 rounded-lg p-2">
-                  <h4 className="font-bold text-white text-center text-sm">{getMachineTypeLabel(type)}</h4>
+                  <h4 className="font-bold text-foreground text-center text-sm">{getMachineTypeLabel(type)}</h4>
                 </div>
                 <div className="grid grid-cols-1 gap-1">
                   {typeMachines.map((machine: Machine) => (
-                    <div key={machine.id} className="bg-white/10 border border-white/20 rounded p-1 text-center">
-                      <p className="text-xs text-white font-medium truncate">{machine.name}</p>
+                    <div key={machine.id} className="bg-muted border border-border rounded p-1 text-center">
+                      <p className="text-xs text-foreground font-medium truncate">{machine.name}</p>
                     </div>
                   ))}
                 </div>
@@ -209,26 +209,26 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
                 >
                   {/* OT Info Column */}
                   <Card 
-                    className="bg-white/10 border-white/20 backdrop-blur-sm p-3 hover:bg-white/15 transition-all cursor-pointer h-full"
+                    className="bg-card/80 border-border backdrop-blur-sm p-3 hover:bg-card transition-all cursor-pointer h-full"
                     onClick={() => onOTSelect(ot)}
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-white text-sm truncate">{ot.ot_number}</h4>
-                          <p className="text-xs text-blue-200 truncate">{ot.client_name}</p>
+                          <h4 className="font-bold text-foreground text-sm truncate">{ot.ot_number}</h4>
+                          <p className="text-xs text-muted-foreground truncate">{ot.client_name}</p>
                         </div>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-6 w-6 p-0 hover:bg-white/20 flex-shrink-0"
+                          className="h-6 w-6 p-0 hover:bg-muted flex-shrink-0"
                           onClick={(e) => handleEditOT(ot, e)}
                         >
-                          <Edit2 className="h-3 w-3 text-white" />
+                          <Edit2 className="h-3 w-3 text-foreground" />
                         </Button>
                       </div>
 
-                      <div className="flex items-center gap-1 text-xs text-white">
+                      <div className="flex items-center gap-1 text-xs text-foreground">
                         <Package className="w-3 h-3" />
                         <span className="truncate">{ot.quantity.toLocaleString()}</span>
                       </div>
@@ -237,22 +237,22 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
                         {statusInfo.label}
                       </Badge>
                       
-                      <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/40 w-full justify-center text-xs">
-                        P{ot.priority}
+                      <Badge className="bg-accent/20 text-accent border-accent/40 w-full justify-center text-xs">
+                        Priority {ot.priority}
                       </Badge>
 
                       {nextStatus && (
                         <Button
                           size="sm"
                           variant="outline"
-                          className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10 h-7 text-xs"
+                          className="w-full h-7 text-xs"
                           onClick={(e) => {
                             e.stopPropagation();
                             updateOTStatus(ot.id, nextStatus.key);
                           }}
                         >
                           <ArrowRight className="w-3 h-3 mr-1" />
-                          Next
+                          {nextStatus.label}
                         </Button>
                       )}
                     </div>
@@ -262,17 +262,17 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
                   {machines.map((machine) => (
                     <div 
                       key={machine.id}
-                      className="bg-white/5 border border-white/10 rounded-lg p-2 min-h-[180px] flex items-center justify-center"
+                      className="bg-muted/50 border border-border rounded-lg p-2 min-h-[180px] flex items-center justify-center"
                     >
                       {ot.workstation?.id === machine.id ? (
                         <div className="text-center">
-                          <div className="w-12 h-12 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto mb-2">
-                            <span className="text-lg">✓</span>
+                          <div className="w-12 h-12 rounded-full bg-supervisor/20 border-2 border-supervisor flex items-center justify-center mx-auto mb-2">
+                            <span className="text-lg text-supervisor">✓</span>
                           </div>
-                          <p className="text-xs text-green-300">Assigned</p>
+                          <p className="text-xs text-supervisor font-medium">Active</p>
                         </div>
                       ) : (
-                        <div className="text-center text-white/20">
+                        <div className="text-center text-muted-foreground/30">
                           <span className="text-xs">-</span>
                         </div>
                       )}
