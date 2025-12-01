@@ -26,8 +26,10 @@ export default function WorkflowDashboard() {
   const [workers, setWorkers] = useState<any[]>([]);
   const [workstations, setWorkstations] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
-  const [selectedShift, setSelectedShift] = useState<string>("morning");
+  const [shifts, setShifts] = useState<any[]>([]);
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeOtBg, setActiveOtBg] = useState<string>("#1f2937");
   const { toast } = useToast();
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -44,10 +46,29 @@ export default function WorkflowDashboard() {
 
   // Fetch all data on component mount
   useEffect(() => {
+    fetchShifts();
     fetchWorkers();
     fetchWorkstations();
     fetchAssignments();
-  }, [selectedShift]);
+  }, []);
+
+  const fetchShifts = async () => {
+    const { data, error } = await supabase
+      .from("shifts")
+      .select("*")
+      .order("start_time");
+
+    if (error) {
+      toast({ title: "Error fetching shifts", variant: "destructive" });
+      return;
+    }
+
+    setShifts(data || []);
+
+    if (!selectedShiftId && data && data.length > 0) {
+      setSelectedShiftId(data[0].id);
+    }
+  };
 
   const fetchWorkers = async () => {
     const { data, error } = await supabase
@@ -97,6 +118,11 @@ export default function WorkflowDashboard() {
     setSelectedWorker(worker);
   };
 
+  useEffect(() => {
+    const storedActive = localStorage.getItem("workflowActiveOtBg");
+    if (storedActive) setActiveOtBg(storedActive);
+  }, []);
+
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
@@ -115,6 +141,15 @@ export default function WorkflowDashboard() {
     const worker = workerData.worker;
     const assignmentId = workerData.assignmentId;
     const workstation = workstationData.workstation;
+
+    if (!selectedShiftId) {
+      toast({
+        title: "Select a shift first",
+        description: "Choose a shift in the Layout settings before assigning workers.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Check capacity
     const currentAssignments = assignments.filter(a => a.workstation_id === workstation.id);
@@ -146,7 +181,7 @@ export default function WorkflowDashboard() {
           .insert({
             worker_id: worker.id,
             workstation_id: workstation.id,
-            shift_id: selectedShift,
+            shift_id: selectedShiftId,
             date: new Date().toISOString().split("T")[0],
             role: "operator",
             ot_id: selectedOT?.id || null
@@ -209,7 +244,10 @@ export default function WorkflowDashboard() {
 
       {/* Selected OT Banner */}
       {selectedOT && (
-        <Card className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-500/40 backdrop-blur-sm p-4">
+        <Card 
+          className="border-purple-500/40 backdrop-blur-sm p-4"
+          style={{ backgroundColor: activeOtBg }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-white">Active OT: {selectedOT.ot_number}</h3>
@@ -260,26 +298,43 @@ export default function WorkflowDashboard() {
                 <Clock className="w-5 h-5 text-white" />
                 <h3 className="text-lg font-bold text-white">Select Shift</h3>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setSelectedShift("morning")}
-                  variant={selectedShift === "morning" ? "default" : "outline"}
-                  className={selectedShift === "morning" 
-                    ? "bg-blue-500 hover:bg-blue-600 text-white" 
-                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
-                >
-                  Morning Shift
-                </Button>
-                <Button
-                  onClick={() => setSelectedShift("evening")}
-                  variant={selectedShift === "evening" ? "default" : "outline"}
-                  className={selectedShift === "evening" 
-                    ? "bg-blue-500 hover:bg-blue-600 text-white" 
-                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
-                >
-                  Evening Shift
-                </Button>
-              </div>
+              {shifts.length === 0 ? (
+                <p className="text-sm text-blue-200">No shifts configured yet.</p>
+              ) : (
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {shifts.map((shift) => (
+                    <Button
+                      key={shift.id}
+                      onClick={() => setSelectedShiftId(shift.id)}
+                      variant={selectedShiftId === shift.id ? "default" : "outline"}
+                      className={selectedShiftId === shift.id 
+                        ? "bg-blue-500 hover:bg-blue-600 text-white" 
+                        : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
+                    >
+                      {shift.name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Layout Color Settings */}
+          <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-4 mb-4">
+            <h3 className="text-lg font-bold text-white mb-2">Layout Colors</h3>
+            <div className="flex flex-wrap gap-4 text-white text-sm">
+              <label className="flex items-center gap-2">
+                <span>Active OT Banner</span>
+                <input
+                  type="color"
+                  value={activeOtBg}
+                  onChange={(e) => {
+                    setActiveOtBg(e.target.value);
+                    localStorage.setItem("workflowActiveOtBg", e.target.value);
+                  }}
+                  className="h-8 w-10 rounded border border-white/20 bg-transparent p-0"
+                />
+              </label>
             </div>
           </Card>
 
@@ -290,7 +345,7 @@ export default function WorkflowDashboard() {
                 workstations={workstations}
                 assignments={assignments}
                 workers={workers}
-                selectedShift={selectedShift}
+                selectedShift={selectedShiftId || ""}
                 selectedOT={selectedOT}
                 onWorkerSelect={handleWorkerSelect}
                 onAssignmentChange={fetchAssignments}
