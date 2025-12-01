@@ -185,6 +185,212 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_checklists: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          frequency: string
+          id: string
+          machine_id: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          frequency: string
+          id?: string
+          machine_id?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          frequency?: string
+          id?: string
+          machine_id?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_checklists_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_task_completions: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          task_id: string
+          time_spent_minutes: number | null
+          work_order_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          task_id: string
+          time_spent_minutes?: number | null
+          work_order_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          task_id?: string
+          time_spent_minutes?: number | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_task_completions_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_tasks: {
+        Row: {
+          checklist_id: string
+          created_at: string | null
+          description: string
+          estimated_minutes: number | null
+          id: string
+          notes: string | null
+          requires_parts: boolean | null
+          task_number: number
+        }
+        Insert: {
+          checklist_id: string
+          created_at?: string | null
+          description: string
+          estimated_minutes?: number | null
+          id?: string
+          notes?: string | null
+          requires_parts?: boolean | null
+          task_number: number
+        }
+        Update: {
+          checklist_id?: string
+          created_at?: string | null
+          description?: string
+          estimated_minutes?: number | null
+          id?: string
+          notes?: string | null
+          requires_parts?: boolean | null
+          task_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_tasks_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_work_orders: {
+        Row: {
+          assigned_to: string | null
+          checklist_id: string
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          machine_id: string
+          notes: string | null
+          ot_id: string | null
+          priority: number | null
+          scheduled_date: string
+          started_at: string | null
+          status: string
+          total_time_minutes: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          checklist_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          machine_id: string
+          notes?: string | null
+          ot_id?: string | null
+          priority?: number | null
+          scheduled_date: string
+          started_at?: string | null
+          status?: string
+          total_time_minutes?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          checklist_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          machine_id?: string
+          notes?: string | null
+          ot_id?: string | null
+          priority?: number | null
+          scheduled_date?: string
+          started_at?: string | null
+          status?: string
+          total_time_minutes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_work_orders_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_work_orders_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_work_orders_ot_id_fkey"
+            columns: ["ot_id"]
+            isOneToOne: false
+            referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ot_financials: {
         Row: {
           created_at: string | null
@@ -649,7 +855,7 @@ export type Database = {
       is_own_worker_record: { Args: { _worker_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "supervisor" | "manager" | "admin"
+      app_role: "supervisor" | "manager" | "admin" | "technician"
       job_status: "pending" | "in_progress" | "completed" | "delivered"
       machine_status: "idle" | "running" | "maintenance" | "offline"
       machine_type:
@@ -806,7 +1012,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["supervisor", "manager", "admin"],
+      app_role: ["supervisor", "manager", "admin", "technician"],
       job_status: ["pending", "in_progress", "completed", "delivered"],
       machine_status: ["idle", "running", "maintenance", "offline"],
       machine_type: [
