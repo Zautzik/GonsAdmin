@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, Users, Package, FileText, DollarSign, Factory } from 'lucide-react';
+import { LogOut, Users, Package, FileText, DollarSign, Factory, Wrench } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserManagement from '@/components/admin/UserManagement';
 import WorkersManagement from '@/components/admin/WorkersManagement';
@@ -84,6 +84,15 @@ const AdminDashboard = () => {
             >
               <Factory className="mr-2 h-4 w-4" aria-hidden="true" />
               Workflow Management
+            </Button>
+            <Button
+              onClick={() => navigate('/maintenance')}
+              variant="outline"
+              className="border-orange-500/30 text-orange-500 hover:bg-orange-500/10"
+              aria-label="Navigate to Asset Maintenance"
+            >
+              <Wrench className="mr-2 h-4 w-4" aria-hidden="true" />
+              Maintenance
             </Button>
             <Button
               onClick={handleLogout}
