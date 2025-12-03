@@ -22,17 +22,17 @@ interface Machine {
 }
 
 const STATUS_FLOW = [
-  { key: 'paper_purchase', label: 'Paper Purchase', color: 'bg-gray-500' },
-  { key: 'paper_received', label: 'Paper Received', color: 'bg-blue-500' },
-  { key: 'in_storage', label: 'In Storage', color: 'bg-purple-500' },
-  { key: 'guillotine_first_cut', label: 'First Cut', color: 'bg-orange-500' },
-  { key: 'offset_printing', label: 'Printing', color: 'bg-indigo-500' },
-  { key: 'die_cutting', label: 'Die Cutting', color: 'bg-pink-500' },
-  { key: 'guillotine_final_cut', label: 'Final Cut', color: 'bg-orange-600' },
-  { key: 'workshop_revision', label: 'Revision', color: 'bg-green-500' },
-  { key: 'ready_for_delivery', label: 'Ready', color: 'bg-teal-500' },
-  { key: 'in_delivery', label: 'In Delivery', color: 'bg-yellow-500' },
-  { key: 'completed', label: 'Completed', color: 'bg-emerald-500' },
+  { key: 'paper_purchase', label: 'Paper Purchase', color: 'bg-muted' },
+  { key: 'paper_received', label: 'Paper Received', color: 'bg-primary' },
+  { key: 'in_storage', label: 'In Storage', color: 'bg-accent' },
+  { key: 'guillotine_first_cut', label: 'First Cut', color: 'bg-destructive' },
+  { key: 'offset_printing', label: 'Printing', color: 'bg-primary' },
+  { key: 'die_cutting', label: 'Die Cutting', color: 'bg-accent' },
+  { key: 'guillotine_final_cut', label: 'Final Cut', color: 'bg-destructive' },
+  { key: 'workshop_revision', label: 'Revision', color: 'bg-supervisor' },
+  { key: 'ready_for_delivery', label: 'Ready', color: 'bg-primary' },
+  { key: 'in_delivery', label: 'In Delivery', color: 'bg-manager' },
+  { key: 'completed', label: 'Completed', color: 'bg-supervisor' },
 ];
 
 export function OTManagement({ onOTSelect }: OTManagementProps) {
@@ -118,7 +118,6 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
     setShowEditDialog(true);
   };
 
-  // Group machines by type for column headers
   const machinesByType = machines.reduce((acc: any, machine) => {
     if (!acc[machine.type]) {
       acc[machine.type] = [];
@@ -168,7 +167,7 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
         placeholder={t('ot.searchPlaceholder')}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="bg-input border-border text-foreground placeholder:text-muted-foreground"
+        className="bg-input border-border placeholder:text-muted-foreground"
       />
 
       {/* Grid Layout - Machines as Columns, OTs as Rows */}
@@ -233,7 +232,7 @@ export function OTManagement({ onOTSelect }: OTManagementProps) {
                         <span className="truncate">{ot.quantity.toLocaleString()}</span>
                       </div>
 
-                      <Badge className={`${statusInfo.color} text-white w-full justify-center text-xs py-0.5`}>
+                      <Badge className={`${statusInfo.color} text-primary-foreground w-full justify-center text-xs py-0.5`}>
                         {statusInfo.label}
                       </Badge>
                       
