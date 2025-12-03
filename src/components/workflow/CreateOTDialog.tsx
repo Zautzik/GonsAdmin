@@ -61,9 +61,9 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-white/20 text-white">
+      <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle>Create New Work Order</DialogTitle>
+          <DialogTitle className="text-foreground">Create New Work Order</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -73,7 +73,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
               required
               value={formData.ot_number}
               onChange={(e) => setFormData({ ...formData, ot_number: e.target.value })}
-              className="bg-white/10 border-white/20 text-white"
+              className="bg-input border-border"
               placeholder="OT-2024-001"
             />
           </div>
@@ -85,7 +85,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
               required
               value={formData.client_name}
               onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-              className="bg-white/10 border-white/20 text-white"
+              className="bg-input border-border"
               placeholder="Client Company"
             />
           </div>
@@ -96,7 +96,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="bg-white/10 border-white/20 text-white"
+              className="bg-input border-border"
               placeholder="Brief description of the work order..."
             />
           </div>
@@ -110,7 +110,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
                 required
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                className="bg-white/10 border-white/20 text-white"
+                className="bg-input border-border"
                 placeholder="1000"
               />
             </div>
@@ -124,7 +124,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
                 max="5"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="bg-white/10 border-white/20 text-white"
+                className="bg-input border-border"
               />
             </div>
           </div>
@@ -136,7 +136,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
               type="datetime-local"
               value={formData.deadline}
               onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-              className="bg-white/10 border-white/20 text-white"
+              className="bg-input border-border"
             />
           </div>
 
@@ -145,14 +145,14 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              className="border-border"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-gradient-to-r from-blue-500 to-purple-500"
+              className="bg-primary hover:bg-primary/90"
             >
               {loading ? "Creating..." : "Create OT"}
             </Button>

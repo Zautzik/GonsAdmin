@@ -6,11 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, Plus, Package, FileText } from 'lucide-react';
+import { LogOut, Plus, Package, FileText, Factory } from 'lucide-react';
 import MachineList from '@/components/supervisor/MachineList';
 import JobList from '@/components/supervisor/JobList';
 import AddJobDialog from '@/components/supervisor/AddJobDialog';
-import OTManagement from '@/components/supervisor/OTManagement';
 import WorkerRoster from '@/components/supervisor/WorkerRoster';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
@@ -74,20 +73,27 @@ const SupervisorDashboard = () => {
               <p className="text-xs text-muted-foreground">Production Management</p>
             </div>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="border-supervisor/30 text-supervisor hover:bg-supervisor/10"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            {t('logout')}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate('/workflow')}
+              className="bg-supervisor hover:bg-supervisor/90"
+            >
+              <Factory className="mr-2 h-4 w-4" />
+              Workflow
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="border-supervisor/30 text-supervisor hover:bg-supervisor/10"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('logout')}
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <OTManagement />
-        
         <WorkerRoster showActions={true} />
         
         <Card className="border-supervisor/20 hover:shadow-lg transition-all">

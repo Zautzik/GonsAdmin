@@ -98,9 +98,9 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Edit Work Order</DialogTitle>
+          <DialogTitle className="text-2xl text-foreground">Edit Work Order</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,7 +111,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
                 id="ot_number"
                 value={formData.ot_number}
                 onChange={(e) => setFormData({ ...formData, ot_number: e.target.value })}
-                className="bg-white/10 border-white/20"
+                className="bg-input border-border"
                 required
               />
             </div>
@@ -122,7 +122,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
                 id="client_name"
                 value={formData.client_name}
                 onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                className="bg-white/10 border-white/20"
+                className="bg-input border-border"
                 required
               />
             </div>
@@ -134,7 +134,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="bg-white/10 border-white/20"
+              className="bg-input border-border"
               rows={3}
             />
           </div>
@@ -147,7 +147,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
                 type="number"
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                className="bg-white/10 border-white/20"
+                className="bg-input border-border"
                 required
                 min="0"
               />
@@ -160,7 +160,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
                 type="number"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
-                className="bg-white/10 border-white/20"
+                className="bg-input border-border"
                 required
                 min="1"
                 max="5"
@@ -174,7 +174,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
                 type="date"
                 value={formData.deadline}
                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                className="bg-white/10 border-white/20"
+                className="bg-input border-border"
               />
             </div>
           </div>
@@ -185,10 +185,10 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
               value={formData.status}
               onValueChange={(value) => setFormData({ ...formData, status: value })}
             >
-              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+              <SelectTrigger className="bg-input border-border">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-white/20">
+              <SelectContent className="bg-card border-border">
                 {STATUS_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -203,14 +203,14 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="bg-white/10 border-white/20"
+              className="border-border"
               disabled={loading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-500"
+              className="bg-primary hover:bg-primary/90"
               disabled={loading}
             >
               {loading ? "Updating..." : "Update OT"}
