@@ -63,6 +63,8 @@
     "stations": "Stations"
   },
   "status": {
+    "prePress": "Pre-Press",
+    "vistoBueno": "Customer Approval",
     "paperPurchase": "Paper Purchase",
     "paperReceived": "Paper Received",
     "inStorage": "In Storage",

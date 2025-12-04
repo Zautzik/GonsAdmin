@@ -867,6 +867,8 @@ export type Database = {
         | "manual_workshop"
         | "delivery"
       ot_status:
+        | "pre_press"
+        | "visto_bueno"
         | "paper_purchase"
         | "paper_received"
         | "in_storage"
@@ -1025,6 +1027,8 @@ export const Constants = {
         "delivery",
       ],
       ot_status: [
+        "pre_press",
+        "visto_bueno",
         "paper_purchase",
         "paper_received",
         "in_storage",

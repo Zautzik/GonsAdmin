@@ -16,6 +16,8 @@ interface EditOTDialogProps {
 }
 
 const STATUS_OPTIONS = [
+  { value: 'pre_press', label: 'Pre-Press (Design)' },
+  { value: 'visto_bueno', label: 'Visto Bueno (Approval)' },
   { value: 'paper_purchase', label: 'Paper Purchase' },
   { value: 'paper_received', label: 'Paper Received' },
   { value: 'in_storage', label: 'In Storage' },
@@ -38,7 +40,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
     description: "",
     quantity: 0,
     priority: 1,
-    status: "paper_purchase",
+    status: "pre_press",
     deadline: "",
   });
 
@@ -50,7 +52,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
         description: ot.description || "",
         quantity: ot.quantity || 0,
         priority: ot.priority || 1,
-        status: ot.status || "paper_purchase",
+        status: ot.status || "pre_press",
         deadline: ot.deadline ? new Date(ot.deadline).toISOString().split('T')[0] : "",
       });
     }
@@ -154,7 +156,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
             </div>
 
             <div>
-              <Label htmlFor="priority">Priority (1-5)*</Label>
+              <Label htmlFor="priority">Priority (1-10)*</Label>
               <Input
                 id="priority"
                 type="number"
@@ -163,7 +165,7 @@ export function EditOTDialog({ ot, open, onOpenChange, onSuccess }: EditOTDialog
                 className="bg-input border-border"
                 required
                 min="1"
-                max="5"
+                max="10"
               />
             </div>
 

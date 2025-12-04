@@ -36,7 +36,7 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
       quantity: parseInt(formData.quantity) || 0,
       priority: parseInt(formData.priority) || 1,
       deadline: formData.deadline || null,
-      status: 'paper_purchase'
+      status: 'pre_press'
     });
 
     setLoading(false);
@@ -116,15 +116,16 @@ export function CreateOTDialog({ open, onOpenChange, onSuccess }: CreateOTDialog
             </div>
 
             <div>
-              <Label htmlFor="priority">Priority (1-5)</Label>
+              <Label htmlFor="priority">Priority (1-10)</Label>
               <Input
                 id="priority"
                 type="number"
                 min="1"
-                max="5"
+                max="10"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                 className="bg-input border-border"
+                placeholder="Higher = more urgent"
               />
             </div>
           </div>

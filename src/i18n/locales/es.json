@@ -63,6 +63,8 @@
     "stations": "Estaciones"
   },
   "status": {
+    "prePress": "Pre-Prensa",
+    "vistoBueno": "Visto Bueno",
     "paperPurchase": "Compra de Papel",
     "paperReceived": "Papel Recibido",
     "inStorage": "En Almacenamiento",
