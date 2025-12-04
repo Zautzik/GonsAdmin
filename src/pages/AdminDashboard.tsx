@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { LogOut, Users, Package, FileText, DollarSign, Factory, Wrench } from 'lucide-react';
+import { LogOut, Users, Package, FileText, DollarSign, Factory, Wrench, LayoutDashboard } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserManagement from '@/components/admin/UserManagement';
 import WorkersManagement from '@/components/admin/WorkersManagement';
 import InventoryManagement from '@/components/admin/InventoryManagement';
 import PurchasesManagement from '@/components/admin/PurchasesManagement';
+import ExecutiveOverview from '@/components/admin/ExecutiveOverview';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
 const AdminDashboard = () => {
@@ -170,8 +170,12 @@ const AdminDashboard = () => {
           </Card>
         </section>
 
-        <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-4" role="tablist" aria-label="Admin management sections">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-5" role="tablist" aria-label="Admin management sections">
+            <TabsTrigger value="overview" aria-label="Executive overview tab">
+              <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden="true" />
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="users" aria-label="User management tab">
               <Users className="mr-2 h-4 w-4" aria-hidden="true" />
               {t('users')}
@@ -189,6 +193,10 @@ const AdminDashboard = () => {
               {t('purchases')}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview" className="space-y-4 mt-6">
+            <ExecutiveOverview />
+          </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
             <UserManagement onUpdate={fetchStats} />
