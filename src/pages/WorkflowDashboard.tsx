@@ -318,26 +318,15 @@ export default function WorkflowDashboard() {
               </div>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <div className="lg:col-span-3">
-                <WorkstationLayout
-                  workstations={workstations}
-                  assignments={assignments}
-                  workers={workers}
-                  selectedShift={selectedShiftId || ""}
-                  selectedOT={selectedOT}
-                  onWorkerSelect={handleWorkerSelect}
-                  onAssignmentChange={fetchAssignments}
-                />
-              </div>
-              <div className="lg:col-span-1">
-                <WorkerStatsPanel
-                  selectedWorker={selectedWorker}
-                  workers={workers}
-                  onWorkerSelect={handleWorkerSelect}
-                />
-              </div>
-            </div>
+            <WorkstationLayout
+              workstations={workstations}
+              assignments={assignments}
+              workers={workers}
+              selectedShift={selectedShiftId || ""}
+              selectedOT={selectedOT}
+              onWorkerSelect={handleWorkerSelect}
+              onAssignmentChange={fetchAssignments}
+            />
           </TabsContent>
 
           <TabsContent value="shifts" className="mt-4">
