@@ -1,12 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Users, Printer, Scissors, Wrench, Layers, Info, GripVertical, Hand } from "lucide-react";
+import { Users, Printer, Scissors, Wrench, Layers, Hand, GripVertical, Truck, Crown, UserCheck } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WorkstationLayoutProps {
   workstations: any[];
@@ -18,6 +16,14 @@ interface WorkstationLayoutProps {
   onAssignmentChange: () => void;
 }
 
+const STATION_CONFIG = {
+  die_cutter: { icon: Layers, label: "Die Cutters", labelEs: "Troqueladores", color: "from-pink-500/30 to-rose-600/30", border: "border-pink-500/60", roles: ["technician"] },
+  guillotine: { icon: Scissors, label: "Guillotine", labelEs: "Guillotina", color: "from-orange-500/30 to-amber-600/30", border: "border-orange-500/60", roles: ["technician"] },
+  offset_printer: { icon: Printer, label: "Offset Printers", labelEs: "Impresoras Offset", color: "from-purple-500/30 to-violet-600/30", border: "border-purple-500/60", roles: ["master", "assistant"] },
+  dispatch: { icon: Truck, label: "Dispatch", labelEs: "Despacho", color: "from-blue-500/30 to-cyan-600/30", border: "border-blue-500/60", roles: ["driver", "assistant"] },
+  workshop: { icon: Wrench, label: "Workshop", labelEs: "Taller", color: "from-green-500/30 to-emerald-600/30", border: "border-green-500/60", roles: ["operator"] },
+};
+
 function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?: string }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: assignmentId || `worker-${worker.id}`,
@@ -25,11 +31,21 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
   });
 
   const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
-      }
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 }
     : undefined;
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "master": return { icon: Crown, color: "bg-yellow-500/80 text-yellow-100", label: "Master" };
+      case "driver": return { icon: Truck, color: "bg-blue-500/80 text-blue-100", label: "Driver" };
+      case "assistant": return { icon: UserCheck, color: "bg-green-500/80 text-green-100", label: "Asst" };
+      case "technician": return { icon: Wrench, color: "bg-purple-500/80 text-purple-100", label: "Tech" };
+      default: return { icon: Users, color: "bg-gray-500/80 text-gray-100", label: "Op" };
+    }
+  };
+
+  const roleBadge = getRoleBadge(worker.worker_role);
+  const RoleIcon = roleBadge.icon;
 
   return (
     <div
@@ -37,126 +53,129 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
       style={style}
       {...listeners}
       {...attributes}
-      className="relative bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-primary/60 rounded-lg p-3 hover:from-blue-500/50 hover:to-purple-500/50 hover:border-primary hover:scale-105 transition-all cursor-grab active:cursor-grabbing shadow-xl hover:shadow-primary/30"
+      className="relative bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-primary/60 rounded-lg p-2.5 hover:from-blue-500/50 hover:to-purple-500/50 hover:border-primary hover:scale-105 transition-all cursor-grab active:cursor-grabbing shadow-lg hover:shadow-primary/30"
     >
       {!assignmentId && (
         <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1">
-          <Hand className="w-4 h-4 text-primary-foreground" />
+          <Hand className="w-3 h-3 text-primary-foreground" />
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GripVertical className="w-5 h-5 text-primary/80" />
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-primary/40">
-            {worker.name.charAt(0)}
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white">{worker.name}</p>
-            <p className="text-xs text-blue-200">{worker.department}</p>
+      <div className="flex items-center gap-2">
+        <GripVertical className="w-4 h-4 text-primary/80" />
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-md ring-2 ring-primary/40">
+          {worker.name.charAt(0)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-white truncate">{worker.name}</p>
+          <div className="flex items-center gap-1">
+            <Badge className={`${roleBadge.color} text-[10px] px-1 py-0`}>
+              <RoleIcon className="w-2.5 h-2.5 mr-0.5" />
+              {roleBadge.label}
+            </Badge>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xl font-bold text-accent">{worker.overall_rating}</div>
-          <p className="text-xs text-blue-200">OVR</p>
+          <div className="text-lg font-bold text-accent">{worker.overall_rating}</div>
+          <p className="text-[10px] text-blue-200">OVR</p>
         </div>
       </div>
     </div>
   );
 }
 
-function DroppableWorkstation({ 
-  station, 
-  assignedWorkers, 
-  occupancy, 
-  capacity,
-  getWorkstationIcon,
-  getWorkstationColor,
-  onWorkerSelect,
-  selectedOT
-}: any) {
+function DroppableWorkstation({ station, assignedWorkers, occupancy, capacity, config, selectedOT }: any) {
   const { setNodeRef, isOver } = useDroppable({
     id: station.id,
     data: { workstation: station, selectedOT },
   });
 
+  const Icon = config.icon;
+
   return (
     <Card
       ref={setNodeRef}
-      className={`${getWorkstationColor(station.type)} border-3 p-4 transition-all duration-300 ${
-        isOver ? 'ring-4 ring-primary scale-105 bg-primary/10 border-primary shadow-2xl shadow-primary/40' : 'hover:scale-102 hover:shadow-lg'
+      className={`bg-gradient-to-br ${config.color} ${config.border} border-2 p-3 transition-all duration-300 ${
+        isOver ? 'ring-4 ring-primary scale-105 bg-primary/20 shadow-2xl shadow-primary/40' : 'hover:scale-102 hover:shadow-lg'
       }`}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {getWorkstationIcon(station.type)}
+          <Icon className="w-5 h-5 text-white" />
           <div>
-            <h3 className="font-bold text-white text-lg">{station.name}</h3>
-            <p className="text-xs text-blue-200 capitalize">
-              {station.type.replace("_", " ")}
-            </p>
+            <h4 className="font-bold text-white text-sm">{station.name}</h4>
           </div>
         </div>
-        <Badge
-          variant="outline"
-          className={`${
-            station.status === "active"
-              ? "bg-green-500/30 border-green-500"
-              : "bg-gray-500/30 border-gray-500"
-          } text-white`}
-        >
+        <Badge variant="outline" className={`${station.status === "active" ? "bg-green-500/30 border-green-500" : "bg-gray-500/30 border-gray-500"} text-white text-xs`}>
           {station.status}
         </Badge>
       </div>
 
-      <div className="mb-3">
-        <div className="flex items-center justify-between text-xs text-white mb-1">
+      <div className="mb-2">
+        <div className="flex items-center justify-between text-xs text-white/80 mb-1">
           <span>Capacity</span>
           <span className="font-bold">{occupancy}/{capacity}</span>
         </div>
-        <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className={`h-full ${
-              occupancy >= capacity ? "bg-red-500" : "bg-green-500"
-            } transition-all`}
-            style={{ width: `${(occupancy / capacity) * 100}%` }}
-          />
+        <div className="h-2 bg-background/30 rounded-full overflow-hidden">
+          <div className={`h-full ${occupancy >= capacity ? "bg-red-500" : "bg-green-500"} transition-all`} style={{ width: `${Math.min((occupancy / capacity) * 100, 100)}%` }} />
         </div>
       </div>
 
-      <div className={`space-y-2 mb-3 min-h-[140px] rounded-lg border-3 border-dashed p-3 transition-all duration-300 ${
-        isOver ? 'border-primary bg-primary/10' : 'border-white/30 bg-white/5'
-      }`}>
+      <div className={`space-y-2 min-h-[100px] rounded-lg border-2 border-dashed p-2 transition-all duration-300 ${isOver ? 'border-primary bg-primary/10' : 'border-white/30 bg-white/5'}`}>
         {assignedWorkers.length > 0 ? (
           assignedWorkers.map((assignment: any) => (
-            <DraggableWorker 
-              key={assignment.id} 
-              worker={assignment.worker} 
-              assignmentId={assignment.id}
-            />
+            <DraggableWorker key={assignment.id} worker={assignment.worker} assignmentId={assignment.id} />
           ))
         ) : (
-          <div className={`text-center py-8 transition-all ${isOver ? 'text-primary' : 'text-blue-200'}`}>
-            <Users className={`w-12 h-12 mx-auto mb-2 ${isOver ? 'opacity-100 scale-110' : 'opacity-50'}`} />
-            <p className={`text-sm font-bold ${isOver ? 'text-primary' : ''}`}>
-              {isOver ? '📌 Release to assign!' : 'Drop workers here'}
+          <div className={`text-center py-6 transition-all ${isOver ? 'text-primary' : 'text-white/50'}`}>
+            <Users className={`w-8 h-8 mx-auto mb-1 ${isOver ? 'opacity-100 scale-110' : 'opacity-50'}`} />
+            <p className={`text-xs font-medium ${isOver ? 'text-primary' : ''}`}>
+              {isOver ? 'Release to assign!' : 'Drop workers here'}
             </p>
           </div>
         )}
       </div>
-
-      {selectedOT && (
-        <Badge className="bg-purple-500/30 text-purple-200 w-full justify-center mb-2">
-          {selectedOT.ot_number}
-        </Badge>
-      )}
     </Card>
   );
 }
 
-/**
- * WorkstationLayout - Visual layout of all workstations
- * Similar to FIFA formation view
- */
+function WorkerPoolBySpecialty({ workers, specialty, config }: { workers: any[]; specialty: string; config: any }) {
+  const { language } = useLanguage();
+  const Icon = config.icon;
+  
+  // Group workers by role
+  const workersByRole = workers.reduce((acc: any, worker: any) => {
+    const role = worker.worker_role || 'operator';
+    if (!acc[role]) acc[role] = [];
+    acc[role].push(worker);
+    return acc;
+  }, {});
+
+  if (workers.length === 0) return null;
+
+  return (
+    <div className={`bg-gradient-to-br ${config.color} ${config.border} border-2 rounded-xl p-4`}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="bg-white/20 rounded-full p-2">
+          <Icon className="w-5 h-5 text-white" />
+        </div>
+        <h4 className="font-bold text-white">{language === 'es' ? config.labelEs : config.label}</h4>
+        <Badge className="bg-white/20 text-white border-white/40 ml-auto">{workers.length}</Badge>
+      </div>
+      
+      {Object.entries(workersByRole).map(([role, roleWorkers]: [string, any]) => (
+        <div key={role} className="mb-3 last:mb-0">
+          <p className="text-xs text-white/70 uppercase font-semibold mb-2">{role}s ({roleWorkers.length})</p>
+          <div className="grid grid-cols-1 gap-2">
+            {roleWorkers.map((worker: any) => (
+              <DraggableWorker key={worker.id} worker={worker} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function WorkstationLayout({
   workstations,
   assignments,
@@ -166,27 +185,7 @@ export function WorkstationLayout({
   onWorkerSelect,
   onAssignmentChange,
 }: WorkstationLayoutProps) {
-  const { toast } = useToast();
-  
-  const getWorkstationIcon = (type: string) => {
-    switch (type) {
-      case "offset_printer": return <Printer className="w-6 h-6" />;
-      case "guillotine": return <Scissors className="w-6 h-6" />;
-      case "die_cutter": return <Layers className="w-6 h-6" />;
-      case "workshop": return <Wrench className="w-6 h-6" />;
-      default: return <Wrench className="w-6 h-6" />;
-    }
-  };
-
-  const getWorkstationColor = (type: string) => {
-    switch (type) {
-      case "offset_printer": return "bg-purple-500/20 border-purple-500/40";
-      case "guillotine": return "bg-orange-500/20 border-orange-500/40";
-      case "die_cutter": return "bg-pink-500/20 border-pink-500/40";
-      case "workshop": return "bg-green-500/20 border-green-500/40";
-      default: return "bg-blue-500/20 border-blue-500/40";
-    }
-  };
+  const { language } = useLanguage();
 
   const getAssignedWorkers = (workstationId: string) => {
     return assignments.filter((a) => a.workstation_id === workstationId);
@@ -198,104 +197,118 @@ export function WorkstationLayout({
 
   // Group workstations by type
   const groupedWorkstations = workstations.reduce((acc: any, station: any) => {
-    if (!acc[station.type]) {
-      acc[station.type] = [];
-    }
+    if (!acc[station.type]) acc[station.type] = [];
     acc[station.type].push(station);
     return acc;
   }, {});
 
-  const getTypeLabel = (type: string) => {
-    const labels: { [key: string]: string } = {
-      offset_printer: "Offset Printers",
-      guillotine: "Guillotine Cutters",
-      die_cutter: "Die Cutters",
-      workshop: "Workshop Stations"
-    };
-    return labels[type] || type.replace("_", " ");
-  };
+  // Group unassigned workers by specialty
+  const workersBySpecialty = unassignedWorkers.reduce((acc: any, worker: any) => {
+    const specialties = worker.specialty || ['workshop'];
+    const primarySpecialty = specialties[0] || 'workshop';
+    if (!acc[primarySpecialty]) acc[primarySpecialty] = [];
+    acc[primarySpecialty].push(worker);
+    return acc;
+  }, {});
+
+  // Order of station types to display
+  const stationOrder = ['die_cutter', 'guillotine', 'offset_printer', 'dispatch', 'workshop'];
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Instructions */}
+      {/* Quick Guide */}
       <Alert className="bg-card/80 border-2 border-border backdrop-blur-sm shadow-lg">
         <Hand className="h-5 w-5 text-primary" />
         <AlertDescription className="text-foreground">
-          <strong className="text-primary text-lg">🎯 Quick Guide:</strong>
-          <ol className="mt-2 space-y-1 text-sm">
-            <li>1️⃣ <strong>Grab</strong> a worker card from the "Available Workers" section below</li>
-            <li>2️⃣ <strong>Drag</strong> the worker over any workstation (the box will glow when ready)</li>
-            <li>3️⃣ <strong>Drop</strong> to assign! You can also move assigned workers between workstations</li>
-          </ol>
+          <strong className="text-primary text-lg">🎯 {language === 'es' ? 'Guía Rápida' : 'Quick Guide'}:</strong>
+          <span className="ml-2 text-sm">
+            {language === 'es' 
+              ? 'Arrastra trabajadores desde el panel derecho hacia las estaciones de trabajo'
+              : 'Drag workers from the right panel to workstations on the left'}
+          </span>
         </AlertDescription>
       </Alert>
 
-      {/* Workshop Floor - Grouped by Machine Type - MOVED BEFORE WORKERS */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-3xl font-bold text-foreground">🏭 Workshop Floor</h2>
-          <Badge variant="outline" className="bg-supervisor/20 text-supervisor border-supervisor/40 text-sm">
-            Live View
-          </Badge>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* LEFT: Workstations */}
+        <div className="xl:col-span-2 space-y-6">
+          <div className="flex items-center gap-3 mb-2">
+            <h2 className="text-2xl font-bold text-foreground">🏭 {language === 'es' ? 'Estaciones de Trabajo' : 'Workstations'}</h2>
+            <Badge variant="outline" className="bg-supervisor/20 text-supervisor border-supervisor/40">Live View</Badge>
+          </div>
+
+          {stationOrder.map((type) => {
+            const stations = groupedWorkstations[type];
+            if (!stations || stations.length === 0) return null;
+            
+            const config = STATION_CONFIG[type as keyof typeof STATION_CONFIG] || STATION_CONFIG.workshop;
+            const Icon = config.icon;
+
+            return (
+              <Card key={type} className="bg-card/50 border-border backdrop-blur-sm p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`bg-gradient-to-br ${config.color} rounded-lg p-2`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground">{language === 'es' ? config.labelEs : config.label}</h3>
+                  <Badge className="bg-primary/20 text-primary border-primary/40">
+                    {stations.length} {stations.length === 1 ? 'Station' : 'Stations'}
+                  </Badge>
+                </div>
+                
+                <div className={`grid gap-4 ${type === 'workshop' ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                  {stations.map((station: any) => {
+                    const assignedWorkers = getAssignedWorkers(station.id);
+                    return (
+                      <DroppableWorkstation
+                        key={station.id}
+                        station={station}
+                        assignedWorkers={assignedWorkers}
+                        occupancy={assignedWorkers.length}
+                        capacity={station.max_workers}
+                        config={config}
+                        selectedOT={selectedOT}
+                      />
+                    );
+                  })}
+                </div>
+              </Card>
+            );
+          })}
         </div>
 
-        {Object.entries(groupedWorkstations).map(([type, stations]: [string, any]) => (
-          <Card key={type} className="bg-card/50 border-border backdrop-blur-sm p-6">
-            <div className="flex items-center gap-3 mb-4">
-              {getWorkstationIcon(type)}
-              <h3 className="text-xl font-bold text-foreground">{getTypeLabel(type)}</h3>
-              <Badge className="bg-primary/20 text-primary border-primary/40">
-                {(stations as any[]).length} {(stations as any[]).length === 1 ? 'Station' : 'Stations'}
-              </Badge>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {(stations as any[]).map((station) => {
-                const assignedWorkers = getAssignedWorkers(station.id);
-                const occupancy = assignedWorkers.length;
-                const capacity = station.max_workers;
-
-                return (
-                  <DroppableWorkstation
-                    key={station.id}
-                    station={station}
-                    assignedWorkers={assignedWorkers}
-                    occupancy={occupancy}
-                    capacity={capacity}
-                    getWorkstationIcon={getWorkstationIcon}
-                    getWorkstationColor={getWorkstationColor}
-                    onWorkerSelect={onWorkerSelect}
-                    selectedOT={selectedOT}
-                  />
-                );
-              })}
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Unassigned Workers Pool - MOVED TO BOTTOM */}
-      {unassignedWorkers.length > 0 && (
-        <Card className="bg-card/80 border-2 border-primary/40 backdrop-blur-sm p-6 shadow-xl">
-          <div className="flex items-center gap-3 mb-4">
+        {/* RIGHT: Available Workers by Specialty */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
             <div className="bg-primary/20 rounded-full p-2 border-2 border-primary">
-              <Hand className="w-6 h-6 text-primary" />
+              <Hand className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-primary">👥 Available Workers</h3>
-              <p className="text-sm text-muted-foreground">Click and hold any card, then drag to a workstation above</p>
+              <h3 className="text-xl font-bold text-primary">👥 {language === 'es' ? 'Trabajadores Disponibles' : 'Available Workers'}</h3>
+              <p className="text-xs text-muted-foreground">{language === 'es' ? 'Arrastra a estaciones' : 'Drag to workstations'}</p>
             </div>
-            <Badge className="bg-primary/20 text-primary border-primary ml-auto text-lg px-3 py-1">
-              {unassignedWorkers.length} Ready
-            </Badge>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {unassignedWorkers.map((worker) => (
-              <DraggableWorker key={worker.id} worker={worker} />
-            ))}
+
+          <Badge className="bg-primary/20 text-primary border-primary w-full justify-center text-sm py-1">
+            {unassignedWorkers.length} {language === 'es' ? 'disponibles' : 'available'}
+          </Badge>
+
+          <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+            {stationOrder.map((specialty) => {
+              const config = STATION_CONFIG[specialty as keyof typeof STATION_CONFIG];
+              const specialtyWorkers = workersBySpecialty[specialty] || [];
+              return (
+                <WorkerPoolBySpecialty
+                  key={specialty}
+                  workers={specialtyWorkers}
+                  specialty={specialty}
+                  config={config}
+                />
+              );
+            })}
           </div>
-        </Card>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

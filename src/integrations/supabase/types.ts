@@ -763,9 +763,11 @@ export type Database = {
           overtime_availability: boolean | null
           quality_score: number | null
           sheets_per_hour: number | null
+          specialty: string[] | null
           speed_score: number | null
           teamwork_rating: number | null
           updated_at: string | null
+          worker_role: string | null
         }
         Insert: {
           attendance_score?: number | null
@@ -778,9 +780,11 @@ export type Database = {
           overtime_availability?: boolean | null
           quality_score?: number | null
           sheets_per_hour?: number | null
+          specialty?: string[] | null
           speed_score?: number | null
           teamwork_rating?: number | null
           updated_at?: string | null
+          worker_role?: string | null
         }
         Update: {
           attendance_score?: number | null
@@ -793,9 +797,11 @@ export type Database = {
           overtime_availability?: boolean | null
           quality_score?: number | null
           sheets_per_hour?: number | null
+          specialty?: string[] | null
           speed_score?: number | null
           teamwork_rating?: number | null
           updated_at?: string | null
+          worker_role?: string | null
         }
         Relationships: []
       }
