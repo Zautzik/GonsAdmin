@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Printer, Scissors, Wrench, Layers, Hand, GripVertical, Truck, Crown, UserCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Users, Printer, Scissors, Wrench, Layers, Hand, GripVertical, Truck, Crown, UserCheck, Star, Sparkles, Filter } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -24,7 +27,15 @@ const STATION_CONFIG = {
   workshop: { icon: Wrench, label: "Workshop", labelEs: "Taller", color: "from-green-500/30 to-emerald-600/30", border: "border-green-500/60", roles: ["operator"] },
 };
 
-function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?: string }) {
+const RATING_TIERS = [
+  { min: 90, label: "Elite", labelEs: "Élite", color: "bg-yellow-500", textColor: "text-yellow-500" },
+  { min: 80, label: "Pro", labelEs: "Pro", color: "bg-purple-500", textColor: "text-purple-500" },
+  { min: 70, label: "Skilled", labelEs: "Hábil", color: "bg-blue-500", textColor: "text-blue-500" },
+  { min: 60, label: "Standard", labelEs: "Estándar", color: "bg-green-500", textColor: "text-green-500" },
+  { min: 0, label: "All", labelEs: "Todos", color: "bg-gray-500", textColor: "text-gray-500" },
+];
+
+function DraggableWorker({ worker, assignmentId, showMultiSpecialty = false }: { worker: any; assignmentId?: string; showMultiSpecialty?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: assignmentId || `worker-${worker.id}`,
     data: { worker, assignmentId },
@@ -44,6 +55,14 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
     }
   };
 
+  const getRatingColor = (rating: number) => {
+    if (rating >= 90) return "text-yellow-400";
+    if (rating >= 80) return "text-purple-400";
+    if (rating >= 70) return "text-blue-400";
+    return "text-green-400";
+  };
+
+  const hasMultipleSpecialties = (worker.specialty?.length || 0) > 1;
   const roleBadge = getRoleBadge(worker.worker_role);
   const RoleIcon = roleBadge.icon;
 
@@ -53,11 +72,18 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
       style={style}
       {...listeners}
       {...attributes}
-      className="relative bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-primary/60 rounded-lg p-2.5 hover:from-blue-500/50 hover:to-purple-500/50 hover:border-primary hover:scale-105 transition-all cursor-grab active:cursor-grabbing shadow-lg hover:shadow-primary/30"
+      className={`relative bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 rounded-lg p-2.5 hover:from-blue-500/50 hover:to-purple-500/50 hover:border-primary hover:scale-105 transition-all cursor-grab active:cursor-grabbing shadow-lg hover:shadow-primary/30 ${
+        hasMultipleSpecialties ? 'border-yellow-400/80 ring-1 ring-yellow-400/40' : 'border-primary/60'
+      }`}
     >
       {!assignmentId && (
         <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1">
           <Hand className="w-3 h-3 text-primary-foreground" />
+        </div>
+      )}
+      {hasMultipleSpecialties && showMultiSpecialty && (
+        <div className="absolute -top-2 -left-2 bg-yellow-500 rounded-full p-1" title="Multi-specialty worker">
+          <Sparkles className="w-3 h-3 text-yellow-900" />
         </div>
       )}
       <div className="flex items-center gap-2">
@@ -67,15 +93,20 @@ function DraggableWorker({ worker, assignmentId }: { worker: any; assignmentId?:
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-white truncate">{worker.name}</p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             <Badge className={`${roleBadge.color} text-[10px] px-1 py-0`}>
               <RoleIcon className="w-2.5 h-2.5 mr-0.5" />
               {roleBadge.label}
             </Badge>
+            {hasMultipleSpecialties && showMultiSpecialty && (
+              <Badge className="bg-yellow-500/30 text-yellow-200 text-[10px] px-1 py-0 border-yellow-500/50">
+                +{(worker.specialty?.length || 1) - 1}
+              </Badge>
+            )}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-accent">{worker.overall_rating}</div>
+          <div className={`text-lg font-bold ${getRatingColor(worker.overall_rating)}`}>{worker.overall_rating}</div>
           <p className="text-[10px] text-blue-200">OVR</p>
         </div>
       </div>
@@ -138,19 +169,37 @@ function DroppableWorkstation({ station, assignedWorkers, occupancy, capacity, c
   );
 }
 
-function WorkerPoolBySpecialty({ workers, specialty, config }: { workers: any[]; specialty: string; config: any }) {
+function WorkerPoolBySpecialty({ 
+  workers, 
+  specialty, 
+  config, 
+  minRating,
+  showMultiSpecialtyOnly 
+}: { 
+  workers: any[]; 
+  specialty: string; 
+  config: any;
+  minRating: number;
+  showMultiSpecialtyOnly: boolean;
+}) {
   const { language } = useLanguage();
   const Icon = config.icon;
   
+  // Filter workers by rating and multi-specialty
+  let filteredWorkers = workers.filter(w => (w.overall_rating || 75) >= minRating);
+  if (showMultiSpecialtyOnly) {
+    filteredWorkers = filteredWorkers.filter(w => (w.specialty?.length || 0) > 1);
+  }
+
   // Group workers by role
-  const workersByRole = workers.reduce((acc: any, worker: any) => {
+  const workersByRole = filteredWorkers.reduce((acc: any, worker: any) => {
     const role = worker.worker_role || 'operator';
     if (!acc[role]) acc[role] = [];
     acc[role].push(worker);
     return acc;
   }, {});
 
-  if (workers.length === 0) return null;
+  if (filteredWorkers.length === 0) return null;
 
   return (
     <div className={`bg-gradient-to-br ${config.color} ${config.border} border-2 rounded-xl p-4`}>
@@ -159,7 +208,7 @@ function WorkerPoolBySpecialty({ workers, specialty, config }: { workers: any[];
           <Icon className="w-5 h-5 text-white" />
         </div>
         <h4 className="font-bold text-white">{language === 'es' ? config.labelEs : config.label}</h4>
-        <Badge className="bg-white/20 text-white border-white/40 ml-auto">{workers.length}</Badge>
+        <Badge className="bg-white/20 text-white border-white/40 ml-auto">{filteredWorkers.length}</Badge>
       </div>
       
       {Object.entries(workersByRole).map(([role, roleWorkers]: [string, any]) => (
@@ -167,7 +216,7 @@ function WorkerPoolBySpecialty({ workers, specialty, config }: { workers: any[];
           <p className="text-xs text-white/70 uppercase font-semibold mb-2">{role}s ({roleWorkers.length})</p>
           <div className="grid grid-cols-1 gap-2">
             {roleWorkers.map((worker: any) => (
-              <DraggableWorker key={worker.id} worker={worker} />
+              <DraggableWorker key={worker.id} worker={worker} showMultiSpecialty />
             ))}
           </div>
         </div>
@@ -186,6 +235,8 @@ export function WorkstationLayout({
   onAssignmentChange,
 }: WorkstationLayoutProps) {
   const { language } = useLanguage();
+  const [minRating, setMinRating] = useState(0);
+  const [showMultiSpecialtyOnly, setShowMultiSpecialtyOnly] = useState(false);
 
   const getAssignedWorkers = (workstationId: string) => {
     return assignments.filter((a) => a.workstation_id === workstationId);
@@ -195,6 +246,9 @@ export function WorkstationLayout({
     (worker) => !assignments.some((a) => a.worker_id === worker.id)
   );
 
+  // Count multi-specialty workers
+  const multiSpecialtyCount = unassignedWorkers.filter(w => (w.specialty?.length || 0) > 1).length;
+
   // Group workstations by type
   const groupedWorkstations = workstations.reduce((acc: any, station: any) => {
     if (!acc[station.type]) acc[station.type] = [];
@@ -202,17 +256,25 @@ export function WorkstationLayout({
     return acc;
   }, {});
 
-  // Group unassigned workers by specialty
+  // Group unassigned workers by specialty (considering multi-specialty)
   const workersBySpecialty = unassignedWorkers.reduce((acc: any, worker: any) => {
     const specialties = worker.specialty || ['workshop'];
-    const primarySpecialty = specialties[0] || 'workshop';
-    if (!acc[primarySpecialty]) acc[primarySpecialty] = [];
-    acc[primarySpecialty].push(worker);
+    // Add worker to each specialty they belong to
+    specialties.forEach((spec: string) => {
+      if (!acc[spec]) acc[spec] = [];
+      // Avoid duplicates
+      if (!acc[spec].find((w: any) => w.id === worker.id)) {
+        acc[spec].push(worker);
+      }
+    });
     return acc;
   }, {});
 
   // Order of station types to display
   const stationOrder = ['die_cutter', 'guillotine', 'offset_printer', 'dispatch', 'workshop'];
+
+  // Get current rating tier label
+  const currentTier = RATING_TIERS.find(t => minRating >= t.min) || RATING_TIERS[RATING_TIERS.length - 1];
 
   return (
     <div className="space-y-6">
@@ -293,7 +355,78 @@ export function WorkstationLayout({
             {unassignedWorkers.length} {language === 'es' ? 'disponibles' : 'available'}
           </Badge>
 
-          <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+          {/* Filters Card */}
+          <Card className="bg-card/80 border-border p-4 space-y-4">
+            <div className="flex items-center gap-2 text-foreground">
+              <Filter className="w-4 h-4" />
+              <span className="font-semibold text-sm">{language === 'es' ? 'Filtros' : 'Filters'}</span>
+            </div>
+
+            {/* Rating Filter */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <span className="text-xs text-muted-foreground">{language === 'es' ? 'Nivel Mínimo' : 'Min Rating'}</span>
+                </div>
+                <Badge className={`${currentTier.color} text-white text-xs`}>
+                  {minRating}+ {language === 'es' ? currentTier.labelEs : currentTier.label}
+                </Badge>
+              </div>
+              <Slider
+                value={[minRating]}
+                onValueChange={(value) => setMinRating(value[0])}
+                max={100}
+                min={0}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>0</span>
+                <span>60</span>
+                <span>70</span>
+                <span>80</span>
+                <span>90</span>
+                <span>100</span>
+              </div>
+            </div>
+
+            {/* Multi-Specialty Filter */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-yellow-500" />
+                <span className="text-xs text-muted-foreground">{language === 'es' ? 'Multi-especialidad' : 'Multi-specialty'}</span>
+                <Badge variant="outline" className="text-[10px] px-1 py-0 border-yellow-500/50 text-yellow-500">
+                  {multiSpecialtyCount}
+                </Badge>
+              </div>
+              <Button
+                variant={showMultiSpecialtyOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowMultiSpecialtyOnly(!showMultiSpecialtyOnly)}
+                className={`text-xs h-7 ${showMultiSpecialtyOnly ? 'bg-yellow-500 hover:bg-yellow-600 text-yellow-900' : ''}`}
+              >
+                {showMultiSpecialtyOnly ? (language === 'es' ? 'Mostrar Todos' : 'Show All') : (language === 'es' ? 'Solo Multi' : 'Multi Only')}
+              </Button>
+            </div>
+
+            {/* Quick Tier Buttons */}
+            <div className="flex flex-wrap gap-1">
+              {RATING_TIERS.map((tier) => (
+                <Button
+                  key={tier.min}
+                  variant={minRating === tier.min ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMinRating(tier.min)}
+                  className={`text-xs h-6 px-2 ${minRating === tier.min ? tier.color + ' text-white' : ''}`}
+                >
+                  {tier.min}+ {language === 'es' ? tier.labelEs : tier.label}
+                </Button>
+              ))}
+            </div>
+          </Card>
+
+          <div className="space-y-4 max-h-[calc(100vh-500px)] overflow-y-auto pr-2">
             {stationOrder.map((specialty) => {
               const config = STATION_CONFIG[specialty as keyof typeof STATION_CONFIG];
               const specialtyWorkers = workersBySpecialty[specialty] || [];
@@ -303,6 +436,8 @@ export function WorkstationLayout({
                   workers={specialtyWorkers}
                   specialty={specialty}
                   config={config}
+                  minRating={minRating}
+                  showMultiSpecialtyOnly={showMultiSpecialtyOnly}
                 />
               );
             })}
