@@ -10,6 +10,7 @@ import { ShiftManagement } from "@/components/workflow/ShiftManagement";
 import { OTManagement } from "@/components/workflow/OTManagement";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Users, Factory, Clock, BarChart3, ClipboardList, ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
@@ -29,6 +30,7 @@ export default function WorkflowDashboard() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { language } = useLanguage();
 
   const handleBackToDashboard = () => {
     const dashboardRoutes: Record<string, string> = {
@@ -271,51 +273,53 @@ export default function WorkflowDashboard() {
           </TabsContent>
 
           <TabsContent value="layout" className="mt-4">
-            {/* Shift Selection */}
+            {/* Shift Selection with Formation Indicator */}
             <Card className="bg-card/80 border-border backdrop-blur-sm p-4 mb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-foreground" />
-                  <h3 className="text-lg font-bold text-foreground">Select Shift</h3>
+                  <h3 className="text-lg font-bold text-foreground">{t('workflow.selectShift')}</h3>
                 </div>
                 {shifts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No shifts configured yet.</p>
+                  <p className="text-sm text-muted-foreground">{t('workflow.noShifts')}</p>
                 ) : (
                   <div className="flex gap-2 flex-wrap justify-end">
-                    {shifts.map((shift) => (
-                      <Button
-                        key={shift.id}
-                        onClick={() => setSelectedShiftId(shift.id)}
-                        variant={selectedShiftId === shift.id ? "default" : "outline"}
-                        className={selectedShiftId === shift.id 
-                          ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-                          : "border-border bg-card/50 hover:bg-card"}
-                      >
-                        {shift.name}
-                      </Button>
-                    ))}
+                    {shifts.map((shift) => {
+                      const isMorning = shift.name.toLowerCase().includes('morning') || shift.name.toLowerCase().includes('mañana');
+                      const shiftIcon = isMorning ? '🌅' : '🌆';
+                      return (
+                        <Button
+                          key={shift.id}
+                          onClick={() => setSelectedShiftId(shift.id)}
+                          variant={selectedShiftId === shift.id ? "default" : "outline"}
+                          className={`${selectedShiftId === shift.id 
+                            ? (isMorning 
+                              ? "bg-amber-500 hover:bg-amber-600 text-white" 
+                              : "bg-indigo-500 hover:bg-indigo-600 text-white")
+                            : "border-border bg-card/50 hover:bg-card"}`}
+                        >
+                          <span className="mr-2">{shiftIcon}</span>
+                          {shift.name}
+                          <span className="ml-2 text-xs opacity-80">
+                            ({shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)})
+                          </span>
+                        </Button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            </Card>
-
-            {/* Layout Color Settings */}
-            <Card className="bg-card/50 border-border backdrop-blur-sm p-4 mb-4">
-              <h3 className="text-lg font-bold text-foreground mb-2">Layout Colors</h3>
-              <div className="flex flex-wrap gap-4 text-foreground text-sm">
-                <label className="flex items-center gap-2">
-                  <span>Active OT Banner</span>
-                  <input
-                    type="color"
-                    value={activeOtBg}
-                    onChange={(e) => {
-                      setActiveOtBg(e.target.value);
-                      localStorage.setItem("workflowActiveOtBg", e.target.value);
-                    }}
-                    className="h-8 w-10 rounded border border-border bg-transparent p-0"
-                  />
-                </label>
-              </div>
+              {selectedShiftId && (
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground">
+                    {shifts.find(s => s.id === selectedShiftId)?.name.toLowerCase().includes('morning') || 
+                     shifts.find(s => s.id === selectedShiftId)?.name.toLowerCase().includes('mañana')
+                      ? (language === 'es' ? '🌅 Formación Turno Mañana - Configuración de equipos para producción diurna' : '🌅 Morning Shift Formation - Team configuration for daytime production')
+                      : (language === 'es' ? '🌆 Formación Turno Tarde - Configuración de equipos para producción vespertina' : '🌆 Afternoon Shift Formation - Team configuration for evening production')
+                    }
+                  </p>
+                </div>
+              )}
             </Card>
 
             <WorkstationLayout

@@ -38,7 +38,9 @@
     "quickGuide": "Guía Rápida",
     "grabWorker": "Toma una tarjeta de trabajador de la sección Trabajadores Disponibles",
     "dragWorker": "Arrastra el trabajador sobre cualquier estación de trabajo",
-    "dropWorker": "¡Suelta para asignar! También puedes mover trabajadores asignados entre estaciones"
+    "dropWorker": "¡Suelta para asignar! También puedes mover trabajadores asignados entre estaciones",
+    "selectShift": "Seleccionar Turno",
+    "noShifts": "No hay turnos configurados aún."
   },
   "ot": {
     "title": "Órdenes de Trabajo (OT)",
