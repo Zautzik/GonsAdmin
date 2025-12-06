@@ -38,7 +38,9 @@
     "quickGuide": "Quick Guide",
     "grabWorker": "Grab a worker card from the Available Workers section",
     "dragWorker": "Drag the worker over any workstation",
-    "dropWorker": "Drop to assign! You can also move assigned workers between workstations"
+    "dropWorker": "Drop to assign! You can also move assigned workers between workstations",
+    "selectShift": "Select Shift",
+    "noShifts": "No shifts configured yet."
   },
   "ot": {
     "title": "Work Orders (OT)",
