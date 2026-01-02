@@ -40,7 +40,25 @@
     "dragWorker": "Arrastra el trabajador sobre cualquier estación de trabajo",
     "dropWorker": "¡Suelta para asignar! También puedes mover trabajadores asignados entre estaciones",
     "selectShift": "Seleccionar Turno",
-    "noShifts": "No hay turnos configurados aún."
+    "noShifts": "No hay turnos configurados aún.",
+    "progressReports": "Reportes de Progreso"
+  },
+  "whatsapp": {
+    "title": "Reportes de Progreso por WhatsApp",
+    "review": "Revisar y aprobar envíos de trabajadores",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "rejected": "Rechazado",
+    "edited": "Editado",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "history": "Historial",
+    "noSubmissions": "¡Todos los envíos revisados!",
+    "originalMessage": "Mensaje original",
+    "units": "Unidades",
+    "time": "Tiempo",
+    "supervisorNotes": "Notas del Supervisor",
+    "rejectionReason": "Motivo de Rechazo"
   },
   "ot": {
     "title": "Órdenes de Trabajo (OT)",

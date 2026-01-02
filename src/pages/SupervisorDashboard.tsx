@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, Plus, Package, FileText, Factory } from 'lucide-react';
+import { LogOut, Plus, Package, FileText, Factory, MessageSquare } from 'lucide-react';
 import MachineList from '@/components/supervisor/MachineList';
 import JobList from '@/components/supervisor/JobList';
 import AddJobDialog from '@/components/supervisor/AddJobDialog';
 import WorkerRoster from '@/components/supervisor/WorkerRoster';
+import ProgressApprovalDashboard from '@/components/supervisor/ProgressApprovalDashboard';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
 const SupervisorDashboard = () => {
@@ -93,39 +95,58 @@ const SupervisorDashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        <WorkerRoster showActions={true} />
-        
-        <Card className="border-supervisor/20 hover:shadow-lg transition-all">
-          <CardHeader>
-            <CardTitle className="text-supervisor flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {t('machines')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MachineList machines={machines} onUpdate={fetchMachines} />
-          </CardContent>
-        </Card>
+      <main className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="overview" className="gap-2">
+              <Package className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              WhatsApp Reports
+            </TabsTrigger>
+          </TabsList>
 
-        <Card className="border-supervisor/20 hover:shadow-lg transition-all">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-supervisor flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {t('jobs')}
-            </CardTitle>
-            <Button
-              onClick={() => setShowAddJob(true)}
-              className="bg-supervisor hover:bg-supervisor/90"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t('addJob')}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <JobList jobs={jobs} machines={machines} onUpdate={fetchJobs} />
-          </CardContent>
-        </Card>
+          <TabsContent value="overview" className="space-y-8">
+            <WorkerRoster showActions={true} />
+            
+            <Card className="border-supervisor/20 hover:shadow-lg transition-all">
+              <CardHeader>
+                <CardTitle className="text-supervisor flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  {t('machines')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MachineList machines={machines} onUpdate={fetchMachines} />
+              </CardContent>
+            </Card>
+
+            <Card className="border-supervisor/20 hover:shadow-lg transition-all">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-supervisor flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  {t('jobs')}
+                </CardTitle>
+                <Button
+                  onClick={() => setShowAddJob(true)}
+                  className="bg-supervisor hover:bg-supervisor/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('addJob')}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <JobList jobs={jobs} machines={machines} onUpdate={fetchJobs} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="progress">
+            <ProgressApprovalDashboard />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <AddJobDialog
