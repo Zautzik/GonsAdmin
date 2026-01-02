@@ -40,7 +40,25 @@
     "dragWorker": "Drag the worker over any workstation",
     "dropWorker": "Drop to assign! You can also move assigned workers between workstations",
     "selectShift": "Select Shift",
-    "noShifts": "No shifts configured yet."
+    "noShifts": "No shifts configured yet.",
+    "progressReports": "Progress Reports"
+  },
+  "whatsapp": {
+    "title": "WhatsApp Progress Reports",
+    "review": "Review and approve worker submissions",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "edited": "Edited",
+    "approve": "Approve",
+    "reject": "Reject",
+    "history": "History",
+    "noSubmissions": "All submissions reviewed!",
+    "originalMessage": "Original message",
+    "units": "Units",
+    "time": "Time",
+    "supervisorNotes": "Supervisor Notes",
+    "rejectionReason": "Rejection Reason"
   },
   "ot": {
     "title": "Work Orders (OT)",

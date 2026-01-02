@@ -506,6 +506,146 @@ export type Database = {
           },
         ]
       }
+      progress_submissions: {
+        Row: {
+          created_at: string
+          edited_ot_id: string | null
+          edited_time_minutes: number | null
+          edited_units: number | null
+          id: string
+          idle_reason: string | null
+          machine_id: string | null
+          maintenance_description: string | null
+          ot_id: string | null
+          quality_notes: string | null
+          raw_message: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shift_id: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submission_type: Database["public"]["Enums"]["progress_type"]
+          submitted_at: string
+          supervisor_notes: string | null
+          time_reported_minutes: number
+          units_reported: number
+          updated_at: string
+          whatsapp_group: string | null
+          worker_code: string | null
+          worker_id: string | null
+          worker_phone: string
+          workstation_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          edited_ot_id?: string | null
+          edited_time_minutes?: number | null
+          edited_units?: number | null
+          id?: string
+          idle_reason?: string | null
+          machine_id?: string | null
+          maintenance_description?: string | null
+          ot_id?: string | null
+          quality_notes?: string | null
+          raw_message: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          submission_type?: Database["public"]["Enums"]["progress_type"]
+          submitted_at?: string
+          supervisor_notes?: string | null
+          time_reported_minutes?: number
+          units_reported?: number
+          updated_at?: string
+          whatsapp_group?: string | null
+          worker_code?: string | null
+          worker_id?: string | null
+          worker_phone: string
+          workstation_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          edited_ot_id?: string | null
+          edited_time_minutes?: number | null
+          edited_units?: number | null
+          id?: string
+          idle_reason?: string | null
+          machine_id?: string | null
+          maintenance_description?: string | null
+          ot_id?: string | null
+          quality_notes?: string | null
+          raw_message?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          submission_type?: Database["public"]["Enums"]["progress_type"]
+          submitted_at?: string
+          supervisor_notes?: string | null
+          time_reported_minutes?: number
+          units_reported?: number
+          updated_at?: string
+          whatsapp_group?: string | null
+          worker_code?: string | null
+          worker_id?: string | null
+          worker_phone?: string
+          workstation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_submissions_edited_ot_id_fkey"
+            columns: ["edited_ot_id"]
+            isOneToOne: false
+            referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_submissions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_submissions_ot_id_fkey"
+            columns: ["ot_id"]
+            isOneToOne: false
+            referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_submissions_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_submissions_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "worker_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_submissions_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_submissions_workstation_id_fkey"
+            columns: ["workstation_id"]
+            isOneToOne: false
+            referencedRelation: "workstations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_workers: {
         Row: {
           created_at: string | null
@@ -761,12 +901,14 @@ export type Database = {
           name: string
           overall_rating: number | null
           overtime_availability: boolean | null
+          phone: string | null
           quality_score: number | null
           sheets_per_hour: number | null
           specialty: string[] | null
           speed_score: number | null
           teamwork_rating: number | null
           updated_at: string | null
+          worker_code: string | null
           worker_role: string | null
         }
         Insert: {
@@ -778,12 +920,14 @@ export type Database = {
           name: string
           overall_rating?: number | null
           overtime_availability?: boolean | null
+          phone?: string | null
           quality_score?: number | null
           sheets_per_hour?: number | null
           specialty?: string[] | null
           speed_score?: number | null
           teamwork_rating?: number | null
           updated_at?: string | null
+          worker_code?: string | null
           worker_role?: string | null
         }
         Update: {
@@ -795,12 +939,14 @@ export type Database = {
           name?: string
           overall_rating?: number | null
           overtime_availability?: boolean | null
+          phone?: string | null
           quality_score?: number | null
           sheets_per_hour?: number | null
           specialty?: string[] | null
           speed_score?: number | null
           teamwork_rating?: number | null
           updated_at?: string | null
+          worker_code?: string | null
           worker_role?: string | null
         }
         Relationships: []
@@ -886,6 +1032,8 @@ export type Database = {
         | "ready_for_delivery"
         | "in_delivery"
         | "completed"
+      progress_type: "production" | "maintenance" | "idle"
+      submission_status: "pending" | "approved" | "rejected" | "edited"
       task_type:
         | "detachment"
         | "revision"
@@ -1047,6 +1195,8 @@ export const Constants = {
         "in_delivery",
         "completed",
       ],
+      progress_type: ["production", "maintenance", "idle"],
+      submission_status: ["pending", "approved", "rejected", "edited"],
       task_type: [
         "detachment",
         "revision",
