@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 20% 98%;
     --foreground: 220 15% 20%;
 
     --card: 0 0% 100%;
@@ -29,10 +29,10 @@ All colors MUST be HSL.
     --manager: 210 25% 55%;
     --manager-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 90%;
+    --secondary: 210 20% 96%;
     --secondary-foreground: 220 15% 20%;
 
-    --muted: 210 20% 95%;
+    --muted: 210 20% 96%;
     --muted-foreground: 220 10% 45%;
 
     --accent: 320 75% 55%;
@@ -41,9 +41,16 @@ All colors MUST be HSL.
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 88%;
-    --input: 210 20% 90%;
+    --border: 210 20% 90%;
+    --input: 210 20% 92%;
     --ring: 190 95% 45%;
+
+    /* Sidebar specific */
+    --sidebar: 220 20% 99%;
+    --sidebar-foreground: 220 15% 20%;
+    --sidebar-border: 210 20% 90%;
+    --sidebar-accent: 190 95% 95%;
+    --sidebar-accent-foreground: 190 95% 35%;
 
     --radius: 0.5rem;
 
@@ -51,13 +58,13 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 220 20% 10%;
+    --background: 220 20% 8%;
     --foreground: 210 20% 95%;
 
-    --card: 220 18% 12%;
+    --card: 220 18% 10%;
     --card-foreground: 210 20% 95%;
 
-    --popover: 220 18% 12%;
+    --popover: 220 18% 10%;
     --popover-foreground: 210 20% 95%;
 
     --primary: 190 95% 50%;
@@ -69,10 +76,10 @@ All colors MUST be HSL.
     --manager: 210 30% 60%;
     --manager-foreground: 0 0% 100%;
 
-    --secondary: 220 18% 20%;
+    --secondary: 220 18% 16%;
     --secondary-foreground: 210 20% 95%;
 
-    --muted: 220 18% 18%;
+    --muted: 220 18% 14%;
     --muted-foreground: 210 15% 60%;
 
     --accent: 320 75% 60%;
@@ -81,9 +88,16 @@ All colors MUST be HSL.
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 22%;
-    --input: 220 18% 20%;
+    --border: 220 18% 18%;
+    --input: 220 18% 16%;
     --ring: 190 95% 50%;
+
+    /* Sidebar specific - dark */
+    --sidebar: 220 20% 9%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-border: 220 18% 18%;
+    --sidebar-accent: 190 95% 20%;
+    --sidebar-accent-foreground: 190 95% 70%;
   }
 }
 

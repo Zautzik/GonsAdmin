@@ -7,9 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Login from "./pages/Login";
-import SupervisorDashboard from "./pages/SupervisorDashboard";
-import ManagerDashboard from "./pages/ManagerDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import UnifiedDashboard from "./pages/UnifiedDashboard";
 import WorkflowDashboard from "./pages/WorkflowDashboard";
 import FinancialReport from "./pages/FinancialReport";
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
@@ -28,9 +26,10 @@ const App = () => (
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <Routes>
                 <Route path="/" element={<Login />} />
-                <Route path="/supervisor" element={<SupervisorDashboard />} />
-                <Route path="/manager" element={<ManagerDashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/dashboard" element={<UnifiedDashboard />} />
+                <Route path="/supervisor" element={<UnifiedDashboard />} />
+                <Route path="/manager" element={<UnifiedDashboard />} />
+                <Route path="/admin" element={<UnifiedDashboard />} />
                 <Route path="/workflow" element={<WorkflowDashboard />} />
                 <Route path="/financial" element={<FinancialReport />} />
                 <Route path="/maintenance" element={<MaintenanceDashboard />} />
