@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { WorkstationLayout } from "@/components/workflow/WorkstationLayout";
+import { WeeklyWorkstationLayout } from "@/components/workflow/WeeklyWorkstationLayout";
 import { WeeklyPlanner } from "@/components/workflow/WeeklyPlanner";
 import { WorkerSkillsEditor } from "@/components/workflow/WorkerSkillsEditor";
 import { ShiftManagement } from "@/components/workflow/ShiftManagement";
@@ -288,7 +288,7 @@ export default function WorkflowDashboard() {
                 className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <LayoutGrid className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Vista de Hoy' : 'Today\'s Layout'}
+                {language === 'es' ? 'Vista Semanal' : 'Weekly Layout'}
               </TabsTrigger>
               <TabsTrigger 
                 value="workers" 
@@ -326,58 +326,16 @@ export default function WorkflowDashboard() {
               />
             </TabsContent>
 
-            {/* Today's Layout - Drag & Drop */}
+            {/* Weekly Layout - Drag & Drop */}
             <TabsContent value="layout" className="mt-0">
-              {/* Shift Selection */}
-              <Card className="bg-card/80 border-border p-4 mb-4">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-primary" />
-                    <h3 className="font-bold text-foreground">
-                      {language === 'es' ? 'Seleccionar Turno' : 'Select Shift'}
-                    </h3>
-                  </div>
-                  {shifts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'es' ? 'No hay turnos configurados' : 'No shifts configured'}
-                    </p>
-                  ) : (
-                    <div className="flex gap-2 flex-wrap">
-                      {shifts.map((shift) => {
-                        const isMorning = shift.name.toLowerCase().includes('morning') || shift.name.toLowerCase().includes('mañana');
-                        return (
-                          <Button
-                            key={shift.id}
-                            onClick={() => setSelectedShiftId(shift.id)}
-                            variant={selectedShiftId === shift.id ? "default" : "outline"}
-                            size="sm"
-                            className={selectedShiftId === shift.id 
-                              ? (isMorning 
-                                ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-600" 
-                                : "bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-600")
-                              : ""}
-                          >
-                            <span className="mr-2">{isMorning ? '🌅' : '🌆'}</span>
-                            {shift.name}
-                            <span className="ml-2 text-xs opacity-80">
-                              {shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)}
-                            </span>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </Card>
-
-              <WorkstationLayout
+              <WeeklyWorkstationLayout
                 workstations={workstations}
-                assignments={assignments}
                 workers={workers}
-                selectedShift={selectedShiftId || ""}
-                selectedOT={selectedOT}
-                onWorkerSelect={handleWorkerSelect}
-                onAssignmentChange={fetchAssignments}
+                shifts={shifts}
+                onAssignmentChange={() => {
+                  fetchAssignments();
+                  fetchWorkers();
+                }}
               />
             </TabsContent>
 
