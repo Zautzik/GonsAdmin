@@ -4,17 +4,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { WorkstationLayout } from "@/components/workflow/WorkstationLayout";
-import { WorkerStatsPanel } from "@/components/workflow/WorkerStatsPanel";
+import { WeeklyPlanner } from "@/components/workflow/WeeklyPlanner";
+import { WorkerSkillsEditor } from "@/components/workflow/WorkerSkillsEditor";
 import { ShiftManagement } from "@/components/workflow/ShiftManagement";
 import { OTManagement } from "@/components/workflow/OTManagement";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { Users, Factory, Clock, BarChart3, ClipboardList, ArrowLeft } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { 
+  Users, 
+  Factory, 
+  Clock, 
+  CalendarDays, 
+  ClipboardList, 
+  ArrowLeft,
+  Settings,
+  LayoutGrid,
+  Sparkles
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function WorkflowDashboard() {
   const [selectedWorker, setSelectedWorker] = useState<any>(null);
@@ -25,7 +37,6 @@ export default function WorkflowDashboard() {
   const [shifts, setShifts] = useState<any[]>([]);
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeOtBg, setActiveOtBg] = useState<string>("hsl(220, 20%, 10%)");
   const { toast } = useToast();
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -33,12 +44,7 @@ export default function WorkflowDashboard() {
   const { language } = useLanguage();
 
   const handleBackToDashboard = () => {
-    const dashboardRoutes: Record<string, string> = {
-      supervisor: '/supervisor',
-      manager: '/manager',
-      admin: '/admin'
-    };
-    navigate(dashboardRoutes[role || 'supervisor']);
+    navigate('/dashboard');
   };
 
   useEffect(() => {
@@ -108,11 +114,6 @@ export default function WorkflowDashboard() {
     setSelectedWorker(worker);
   };
 
-  useEffect(() => {
-    const storedActive = localStorage.getItem("workflowActiveOtBg");
-    if (storedActive) setActiveOtBg(storedActive);
-  }, []);
-
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
@@ -134,8 +135,10 @@ export default function WorkflowDashboard() {
 
     if (!selectedShiftId) {
       toast({
-        title: "Select a shift first",
-        description: "Choose a shift in the Layout settings before assigning workers.",
+        title: language === 'es' ? "Selecciona un turno primero" : "Select a shift first",
+        description: language === 'es' 
+          ? "Elige un turno antes de asignar trabajadores."
+          : "Choose a shift before assigning workers.",
         variant: "destructive"
       });
       return;
@@ -144,8 +147,10 @@ export default function WorkflowDashboard() {
     const currentAssignments = assignments.filter(a => a.workstation_id === workstation.id);
     if (currentAssignments.length >= workstation.max_workers) {
       toast({
-        title: "Workstation at capacity",
-        description: `${workstation.name} is already at maximum capacity`,
+        title: language === 'es' ? "Estación llena" : "Workstation at capacity",
+        description: language === 'es' 
+          ? `${workstation.name} ya está al máximo`
+          : `${workstation.name} is already at maximum capacity`,
         variant: "destructive"
       });
       return;
@@ -173,182 +178,236 @@ export default function WorkflowDashboard() {
       }
 
       toast({
-        title: "Worker assigned successfully",
-        description: `${worker.name} assigned to ${workstation.name}`
+        title: language === 'es' ? "Trabajador asignado" : "Worker assigned",
+        description: language === 'es' 
+          ? `${worker.name} asignado a ${workstation.name}`
+          : `${worker.name} assigned to ${workstation.name}`
       });
 
       fetchAssignments();
     } catch (error: any) {
       toast({
-        title: "Error assigning worker",
+        title: language === 'es' ? "Error al asignar" : "Error assigning worker",
         description: error.message,
         variant: "destructive"
       });
     }
   };
 
+  // Stats
+  const assignedToday = assignments.length;
+  const availableWorkers = workers.filter(w => !assignments.some(a => a.worker_id === w.id)).length;
+  const multiSkillWorkers = workers.filter(w => (w.specialty?.length || 0) > 1).length;
+
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-background p-6">
+      <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={handleBackToDashboard}
-              variant="outline"
-              size="sm"
-              className="border-border bg-card/50 hover:bg-card"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">{t('workflow.title')}</h1>
-              <p className="text-muted-foreground">Dynamic Workflow & Performance Tracking</p>
+        <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={handleBackToDashboard}
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  {language === 'es' ? 'Volver' : 'Back'}
+                </Button>
+                <div className="h-6 w-px bg-border" />
+                <div>
+                  <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <Factory className="w-5 h-5 text-primary" />
+                    {language === 'es' ? 'Gestión de Taller' : 'Workshop Manager'}
+                  </h1>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {/* Quick Stats */}
+                <div className="hidden md:flex items-center gap-2">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                    <Users className="w-3 h-3 mr-1" />
+                    {assignedToday} {language === 'es' ? 'asignados hoy' : 'assigned today'}
+                  </Badge>
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
+                    {availableWorkers} {language === 'es' ? 'disponibles' : 'available'}
+                  </Badge>
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    {multiSkillWorkers} {language === 'es' ? 'multi-habilidad' : 'multi-skill'}
+                  </Badge>
+                </div>
+                <LanguageSwitcher />
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2 items-center">
-            <LanguageSwitcher />
-            <Card className="bg-card/80 border-border backdrop-blur-sm p-4">
-              <div className="flex items-center gap-2 text-foreground">
-                <Users className="w-5 h-5" />
-                <span className="text-sm">{workers.length} Workers</span>
-              </div>
-            </Card>
-            <Card className="bg-card/80 border-border backdrop-blur-sm p-4">
-              <div className="flex items-center gap-2 text-foreground">
-                <Factory className="w-5 h-5" />
-                <span className="text-sm">{workstations.length} Stations</span>
-              </div>
-            </Card>
           </div>
         </div>
 
         {/* Selected OT Banner */}
         {selectedOT && (
-          <Card 
-            className="border-accent/40 backdrop-blur-sm p-4 mb-6"
-            style={{ backgroundColor: activeOtBg }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Active OT: {selectedOT.ot_number}</h3>
-                <p className="text-sm text-muted-foreground">{selectedOT.client_name} - {selectedOT.quantity} units</p>
+          <div className="bg-primary/10 border-b border-primary/30">
+            <div className="container mx-auto px-4 py-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-primary text-primary-foreground">
+                    {language === 'es' ? 'OT Activa' : 'Active OT'}
+                  </Badge>
+                  <span className="font-bold text-foreground">{selectedOT.ot_number}</span>
+                  <span className="text-muted-foreground">-</span>
+                  <span className="text-muted-foreground">{selectedOT.client_name}</span>
+                  <Badge variant="outline">{selectedOT.quantity} {language === 'es' ? 'unidades' : 'units'}</Badge>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedOT(null)}
+                >
+                  {language === 'es' ? 'Limpiar selección' : 'Clear selection'}
+                </Button>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedOT(null)}
-                className="border-border bg-card/50 hover:bg-card"
-              >
-                Clear Selection
-              </Button>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Main Content */}
-        <Tabs defaultValue="ots" className="w-full">
-          <TabsList className="bg-card/80 border-border backdrop-blur-sm">
-            <TabsTrigger value="ots" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <ClipboardList className="w-4 h-4 mr-2" />
-              {t('workflow.workOrders')}
-            </TabsTrigger>
-            <TabsTrigger value="layout" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Factory className="w-4 h-4 mr-2" />
-              {t('workflow.layout')}
-            </TabsTrigger>
-            <TabsTrigger value="shifts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Clock className="w-4 h-4 mr-2" />
-              {t('workflow.shifts')}
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              {t('workflow.statistics')}
-            </TabsTrigger>
-          </TabsList>
+        <div className="container mx-auto px-4 py-6">
+          <Tabs defaultValue="weekly" className="w-full">
+            <TabsList className="bg-muted/50 border border-border mb-6 p-1">
+              <TabsTrigger 
+                value="weekly" 
+                className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <CalendarDays className="w-4 h-4 mr-2" />
+                {language === 'es' ? 'Planificador Semanal' : 'Weekly Planner'}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="layout" 
+                className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                {language === 'es' ? 'Vista de Hoy' : 'Today\'s Layout'}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="workers" 
+                className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                {language === 'es' ? 'Configurar Trabajadores' : 'Configure Workers'}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ots" 
+                className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <ClipboardList className="w-4 h-4 mr-2" />
+                {language === 'es' ? 'Órdenes de Trabajo' : 'Work Orders'}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="machines" 
+                className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                {language === 'es' ? 'Máquinas' : 'Machines'}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="ots" className="mt-4">
-            <OTManagement onOTSelect={setSelectedOT} />
-          </TabsContent>
+            {/* Weekly Planner - New default view */}
+            <TabsContent value="weekly" className="mt-0">
+              <WeeklyPlanner
+                workstations={workstations}
+                workers={workers}
+                shifts={shifts}
+                onAssignmentChange={() => {
+                  fetchAssignments();
+                  fetchWorkers();
+                }}
+              />
+            </TabsContent>
 
-          <TabsContent value="layout" className="mt-4">
-            {/* Shift Selection with Formation Indicator */}
-            <Card className="bg-card/80 border-border backdrop-blur-sm p-4 mb-4">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-foreground" />
-                  <h3 className="text-lg font-bold text-foreground">{t('workflow.selectShift')}</h3>
-                </div>
-                {shifts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('workflow.noShifts')}</p>
-                ) : (
-                  <div className="flex gap-2 flex-wrap justify-end">
-                    {shifts.map((shift) => {
-                      const isMorning = shift.name.toLowerCase().includes('morning') || shift.name.toLowerCase().includes('mañana');
-                      const shiftIcon = isMorning ? '🌅' : '🌆';
-                      return (
-                        <Button
-                          key={shift.id}
-                          onClick={() => setSelectedShiftId(shift.id)}
-                          variant={selectedShiftId === shift.id ? "default" : "outline"}
-                          className={`${selectedShiftId === shift.id 
-                            ? (isMorning 
-                              ? "bg-amber-500 hover:bg-amber-600 text-white" 
-                              : "bg-indigo-500 hover:bg-indigo-600 text-white")
-                            : "border-border bg-card/50 hover:bg-card"}`}
-                        >
-                          <span className="mr-2">{shiftIcon}</span>
-                          {shift.name}
-                          <span className="ml-2 text-xs opacity-80">
-                            ({shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)})
-                          </span>
-                        </Button>
-                      );
-                    })}
+            {/* Today's Layout - Drag & Drop */}
+            <TabsContent value="layout" className="mt-0">
+              {/* Shift Selection */}
+              <Card className="bg-card/80 border-border p-4 mb-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    <h3 className="font-bold text-foreground">
+                      {language === 'es' ? 'Seleccionar Turno' : 'Select Shift'}
+                    </h3>
                   </div>
-                )}
-              </div>
-              {selectedShiftId && (
-                <div className="mt-3 pt-3 border-t border-border/50">
-                  <p className="text-sm text-muted-foreground">
-                    {shifts.find(s => s.id === selectedShiftId)?.name.toLowerCase().includes('morning') || 
-                     shifts.find(s => s.id === selectedShiftId)?.name.toLowerCase().includes('mañana')
-                      ? (language === 'es' ? '🌅 Formación Turno Mañana - Configuración de equipos para producción diurna' : '🌅 Morning Shift Formation - Team configuration for daytime production')
-                      : (language === 'es' ? '🌆 Formación Turno Tarde - Configuración de equipos para producción vespertina' : '🌆 Afternoon Shift Formation - Team configuration for evening production')
-                    }
-                  </p>
+                  {shifts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'es' ? 'No hay turnos configurados' : 'No shifts configured'}
+                    </p>
+                  ) : (
+                    <div className="flex gap-2 flex-wrap">
+                      {shifts.map((shift) => {
+                        const isMorning = shift.name.toLowerCase().includes('morning') || shift.name.toLowerCase().includes('mañana');
+                        return (
+                          <Button
+                            key={shift.id}
+                            onClick={() => setSelectedShiftId(shift.id)}
+                            variant={selectedShiftId === shift.id ? "default" : "outline"}
+                            size="sm"
+                            className={selectedShiftId === shift.id 
+                              ? (isMorning 
+                                ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-600" 
+                                : "bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-600")
+                              : ""}
+                          >
+                            <span className="mr-2">{isMorning ? '🌅' : '🌆'}</span>
+                            {shift.name}
+                            <span className="ml-2 text-xs opacity-80">
+                              {shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </Card>
+              </Card>
 
-            <WorkstationLayout
-              workstations={workstations}
-              assignments={assignments}
-              workers={workers}
-              selectedShift={selectedShiftId || ""}
-              selectedOT={selectedOT}
-              onWorkerSelect={handleWorkerSelect}
-              onAssignmentChange={fetchAssignments}
-            />
-          </TabsContent>
+              <WorkstationLayout
+                workstations={workstations}
+                assignments={assignments}
+                workers={workers}
+                selectedShift={selectedShiftId || ""}
+                selectedOT={selectedOT}
+                onWorkerSelect={handleWorkerSelect}
+                onAssignmentChange={fetchAssignments}
+              />
+            </TabsContent>
 
-          <TabsContent value="shifts" className="mt-4">
-            <ShiftManagement onShiftChange={() => fetchAssignments()} />
-          </TabsContent>
+            {/* Worker Configuration */}
+            <TabsContent value="workers" className="mt-0">
+              <WorkerSkillsEditor
+                workers={workers}
+                onUpdate={fetchWorkers}
+              />
+            </TabsContent>
 
-          <TabsContent value="stats" className="mt-4">
-            <Card className="bg-card/80 border-border backdrop-blur-sm p-6">
-              <h3 className="text-xl font-bold text-foreground mb-4">Performance Overview</h3>
-              <p className="text-muted-foreground">Detailed statistics coming soon...</p>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            {/* Work Orders */}
+            <TabsContent value="ots" className="mt-0">
+              <OTManagement onOTSelect={setSelectedOT} />
+            </TabsContent>
+
+            {/* Machines */}
+            <TabsContent value="machines" className="mt-0">
+              <ShiftManagement onShiftChange={fetchAssignments} />
+            </TabsContent>
+          </Tabs>
+        </div>
 
         <DragOverlay>
           {activeId ? (
-            <div className="bg-card/80 rounded p-2 backdrop-blur-sm border border-border">
-              <div className="text-foreground font-medium">Dragging...</div>
+            <div className="bg-card rounded-lg p-3 shadow-xl border-2 border-primary">
+              <div className="text-foreground font-medium flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                {language === 'es' ? 'Arrastrando...' : 'Dragging...'}
+              </div>
             </div>
           ) : null}
         </DragOverlay>
