@@ -109,6 +109,13 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
       label: 'Reports & Analytics',
       items: [
         {
+          id: 'custom-reports',
+          label: 'Report Builder',
+          icon: BarChart3,
+          roles: ['admin', 'manager'],
+          description: 'Custom data reports',
+        },
+        {
           id: 'financial',
           label: 'Financial',
           icon: DollarSign,

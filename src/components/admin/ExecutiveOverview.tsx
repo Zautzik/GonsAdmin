@@ -170,16 +170,16 @@ const ExecutiveOverview = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* KPI Scorecards - Balanced Scorecard Approach */}
       <section aria-label="Key Performance Indicators">
         <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
-          Strategic KPIs - Balanced Scorecard
+          Strategic KPIs
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Financial Perspective */}
-          <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-success card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Active Work Orders
@@ -191,7 +191,7 @@ const ExecutiveOverview = () => {
                   <div className="text-3xl font-bold text-foreground">{kpis.activeOTs}</div>
                   <p className="text-xs text-muted-foreground mt-1">In pipeline</p>
                 </div>
-                <div className="flex items-center text-green-500 text-sm">
+                <div className="flex items-center text-success text-sm">
                   <ArrowUpRight className="h-4 w-4" />
                   <span>+12%</span>
                 </div>
@@ -201,7 +201,7 @@ const ExecutiveOverview = () => {
           </Card>
 
           {/* Customer Perspective */}
-          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-info card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 On-Time Delivery
@@ -213,7 +213,7 @@ const ExecutiveOverview = () => {
                   <div className="text-3xl font-bold text-foreground">{kpis.onTimeDelivery}%</div>
                   <p className="text-xs text-muted-foreground mt-1">Customer satisfaction</p>
                 </div>
-                <div className="flex items-center text-green-500 text-sm">
+                <div className="flex items-center text-success text-sm">
                   <TrendingUp className="h-4 w-4" />
                   <span>+2.3%</span>
                 </div>
@@ -223,7 +223,7 @@ const ExecutiveOverview = () => {
           </Card>
 
           {/* Internal Process Perspective */}
-          <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-admin card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Machine Utilization
@@ -244,7 +244,7 @@ const ExecutiveOverview = () => {
           </Card>
 
           {/* Learning & Growth Perspective */}
-          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-warning card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Workforce Efficiency
@@ -256,7 +256,7 @@ const ExecutiveOverview = () => {
                   <div className="text-3xl font-bold text-foreground">{kpis.workforceEfficiency}%</div>
                   <p className="text-xs text-muted-foreground mt-1">Skill utilization</p>
                 </div>
-                <div className="flex items-center text-green-500 text-sm">
+                <div className="flex items-center text-success text-sm">
                   <Zap className="h-4 w-4" />
                   <span>High</span>
                 </div>
@@ -287,11 +287,11 @@ const ExecutiveOverview = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* OT Pipeline Funnel */}
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="card-hover">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Production Pipeline - Value Stream
+              Production Pipeline
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -329,11 +329,11 @@ const ExecutiveOverview = () => {
         </Card>
 
         {/* Machine Status Distribution */}
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="card-hover">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <PieChart className="h-5 w-5 text-primary" />
-              Asset Health - TPM Overview
+              Asset Health Overview
             </CardTitle>
           </CardHeader>
           <CardContent>

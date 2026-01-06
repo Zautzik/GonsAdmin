@@ -2,102 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* 
+ * Gonsa Production System - Design System
+ * CMYK-inspired palette with role-based theming
+ * All colors MUST be HSL.
+ */
 
 @layer base {
   :root {
+    /* Base colors - Clean, modern light theme */
     --background: 220 20% 98%;
-    --foreground: 220 15% 20%;
+    --foreground: 220 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 20%;
+    --card-foreground: 220 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 20%;
+    --popover-foreground: 220 15% 15%;
 
-    /* Company cyan blue */
-    --primary: 190 95% 45%;
+    /* Company cyan blue - Primary action color */
+    --primary: 190 85% 42%;
     --primary-foreground: 0 0% 100%;
 
-    /* Production green for supervisors */
-    --supervisor: 150 70% 45%;
+    /* Role-based colors */
+    --supervisor: 152 65% 42%;
     --supervisor-foreground: 0 0% 100%;
-
-    /* Analytical gray-blue for managers */
-    --manager: 210 25% 55%;
+    --manager: 215 30% 50%;
     --manager-foreground: 0 0% 100%;
+    --admin: 280 60% 55%;
+    --admin-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 220 15% 20%;
+    /* Status colors */
+    --success: 152 65% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+    --info: 200 85% 50%;
+    --info-foreground: 0 0% 100%;
 
-    --muted: 210 20% 96%;
+    --secondary: 220 15% 95%;
+    --secondary-foreground: 220 15% 25%;
+
+    --muted: 220 15% 94%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 320 75% 55%;
+    --accent: 320 70% 55%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 92%;
-    --ring: 190 95% 45%;
+    --border: 220 15% 88%;
+    --input: 220 15% 92%;
+    --ring: 190 85% 42%;
 
-    /* Sidebar specific */
-    --sidebar: 220 20% 99%;
-    --sidebar-foreground: 220 15% 20%;
-    --sidebar-border: 210 20% 90%;
-    --sidebar-accent: 190 95% 95%;
-    --sidebar-accent-foreground: 190 95% 35%;
+    /* Sidebar */
+    --sidebar: 220 18% 99%;
+    --sidebar-foreground: 220 15% 15%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-accent: 190 80% 95%;
+    --sidebar-accent-foreground: 190 85% 32%;
 
-    --radius: 0.5rem;
-
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --radius: 0.625rem;
   }
 
   .dark {
-    --background: 220 20% 8%;
-    --foreground: 210 20% 95%;
+    --background: 224 20% 6%;
+    --foreground: 220 15% 92%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 210 20% 95%;
+    --card: 224 18% 9%;
+    --card-foreground: 220 15% 92%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 224 18% 9%;
+    --popover-foreground: 220 15% 92%;
 
-    --primary: 190 95% 50%;
+    --primary: 190 85% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --supervisor: 150 70% 50%;
+    --supervisor: 152 65% 48%;
     --supervisor-foreground: 0 0% 100%;
-
-    --manager: 210 30% 60%;
+    --manager: 215 35% 58%;
     --manager-foreground: 0 0% 100%;
+    --admin: 280 60% 60%;
+    --admin-foreground: 0 0% 100%;
 
-    --secondary: 220 18% 16%;
-    --secondary-foreground: 210 20% 95%;
+    --success: 152 65% 48%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 10%;
+    --info: 200 85% 55%;
+    --info-foreground: 0 0% 100%;
 
-    --muted: 220 18% 14%;
-    --muted-foreground: 210 15% 60%;
+    --secondary: 224 18% 14%;
+    --secondary-foreground: 220 15% 90%;
 
-    --accent: 320 75% 60%;
+    --muted: 224 18% 12%;
+    --muted-foreground: 220 12% 55%;
+
+    --accent: 320 70% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 18%;
-    --input: 220 18% 16%;
-    --ring: 190 95% 50%;
+    --border: 224 18% 16%;
+    --input: 224 18% 14%;
+    --ring: 190 85% 50%;
 
-    /* Sidebar specific - dark */
-    --sidebar: 220 20% 9%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-border: 220 18% 18%;
-    --sidebar-accent: 190 95% 20%;
-    --sidebar-accent-foreground: 190 95% 70%;
+    --sidebar: 224 20% 7%;
+    --sidebar-foreground: 220 15% 92%;
+    --sidebar-border: 224 18% 16%;
+    --sidebar-accent: 190 80% 15%;
+    --sidebar-accent-foreground: 190 85% 65%;
   }
 }
 
@@ -107,13 +123,18 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
   }
 }
 
-/* Accessibility improvements */
+/* Utility classes */
 @layer utilities {
-  /* Screen reader only content */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -126,13 +147,56 @@ All colors MUST be HSL.
     border-width: 0;
   }
 
-  /* Focus visible for keyboard navigation */
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
-  /* Skip to main content link */
   .skip-to-content {
     @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-sm border border-border/50;
+  }
+
+  /* Subtle gradient backgrounds */
+  .gradient-subtle {
+    @apply bg-gradient-to-br from-background via-background to-muted/30;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:border-primary/30;
+  }
+
+  /* Status indicator animations */
+  .pulse-success {
+    animation: pulse-success 2s infinite;
+  }
+
+  @keyframes pulse-success {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.4); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--success) / 0); }
+  }
+
+  /* Fade in animation */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Slide in animation */
+  .animate-slide-in {
+    animation: slideIn 0.25s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 }

@@ -30,6 +30,9 @@ import ProgressApprovalDashboard from '@/components/supervisor/ProgressApprovalD
 // WhatsApp Components
 import { WhatsAppManagement } from '@/components/whatsapp/WhatsAppManagement';
 
+// Reports Components
+import { CustomReportBuilder } from '@/components/reports/CustomReportBuilder';
+
 import { Button } from '@/components/ui/button';
 import { 
   LayoutDashboard, Users, MessageSquare, TrendingUp, BarChart3, 
@@ -93,6 +96,7 @@ const UnifiedDashboard = () => {
     switch (activeSection) {
       case 'overview': return <LayoutDashboard className="h-5 w-5" />;
       case 'whatsapp': return <MessageSquare className="h-5 w-5" />;
+      case 'custom-reports': return <BarChart3 className="h-5 w-5" />;
       case 'costs': return <TrendingUp className="h-5 w-5" />;
       case 'workers-report': return <BarChart3 className="h-5 w-5" />;
       case 'traceability': return <ClipboardList className="h-5 w-5" />;
@@ -112,6 +116,7 @@ const UnifiedDashboard = () => {
       case 'overview': return 'Dashboard Overview';
       case 'whatsapp': return 'WhatsApp Reports';
       case 'whatsapp-config': return 'WhatsApp Configuration';
+      case 'custom-reports': return 'Custom Report Builder';
       case 'costs': return 'Cost Analysis';
       case 'workers-report': return 'Worker Statistics';
       case 'traceability': return 'Traceability Report';
@@ -131,6 +136,7 @@ const UnifiedDashboard = () => {
       case 'overview': return 'Key performance indicators and system overview';
       case 'whatsapp': return 'Review and approve worker progress submissions';
       case 'whatsapp-config': return 'Configure WhatsApp integration settings';
+      case 'custom-reports': return 'Build custom reports from any data source';
       case 'costs': return 'Analyze production costs and profitability';
       case 'workers-report': return 'View worker performance metrics';
       case 'traceability': return 'Track order history and audit trail';
@@ -173,6 +179,8 @@ const UnifiedDashboard = () => {
         return <WhatsAppManagement />;
 
       // Reports (Manager/Admin)
+      case 'custom-reports':
+        return <CustomReportBuilder />;
       case 'costs':
         return <CostReport />;
       case 'workers-report':
