@@ -230,14 +230,14 @@ export default function WorkflowDashboard() {
                 <div className="hidden md:flex items-center gap-2">
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                     <Users className="w-3 h-3 mr-1" />
-                    {assignedToday} {language === 'es' ? 'asignados hoy' : 'assigned today'}
+                    {assignedToday} {language === 'es' ? 'asignados' : 'assigned'}
                   </Badge>
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                     {availableWorkers} {language === 'es' ? 'disponibles' : 'available'}
                   </Badge>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                  <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
                     <Sparkles className="w-3 h-3 mr-1" />
-                    {multiSkillWorkers} {language === 'es' ? 'multi-habilidad' : 'multi-skill'}
+                    {multiSkillWorkers} multi-skill
                   </Badge>
                 </div>
                 <LanguageSwitcher />
@@ -273,7 +273,7 @@ export default function WorkflowDashboard() {
         )}
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6 animate-fade-in">
           <Tabs defaultValue="weekly" className="w-full">
             <TabsList className="bg-muted/50 border border-border mb-6 p-1">
               <TabsTrigger 
@@ -281,35 +281,35 @@ export default function WorkflowDashboard() {
                 className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <CalendarDays className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Planificador Semanal' : 'Weekly Planner'}
+                {language === 'es' ? 'Planificador' : 'Planner'}
               </TabsTrigger>
               <TabsTrigger 
                 value="layout" 
                 className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <LayoutGrid className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Vista Semanal' : 'Weekly Layout'}
+                {language === 'es' ? 'Vista Semanal' : 'Weekly View'}
               </TabsTrigger>
               <TabsTrigger 
                 value="workers" 
                 className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <Settings className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Configurar Trabajadores' : 'Configure Workers'}
+                {language === 'es' ? 'Configurar' : 'Configure'}
               </TabsTrigger>
               <TabsTrigger 
                 value="ots" 
                 className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <ClipboardList className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Órdenes de Trabajo' : 'Work Orders'}
+                {language === 'es' ? 'Órdenes' : 'Work Orders'}
               </TabsTrigger>
               <TabsTrigger 
                 value="machines" 
                 className="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <Clock className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Máquinas' : 'Machines'}
+                {language === 'es' ? 'Turnos' : 'Shifts'}
               </TabsTrigger>
             </TabsList>
 
