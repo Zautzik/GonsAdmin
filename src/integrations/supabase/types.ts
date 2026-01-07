@@ -896,6 +896,7 @@ export type Database = {
           attendance_score: number | null
           created_at: string | null
           department: string
+          hourly_salary: number | null
           id: string
           lateness_minutes: number | null
           name: string
@@ -915,6 +916,7 @@ export type Database = {
           attendance_score?: number | null
           created_at?: string | null
           department: string
+          hourly_salary?: number | null
           id?: string
           lateness_minutes?: number | null
           name: string
@@ -934,6 +936,7 @@ export type Database = {
           attendance_score?: number | null
           created_at?: string | null
           department?: string
+          hourly_salary?: number | null
           id?: string
           lateness_minutes?: number | null
           name?: string
