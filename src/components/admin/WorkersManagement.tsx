@@ -43,6 +43,8 @@ const WorkersManagement = ({ onUpdate }: WorkersManagementProps) => {
   const [formData, setFormData] = useState({
     name: '',
     department: 'press',
+    hourly_salary: 0,
+    specialty: [] as string[],
   });
 
   useEffect(() => {
@@ -114,6 +116,8 @@ const WorkersManagement = ({ onUpdate }: WorkersManagementProps) => {
     setFormData({
       name: '',
       department: 'press',
+      hourly_salary: 0,
+      specialty: [],
     });
     setEditingWorker(null);
     setShowDialog(false);
@@ -124,6 +128,8 @@ const WorkersManagement = ({ onUpdate }: WorkersManagementProps) => {
     setFormData({
       name: worker.name,
       department: worker.department,
+      hourly_salary: worker.hourly_salary || 0,
+      specialty: worker.specialty || [],
     });
     setShowDialog(true);
   };
@@ -138,19 +144,34 @@ const WorkersManagement = ({ onUpdate }: WorkersManagementProps) => {
         </Button>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+          <strong>{t('overtimeNote')}:</strong> {t('overtimeDescription')}
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
               <TableHead>{t('department')}</TableHead>
+              <TableHead>{t('specialty')}</TableHead>
+              <TableHead>{t('hourlySalary')}</TableHead>
               <TableHead>{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {workers.map((worker) => (
               <TableRow key={worker.id}>
-                <TableCell>{worker.name}</TableCell>
+                <TableCell className="font-medium">{worker.name}</TableCell>
                 <TableCell>{t(worker.department)}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {(worker.specialty || []).map((spec: string) => (
+                      <span key={spec} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                        {t(spec)}
+                      </span>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>${worker.hourly_salary?.toFixed(2) || '0.00'}/hr</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button
@@ -204,12 +225,53 @@ const WorkersManagement = ({ onUpdate }: WorkersManagementProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="press">{t('press')}</SelectItem>
+                  <SelectItem value="die_cutting">{t('die_cutting')}</SelectItem>
+                  <SelectItem value="guillotine">{t('guillotine')}</SelectItem>
                   <SelectItem value="manual_workshop">{t('manual_workshop')}</SelectItem>
                   <SelectItem value="deliveries">{t('deliveries')}</SelectItem>
                   <SelectItem value="pre_press">{t('pre_press')}</SelectItem>
                   <SelectItem value="administration">{t('administration')}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('specialty')}</Label>
+              <div className="flex flex-wrap gap-2">
+                {['die_cutter', 'guillotine', 'offset_printer', 'dispatch', 'workshop'].map((spec) => (
+                  <Button
+                    key={spec}
+                    type="button"
+                    variant={formData.specialty.includes(spec) ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      const newSpecialty = formData.specialty.includes(spec)
+                        ? formData.specialty.filter((s) => s !== spec)
+                        : [...formData.specialty, spec];
+                      setFormData({ ...formData, specialty: newSpecialty });
+                    }}
+                  >
+                    {t(spec)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hourly_salary">{t('hourlySalary')}</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                <Input
+                  id="hourly_salary"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="pl-7"
+                  value={formData.hourly_salary}
+                  onChange={(e) => setFormData({ ...formData, hourly_salary: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">{t('overtimeRateNote')}</p>
             </div>
           </div>
 

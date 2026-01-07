@@ -61,6 +61,9 @@ const translations: Translations = {
   press: { en: 'Press', es: 'Prensa' },
   deliveries: { en: 'Deliveries', es: 'Entregas' },
   administration: { en: 'Administration', es: 'Administración' },
+  die_cutting: { en: 'Die Cutting', es: 'Troquelado' },
+  workshop: { en: 'Workshop', es: 'Taller' },
+  dispatch: { en: 'Dispatch', es: 'Despacho' },
   managerDomain: { en: 'Manager Domain', es: 'Dominio del Gerente' },
   cost: { en: 'Cost', es: 'Costos' },
   production: { en: 'Production', es: 'Producción' },
@@ -188,6 +191,13 @@ const translations: Translations = {
   allWorkers: { en: 'All Workers', es: 'Todos los Trabajadores' },
   filterByDept: { en: 'Filter by Department', es: 'Filtrar por Departamento' },
   sortBy: { en: 'Sort by', es: 'Ordenar por' },
+  
+  // Salary & Overtime
+  hourlySalary: { en: 'Hourly Salary', es: 'Salario por Hora' },
+  specialty: { en: 'Specialty', es: 'Especialidad' },
+  overtimeNote: { en: 'Overtime Note', es: 'Nota de Horas Extra' },
+  overtimeDescription: { en: 'Base work week is 40 hours. Hours beyond 40 are paid at 1.5x rate.', es: 'La semana laboral base es de 40 horas. Las horas más allá de 40 se pagan a 1.5x.' },
+  overtimeRateNote: { en: 'Overtime (>40hrs/week) is paid at 1.5x this rate', es: 'Horas extra (>40hrs/semana) se pagan a 1.5x esta tarifa' },
 };
 
 interface LanguageContextType {
