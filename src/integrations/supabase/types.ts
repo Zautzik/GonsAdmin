@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      die_molds: {
+        Row: {
+          boca_count: number | null
+          client_id: string | null
+          created_at: string | null
+          creation_cost: number | null
+          description: string | null
+          id: string
+          last_used_at: string | null
+          location: string | null
+          name: string
+          size_height_cm: number | null
+          size_width_cm: number | null
+        }
+        Insert: {
+          boca_count?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          creation_cost?: number | null
+          description?: string | null
+          id?: string
+          last_used_at?: string | null
+          location?: string | null
+          name: string
+          size_height_cm?: number | null
+          size_width_cm?: number | null
+        }
+        Update: {
+          boca_count?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          creation_cost?: number | null
+          description?: string | null
+          id?: string
+          last_used_at?: string | null
+          location?: string | null
+          name?: string
+          size_height_cm?: number | null
+          size_width_cm?: number | null
+        }
+        Relationships: []
+      }
       equipment_investments: {
         Row: {
           created_at: string | null
@@ -63,6 +105,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      inks: {
+        Row: {
+          color: string
+          cost_per_liter: number | null
+          created_at: string | null
+          current_stock_liters: number | null
+          density_g_per_ml: number | null
+          id: string
+          in_stock: boolean | null
+          name: string
+          type: string
+        }
+        Insert: {
+          color: string
+          cost_per_liter?: number | null
+          created_at?: string | null
+          current_stock_liters?: number | null
+          density_g_per_ml?: number | null
+          id?: string
+          in_stock?: boolean | null
+          name: string
+          type: string
+        }
+        Update: {
+          color?: string
+          cost_per_liter?: number | null
+          created_at?: string | null
+          current_stock_liters?: number | null
+          density_g_per_ml?: number | null
+          id?: string
+          in_stock?: boolean | null
+          name?: string
+          type?: string
+        }
+        Relationships: []
       }
       jobs: {
         Row: {
@@ -391,6 +469,65 @@ export type Database = {
           },
         ]
       }
+      ot_cost_items: {
+        Row: {
+          category: string | null
+          cost_actual: number | null
+          cost_estimated: number | null
+          created_at: string | null
+          description: string
+          deviation_percent: number | null
+          deviation_reason: string | null
+          id: string
+          item_code: string
+          ot_id: string
+          quantity_actual: number | null
+          quantity_estimated: number | null
+          unit: string | null
+          unit_cost: number | null
+        }
+        Insert: {
+          category?: string | null
+          cost_actual?: number | null
+          cost_estimated?: number | null
+          created_at?: string | null
+          description: string
+          deviation_percent?: number | null
+          deviation_reason?: string | null
+          id?: string
+          item_code: string
+          ot_id: string
+          quantity_actual?: number | null
+          quantity_estimated?: number | null
+          unit?: string | null
+          unit_cost?: number | null
+        }
+        Update: {
+          category?: string | null
+          cost_actual?: number | null
+          cost_estimated?: number | null
+          created_at?: string | null
+          description?: string
+          deviation_percent?: number | null
+          deviation_reason?: string | null
+          id?: string
+          item_code?: string
+          ot_id?: string
+          quantity_actual?: number | null
+          quantity_estimated?: number | null
+          unit?: string | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_cost_items_ot_id_fkey"
+            columns: ["ot_id"]
+            isOneToOne: false
+            referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ot_financials: {
         Row: {
           created_at: string | null
@@ -448,6 +585,194 @@ export type Database = {
             foreignKeyName: "ot_financials_ot_id_fkey"
             columns: ["ot_id"]
             isOneToOne: true
+            referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ot_specifications: {
+        Row: {
+          back_colors: number | null
+          closed_height_cm: number | null
+          closed_width_cm: number | null
+          created_at: string | null
+          ctp_plates_needed: number | null
+          cut_cost_per_unit: number | null
+          die_boca_count: number | null
+          die_cutting_hours: number | null
+          die_cutting_hours_est: number | null
+          die_mold_cost: number | null
+          die_mold_exists: boolean | null
+          final_cuts: number | null
+          final_height_cm: number | null
+          final_width_cm: number | null
+          finishing_hours: number | null
+          finishing_processes: string[] | null
+          front_colors: number | null
+          id: string
+          initial_cuts: number | null
+          ink_cost_per_liter: number | null
+          ink_coverage_percent: number | null
+          ink_density_g_per_sqm: number | null
+          ink_liters_needed: number | null
+          layout_cols: number | null
+          layout_rows: number | null
+          montaje_type: string | null
+          ot_id: string
+          outsourced_services: Json | null
+          packaging_boxes: number | null
+          pages_count: number | null
+          pliego_height_cm: number | null
+          pliego_width_cm: number | null
+          pliegos_per_sheet: number | null
+          pliegos_to_print: number | null
+          prepress_hours: number | null
+          printing_hours: number | null
+          printing_method: string | null
+          product_name: string | null
+          product_type: string | null
+          production_notes: string | null
+          requires_die_cutting: boolean | null
+          requires_folding: boolean | null
+          requires_gluing: boolean | null
+          requires_stapling: boolean | null
+          sheet_height_cm: number | null
+          sheet_width_cm: number | null
+          sheets_leftover: number | null
+          sheets_needed: number | null
+          sheets_per_base: number | null
+          special_colors: string[] | null
+          special_instructions: string | null
+          substrate_cost_per_kg: number | null
+          substrate_kg_needed: number | null
+          substrate_type: string | null
+          substrate_weight_grs: number | null
+          units_per_box: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          back_colors?: number | null
+          closed_height_cm?: number | null
+          closed_width_cm?: number | null
+          created_at?: string | null
+          ctp_plates_needed?: number | null
+          cut_cost_per_unit?: number | null
+          die_boca_count?: number | null
+          die_cutting_hours?: number | null
+          die_cutting_hours_est?: number | null
+          die_mold_cost?: number | null
+          die_mold_exists?: boolean | null
+          final_cuts?: number | null
+          final_height_cm?: number | null
+          final_width_cm?: number | null
+          finishing_hours?: number | null
+          finishing_processes?: string[] | null
+          front_colors?: number | null
+          id?: string
+          initial_cuts?: number | null
+          ink_cost_per_liter?: number | null
+          ink_coverage_percent?: number | null
+          ink_density_g_per_sqm?: number | null
+          ink_liters_needed?: number | null
+          layout_cols?: number | null
+          layout_rows?: number | null
+          montaje_type?: string | null
+          ot_id: string
+          outsourced_services?: Json | null
+          packaging_boxes?: number | null
+          pages_count?: number | null
+          pliego_height_cm?: number | null
+          pliego_width_cm?: number | null
+          pliegos_per_sheet?: number | null
+          pliegos_to_print?: number | null
+          prepress_hours?: number | null
+          printing_hours?: number | null
+          printing_method?: string | null
+          product_name?: string | null
+          product_type?: string | null
+          production_notes?: string | null
+          requires_die_cutting?: boolean | null
+          requires_folding?: boolean | null
+          requires_gluing?: boolean | null
+          requires_stapling?: boolean | null
+          sheet_height_cm?: number | null
+          sheet_width_cm?: number | null
+          sheets_leftover?: number | null
+          sheets_needed?: number | null
+          sheets_per_base?: number | null
+          special_colors?: string[] | null
+          special_instructions?: string | null
+          substrate_cost_per_kg?: number | null
+          substrate_kg_needed?: number | null
+          substrate_type?: string | null
+          substrate_weight_grs?: number | null
+          units_per_box?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          back_colors?: number | null
+          closed_height_cm?: number | null
+          closed_width_cm?: number | null
+          created_at?: string | null
+          ctp_plates_needed?: number | null
+          cut_cost_per_unit?: number | null
+          die_boca_count?: number | null
+          die_cutting_hours?: number | null
+          die_cutting_hours_est?: number | null
+          die_mold_cost?: number | null
+          die_mold_exists?: boolean | null
+          final_cuts?: number | null
+          final_height_cm?: number | null
+          final_width_cm?: number | null
+          finishing_hours?: number | null
+          finishing_processes?: string[] | null
+          front_colors?: number | null
+          id?: string
+          initial_cuts?: number | null
+          ink_cost_per_liter?: number | null
+          ink_coverage_percent?: number | null
+          ink_density_g_per_sqm?: number | null
+          ink_liters_needed?: number | null
+          layout_cols?: number | null
+          layout_rows?: number | null
+          montaje_type?: string | null
+          ot_id?: string
+          outsourced_services?: Json | null
+          packaging_boxes?: number | null
+          pages_count?: number | null
+          pliego_height_cm?: number | null
+          pliego_width_cm?: number | null
+          pliegos_per_sheet?: number | null
+          pliegos_to_print?: number | null
+          prepress_hours?: number | null
+          printing_hours?: number | null
+          printing_method?: string | null
+          product_name?: string | null
+          product_type?: string | null
+          production_notes?: string | null
+          requires_die_cutting?: boolean | null
+          requires_folding?: boolean | null
+          requires_gluing?: boolean | null
+          requires_stapling?: boolean | null
+          sheet_height_cm?: number | null
+          sheet_width_cm?: number | null
+          sheets_leftover?: number | null
+          sheets_needed?: number | null
+          sheets_per_base?: number | null
+          special_colors?: string[] | null
+          special_instructions?: string | null
+          substrate_cost_per_kg?: number | null
+          substrate_kg_needed?: number | null
+          substrate_type?: string | null
+          substrate_weight_grs?: number | null
+          units_per_box?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_specifications_ot_id_fkey"
+            columns: ["ot_id"]
+            isOneToOne: false
             referencedRelation: "ots"
             referencedColumns: ["id"]
           },
@@ -737,6 +1062,45 @@ export type Database = {
           id?: string
           name?: string
           start_time?: string
+        }
+        Relationships: []
+      }
+      substrates: {
+        Row: {
+          available_sizes: string[] | null
+          cost_per_kg: number | null
+          created_at: string | null
+          current_stock_kg: number | null
+          id: string
+          in_stock: boolean | null
+          min_stock_kg: number | null
+          name: string
+          type: string
+          weight_grs: number
+        }
+        Insert: {
+          available_sizes?: string[] | null
+          cost_per_kg?: number | null
+          created_at?: string | null
+          current_stock_kg?: number | null
+          id?: string
+          in_stock?: boolean | null
+          min_stock_kg?: number | null
+          name: string
+          type: string
+          weight_grs: number
+        }
+        Update: {
+          available_sizes?: string[] | null
+          cost_per_kg?: number | null
+          created_at?: string | null
+          current_stock_kg?: number | null
+          id?: string
+          in_stock?: boolean | null
+          min_stock_kg?: number | null
+          name?: string
+          type?: string
+          weight_grs?: number
         }
         Relationships: []
       }
