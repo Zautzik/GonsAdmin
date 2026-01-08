@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          rut: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          rut?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          rut?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       die_molds: {
         Row: {
           boca_count: number | null
@@ -469,6 +502,116 @@ export type Database = {
           },
         ]
       }
+      operations_catalog: {
+        Row: {
+          category: Database["public"]["Enums"]["operation_category"]
+          code: string
+          cost_type: Database["public"]["Enums"]["cost_type"]
+          created_at: string | null
+          default_cost: number
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          unit_of_measure: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["operation_category"]
+          code: string
+          cost_type: Database["public"]["Enums"]["cost_type"]
+          created_at?: string | null
+          default_cost?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          unit_of_measure: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["operation_category"]
+          code?: string
+          cost_type?: Database["public"]["Enums"]["cost_type"]
+          created_at?: string | null
+          default_cost?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          unit_of_measure?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ot_calculations: {
+        Row: {
+          bocas_per_sheet: number | null
+          created_at: string | null
+          ctp_plates: number | null
+          finishing_hours_estimated: number | null
+          id: string
+          imposition_layout: Json | null
+          ink_calculations: Json | null
+          printing_hours_estimated: number | null
+          setup_sheets: number | null
+          sheet_format: string | null
+          sheet_height_cm: number | null
+          sheet_width_cm: number | null
+          substrate_kg: number | null
+          total_sheets: number | null
+          updated_at: string | null
+          waste_factor_percent: number | null
+          work_order_id: string
+        }
+        Insert: {
+          bocas_per_sheet?: number | null
+          created_at?: string | null
+          ctp_plates?: number | null
+          finishing_hours_estimated?: number | null
+          id?: string
+          imposition_layout?: Json | null
+          ink_calculations?: Json | null
+          printing_hours_estimated?: number | null
+          setup_sheets?: number | null
+          sheet_format?: string | null
+          sheet_height_cm?: number | null
+          sheet_width_cm?: number | null
+          substrate_kg?: number | null
+          total_sheets?: number | null
+          updated_at?: string | null
+          waste_factor_percent?: number | null
+          work_order_id: string
+        }
+        Update: {
+          bocas_per_sheet?: number | null
+          created_at?: string | null
+          ctp_plates?: number | null
+          finishing_hours_estimated?: number | null
+          id?: string
+          imposition_layout?: Json | null
+          ink_calculations?: Json | null
+          printing_hours_estimated?: number | null
+          setup_sheets?: number | null
+          sheet_format?: string | null
+          sheet_height_cm?: number | null
+          sheet_width_cm?: number | null
+          substrate_kg?: number | null
+          total_sheets?: number | null
+          updated_at?: string | null
+          waste_factor_percent?: number | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_calculations_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: true
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ot_cost_items: {
         Row: {
           category: string | null
@@ -590,190 +733,213 @@ export type Database = {
           },
         ]
       }
-      ot_specifications: {
+      ot_operations: {
         Row: {
-          back_colors: number | null
-          closed_height_cm: number | null
-          closed_width_cm: number | null
           created_at: string | null
-          ctp_plates_needed: number | null
-          cut_cost_per_unit: number | null
-          die_boca_count: number | null
-          die_cutting_hours: number | null
-          die_cutting_hours_est: number | null
-          die_mold_cost: number | null
-          die_mold_exists: boolean | null
-          final_cuts: number | null
-          final_height_cm: number | null
-          final_width_cm: number | null
-          finishing_hours: number | null
-          finishing_processes: string[] | null
-          front_colors: number | null
           id: string
-          initial_cuts: number | null
-          ink_cost_per_liter: number | null
-          ink_coverage_percent: number | null
-          ink_density_g_per_sqm: number | null
-          ink_liters_needed: number | null
-          layout_cols: number | null
-          layout_rows: number | null
-          montaje_type: string | null
-          ot_id: string
-          outsourced_services: Json | null
-          packaging_boxes: number | null
-          pages_count: number | null
-          pliego_height_cm: number | null
-          pliego_width_cm: number | null
-          pliegos_per_sheet: number | null
-          pliegos_to_print: number | null
-          prepress_hours: number | null
-          printing_hours: number | null
-          printing_method: string | null
-          product_name: string | null
-          product_type: string | null
-          production_notes: string | null
-          requires_die_cutting: boolean | null
-          requires_folding: boolean | null
-          requires_gluing: boolean | null
-          requires_stapling: boolean | null
-          sheet_height_cm: number | null
-          sheet_width_cm: number | null
-          sheets_leftover: number | null
-          sheets_needed: number | null
-          sheets_per_base: number | null
-          special_colors: string[] | null
-          special_instructions: string | null
-          substrate_cost_per_kg: number | null
-          substrate_kg_needed: number | null
-          substrate_type: string | null
-          substrate_weight_grs: number | null
-          units_per_box: number | null
+          notes: string | null
+          operation_code: string
+          quantity_actual: number | null
+          quantity_budgeted: number | null
+          sequence_order: number
+          status: Database["public"]["Enums"]["ot_operation_status"] | null
+          total_cost_actual: number | null
+          total_cost_budgeted: number | null
+          unit_cost_actual: number | null
+          unit_cost_budgeted: number | null
+          unit_of_measure: string | null
           updated_at: string | null
+          work_order_id: string
         }
         Insert: {
-          back_colors?: number | null
-          closed_height_cm?: number | null
-          closed_width_cm?: number | null
           created_at?: string | null
-          ctp_plates_needed?: number | null
-          cut_cost_per_unit?: number | null
-          die_boca_count?: number | null
-          die_cutting_hours?: number | null
-          die_cutting_hours_est?: number | null
-          die_mold_cost?: number | null
-          die_mold_exists?: boolean | null
-          final_cuts?: number | null
-          final_height_cm?: number | null
-          final_width_cm?: number | null
-          finishing_hours?: number | null
-          finishing_processes?: string[] | null
-          front_colors?: number | null
           id?: string
-          initial_cuts?: number | null
-          ink_cost_per_liter?: number | null
-          ink_coverage_percent?: number | null
-          ink_density_g_per_sqm?: number | null
-          ink_liters_needed?: number | null
-          layout_cols?: number | null
-          layout_rows?: number | null
-          montaje_type?: string | null
-          ot_id: string
-          outsourced_services?: Json | null
-          packaging_boxes?: number | null
-          pages_count?: number | null
-          pliego_height_cm?: number | null
-          pliego_width_cm?: number | null
-          pliegos_per_sheet?: number | null
-          pliegos_to_print?: number | null
-          prepress_hours?: number | null
-          printing_hours?: number | null
-          printing_method?: string | null
-          product_name?: string | null
-          product_type?: string | null
-          production_notes?: string | null
-          requires_die_cutting?: boolean | null
-          requires_folding?: boolean | null
-          requires_gluing?: boolean | null
-          requires_stapling?: boolean | null
-          sheet_height_cm?: number | null
-          sheet_width_cm?: number | null
-          sheets_leftover?: number | null
-          sheets_needed?: number | null
-          sheets_per_base?: number | null
-          special_colors?: string[] | null
-          special_instructions?: string | null
-          substrate_cost_per_kg?: number | null
-          substrate_kg_needed?: number | null
-          substrate_type?: string | null
-          substrate_weight_grs?: number | null
-          units_per_box?: number | null
+          notes?: string | null
+          operation_code: string
+          quantity_actual?: number | null
+          quantity_budgeted?: number | null
+          sequence_order?: number
+          status?: Database["public"]["Enums"]["ot_operation_status"] | null
+          total_cost_actual?: number | null
+          total_cost_budgeted?: number | null
+          unit_cost_actual?: number | null
+          unit_cost_budgeted?: number | null
+          unit_of_measure?: string | null
           updated_at?: string | null
+          work_order_id: string
         }
         Update: {
-          back_colors?: number | null
-          closed_height_cm?: number | null
-          closed_width_cm?: number | null
           created_at?: string | null
-          ctp_plates_needed?: number | null
-          cut_cost_per_unit?: number | null
-          die_boca_count?: number | null
-          die_cutting_hours?: number | null
-          die_cutting_hours_est?: number | null
-          die_mold_cost?: number | null
-          die_mold_exists?: boolean | null
-          final_cuts?: number | null
-          final_height_cm?: number | null
-          final_width_cm?: number | null
-          finishing_hours?: number | null
-          finishing_processes?: string[] | null
-          front_colors?: number | null
           id?: string
-          initial_cuts?: number | null
-          ink_cost_per_liter?: number | null
-          ink_coverage_percent?: number | null
-          ink_density_g_per_sqm?: number | null
-          ink_liters_needed?: number | null
-          layout_cols?: number | null
-          layout_rows?: number | null
-          montaje_type?: string | null
-          ot_id?: string
-          outsourced_services?: Json | null
-          packaging_boxes?: number | null
-          pages_count?: number | null
-          pliego_height_cm?: number | null
-          pliego_width_cm?: number | null
-          pliegos_per_sheet?: number | null
-          pliegos_to_print?: number | null
-          prepress_hours?: number | null
-          printing_hours?: number | null
-          printing_method?: string | null
-          product_name?: string | null
-          product_type?: string | null
-          production_notes?: string | null
-          requires_die_cutting?: boolean | null
-          requires_folding?: boolean | null
-          requires_gluing?: boolean | null
-          requires_stapling?: boolean | null
-          sheet_height_cm?: number | null
-          sheet_width_cm?: number | null
-          sheets_leftover?: number | null
-          sheets_needed?: number | null
-          sheets_per_base?: number | null
-          special_colors?: string[] | null
-          special_instructions?: string | null
-          substrate_cost_per_kg?: number | null
-          substrate_kg_needed?: number | null
-          substrate_type?: string | null
-          substrate_weight_grs?: number | null
-          units_per_box?: number | null
+          notes?: string | null
+          operation_code?: string
+          quantity_actual?: number | null
+          quantity_budgeted?: number | null
+          sequence_order?: number
+          status?: Database["public"]["Enums"]["ot_operation_status"] | null
+          total_cost_actual?: number | null
+          total_cost_budgeted?: number | null
+          unit_cost_actual?: number | null
+          unit_cost_budgeted?: number | null
+          unit_of_measure?: string | null
           updated_at?: string | null
+          work_order_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ot_specifications_ot_id_fkey"
-            columns: ["ot_id"]
+            foreignKeyName: "ot_operations_operation_code_fkey"
+            columns: ["operation_code"]
             isOneToOne: false
-            referencedRelation: "ots"
+            referencedRelation: "operations_catalog"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "ot_operations_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ot_pricing: {
+        Row: {
+          commission1_amount: number | null
+          commission1_percent: number | null
+          commission2_amount: number | null
+          commission2_percent: number | null
+          commission3_amount: number | null
+          commission3_percent: number | null
+          created_at: string | null
+          id: string
+          increment_amount: number | null
+          increment_percent: number | null
+          labor_cost: number | null
+          margin_amount: number | null
+          margin_percent: number | null
+          materials_cost: number | null
+          other_cost: number | null
+          subtotal: number | null
+          third_party_cost: number | null
+          total_price: number | null
+          unit_price: number | null
+          updated_at: string | null
+          work_order_id: string
+        }
+        Insert: {
+          commission1_amount?: number | null
+          commission1_percent?: number | null
+          commission2_amount?: number | null
+          commission2_percent?: number | null
+          commission3_amount?: number | null
+          commission3_percent?: number | null
+          created_at?: string | null
+          id?: string
+          increment_amount?: number | null
+          increment_percent?: number | null
+          labor_cost?: number | null
+          margin_amount?: number | null
+          margin_percent?: number | null
+          materials_cost?: number | null
+          other_cost?: number | null
+          subtotal?: number | null
+          third_party_cost?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+          work_order_id: string
+        }
+        Update: {
+          commission1_amount?: number | null
+          commission1_percent?: number | null
+          commission2_amount?: number | null
+          commission2_percent?: number | null
+          commission3_amount?: number | null
+          commission3_percent?: number | null
+          created_at?: string | null
+          id?: string
+          increment_amount?: number | null
+          increment_percent?: number | null
+          labor_cost?: number | null
+          margin_amount?: number | null
+          margin_percent?: number | null
+          materials_cost?: number | null
+          other_cost?: number | null
+          subtotal?: number | null
+          third_party_cost?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_pricing_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: true
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ot_specifications: {
+        Row: {
+          colors_back: number | null
+          colors_front: number | null
+          created_at: string | null
+          finished_height_cm: number | null
+          finished_width_cm: number | null
+          finishing_operations: Json | null
+          id: string
+          packaging_notes: string | null
+          pantone_colors: Json | null
+          product_type: string | null
+          substrate_brand: string | null
+          substrate_type: string | null
+          substrate_weight_gsm: number | null
+          updated_at: string | null
+          work_order_id: string
+        }
+        Insert: {
+          colors_back?: number | null
+          colors_front?: number | null
+          created_at?: string | null
+          finished_height_cm?: number | null
+          finished_width_cm?: number | null
+          finishing_operations?: Json | null
+          id?: string
+          packaging_notes?: string | null
+          pantone_colors?: Json | null
+          product_type?: string | null
+          substrate_brand?: string | null
+          substrate_type?: string | null
+          substrate_weight_gsm?: number | null
+          updated_at?: string | null
+          work_order_id: string
+        }
+        Update: {
+          colors_back?: number | null
+          colors_front?: number | null
+          created_at?: string | null
+          finished_height_cm?: number | null
+          finished_width_cm?: number | null
+          finishing_operations?: Json | null
+          id?: string
+          packaging_notes?: string | null
+          pantone_colors?: Json | null
+          product_type?: string | null
+          substrate_brand?: string | null
+          substrate_type?: string | null
+          substrate_weight_gsm?: number | null
+          updated_at?: string | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_specifications_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: true
+            referencedRelation: "work_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1183,6 +1349,77 @@ export type Database = {
         }
         Relationships: []
       }
+      work_orders: {
+        Row: {
+          budget_code: string | null
+          client_id: string | null
+          client_name: string
+          created_at: string
+          created_by: string | null
+          delivery_date: string | null
+          id: string
+          notes: string | null
+          ot_number: number
+          priority: number | null
+          product_description: string | null
+          product_name: string
+          quantity: number
+          sales_rep_id: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          total_price: number | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          budget_code?: string | null
+          client_id?: string | null
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          ot_number?: number
+          priority?: number | null
+          product_description?: string | null
+          product_name: string
+          quantity?: number
+          sales_rep_id?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          budget_code?: string | null
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          ot_number?: number
+          priority?: number | null
+          product_description?: string | null
+          product_name?: string
+          quantity?: number
+          sales_rep_id?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worker_assignments: {
         Row: {
           created_at: string | null
@@ -1375,6 +1612,7 @@ export type Database = {
     }
     Enums: {
       app_role: "supervisor" | "manager" | "admin" | "technician"
+      cost_type: "per_unit" | "per_hour" | "fixed" | "percentage"
       job_status: "pending" | "in_progress" | "completed" | "delivered"
       machine_status: "idle" | "running" | "maintenance" | "offline"
       machine_type:
@@ -1385,6 +1623,14 @@ export type Database = {
         | "pre_press"
         | "manual_workshop"
         | "delivery"
+      operation_category:
+        | "PREPRESS"
+        | "PRINTING"
+        | "FINISHING"
+        | "MATERIALS"
+        | "THIRD_PARTY"
+        | "OTHER"
+      ot_operation_status: "pending" | "in_progress" | "completed" | "cancelled"
       ot_status:
         | "pre_press"
         | "visto_bueno"
@@ -1408,6 +1654,13 @@ export type Database = {
         | "printing"
         | "cutting"
         | "delivery"
+      work_order_status:
+        | "draft"
+        | "approved"
+        | "in_production"
+        | "completed"
+        | "delivered"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1536,6 +1789,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["supervisor", "manager", "admin", "technician"],
+      cost_type: ["per_unit", "per_hour", "fixed", "percentage"],
       job_status: ["pending", "in_progress", "completed", "delivered"],
       machine_status: ["idle", "running", "maintenance", "offline"],
       machine_type: [
@@ -1547,6 +1801,15 @@ export const Constants = {
         "manual_workshop",
         "delivery",
       ],
+      operation_category: [
+        "PREPRESS",
+        "PRINTING",
+        "FINISHING",
+        "MATERIALS",
+        "THIRD_PARTY",
+        "OTHER",
+      ],
+      ot_operation_status: ["pending", "in_progress", "completed", "cancelled"],
       ot_status: [
         "pre_press",
         "visto_bueno",
@@ -1571,6 +1834,14 @@ export const Constants = {
         "printing",
         "cutting",
         "delivery",
+      ],
+      work_order_status: [
+        "draft",
+        "approved",
+        "in_production",
+        "completed",
+        "delivered",
+        "cancelled",
       ],
     },
   },
