@@ -671,6 +671,57 @@ export type Database = {
           },
         ]
       }
+      ot_deviations: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deviation_amount: number | null
+          deviation_percent: number | null
+          id: string
+          notes: string | null
+          operation_id: string | null
+          reason: string | null
+          work_order_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          deviation_amount?: number | null
+          deviation_percent?: number | null
+          id?: string
+          notes?: string | null
+          operation_id?: string | null
+          reason?: string | null
+          work_order_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          deviation_amount?: number | null
+          deviation_percent?: number | null
+          id?: string
+          notes?: string | null
+          operation_id?: string | null
+          reason?: string | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_deviations_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "ot_operations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ot_deviations_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ot_financials: {
         Row: {
           created_at: string | null
@@ -729,6 +780,50 @@ export type Database = {
             columns: ["ot_id"]
             isOneToOne: true
             referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ot_history: {
+        Row: {
+          action: string
+          changed_at: string | null
+          changed_by: string | null
+          field_changed: string | null
+          id: string
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+          work_order_id: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string | null
+          changed_by?: string | null
+          field_changed?: string | null
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          work_order_id: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          field_changed?: string | null
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_history_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -943,6 +1038,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ot_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          operations: Json | null
+          product_type: string | null
+          specifications: Json | null
+          updated_at: string | null
+          use_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          operations?: Json | null
+          product_type?: string | null
+          specifications?: Json | null
+          updated_at?: string | null
+          use_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          operations?: Json | null
+          product_type?: string | null
+          specifications?: Json | null
+          updated_at?: string | null
+          use_count?: number | null
+        }
+        Relationships: []
       }
       ots: {
         Row: {
