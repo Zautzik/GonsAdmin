@@ -175,6 +175,204 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          is_acknowledged: boolean | null
+          message: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          is_acknowledged?: boolean | null
+          message?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          is_acknowledged?: boolean | null
+          message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_alerts_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          barcode: string | null
+          category: Database["public"]["Enums"]["inventory_category"] | null
+          created_at: string | null
+          current_stock: number | null
+          id: string
+          is_active: boolean | null
+          last_purchase_date: string | null
+          last_purchase_price: number | null
+          location: string | null
+          maximum_stock: number | null
+          minimum_stock: number | null
+          name: string
+          qr_code: string | null
+          reorder_point: number | null
+          sku: string
+          supplier_id: string | null
+          unit_cost: number | null
+          unit_of_measure: Database["public"]["Enums"]["inventory_unit"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          category?: Database["public"]["Enums"]["inventory_category"] | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_purchase_date?: string | null
+          last_purchase_price?: number | null
+          location?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          name: string
+          qr_code?: string | null
+          reorder_point?: number | null
+          sku: string
+          supplier_id?: string | null
+          unit_cost?: number | null
+          unit_of_measure?: Database["public"]["Enums"]["inventory_unit"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          category?: Database["public"]["Enums"]["inventory_category"] | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_purchase_date?: string | null
+          last_purchase_price?: number | null
+          location?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          name?: string
+          qr_code?: string | null
+          reorder_point?: number | null
+          sku?: string
+          supplier_id?: string | null
+          unit_cost?: number | null
+          unit_of_measure?: Database["public"]["Enums"]["inventory_unit"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          notes: string | null
+          performed_by: string | null
+          production_report_id: string | null
+          purchase_order_id: string | null
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          scanned_via: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          unit_cost: number | null
+          whatsapp_message_id: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          notes?: string | null
+          performed_by?: string | null
+          production_report_id?: string | null
+          purchase_order_id?: string | null
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          scanned_via?: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          unit_cost?: number | null
+          whatsapp_message_id?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          notes?: string | null
+          performed_by?: string | null
+          production_report_id?: string | null
+          purchase_order_id?: string | null
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          scanned_via?: string | null
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          unit_cost?: number | null
+          whatsapp_message_id?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_production_report_id_fkey"
+            columns: ["production_report_id"]
+            isOneToOne: false
+            referencedRelation: "production_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           assigned_machine_id: string | null
@@ -498,6 +696,57 @@ export type Database = {
             columns: ["ot_id"]
             isOneToOne: false
             referencedRelation: "ots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_requirements: {
+        Row: {
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          notes: string | null
+          quantity_allocated: number | null
+          quantity_consumed: number | null
+          quantity_required: number
+          status: Database["public"]["Enums"]["material_status"] | null
+          work_order_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          notes?: string | null
+          quantity_allocated?: number | null
+          quantity_consumed?: number | null
+          quantity_required: number
+          status?: Database["public"]["Enums"]["material_status"] | null
+          work_order_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          notes?: string | null
+          quantity_allocated?: number | null
+          quantity_consumed?: number | null
+          quantity_required?: number
+          status?: Database["public"]["Enums"]["material_status"] | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_requirements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_requirements_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1131,6 +1380,145 @@ export type Database = {
           },
         ]
       }
+      production_issues: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          issue_type: Database["public"]["Enums"]["issue_type"]
+          production_report_id: string | null
+          reported_by: string | null
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["issue_severity"] | null
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          issue_type: Database["public"]["Enums"]["issue_type"]
+          production_report_id?: string | null
+          reported_by?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["issue_severity"] | null
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          issue_type?: Database["public"]["Enums"]["issue_type"]
+          production_report_id?: string | null
+          reported_by?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["issue_severity"] | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_issues_production_report_id_fkey"
+            columns: ["production_report_id"]
+            isOneToOne: false
+            referencedRelation: "production_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_issues_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          machine_id: string | null
+          notes: string | null
+          operation_code: string | null
+          operator_id: string | null
+          reported_via: string | null
+          status: Database["public"]["Enums"]["production_status"] | null
+          time_elapsed_minutes: number | null
+          time_ended: string | null
+          time_started: string | null
+          units_produced: number
+          units_rejected: number | null
+          updated_at: string | null
+          whatsapp_message_id: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          machine_id?: string | null
+          notes?: string | null
+          operation_code?: string | null
+          operator_id?: string | null
+          reported_via?: string | null
+          status?: Database["public"]["Enums"]["production_status"] | null
+          time_elapsed_minutes?: number | null
+          time_ended?: string | null
+          time_started?: string | null
+          units_produced: number
+          units_rejected?: number | null
+          updated_at?: string | null
+          whatsapp_message_id?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          machine_id?: string | null
+          notes?: string | null
+          operation_code?: string | null
+          operator_id?: string | null
+          reported_via?: string | null
+          status?: Database["public"]["Enums"]["production_status"] | null
+          time_elapsed_minutes?: number | null
+          time_ended?: string | null
+          time_started?: string | null
+          units_produced?: number
+          units_rejected?: number | null
+          updated_at?: string | null
+          whatsapp_message_id?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_reports_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_reports_operation_code_fkey"
+            columns: ["operation_code"]
+            isOneToOne: false
+            referencedRelation: "operations_catalog"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "production_reports_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       progress_submissions: {
         Row: {
           created_at: string
@@ -1271,6 +1659,113 @@ export type Database = {
           },
         ]
       }
+      purchase_order_items: {
+        Row: {
+          id: string
+          inventory_item_id: string
+          notes: string | null
+          purchase_order_id: string
+          quantity_ordered: number
+          quantity_received: number | null
+          total_cost: number | null
+          unit_cost: number
+        }
+        Insert: {
+          id?: string
+          inventory_item_id: string
+          notes?: string | null
+          purchase_order_id: string
+          quantity_ordered: number
+          quantity_received?: number | null
+          total_cost?: number | null
+          unit_cost: number
+        }
+        Update: {
+          id?: string
+          inventory_item_id?: string
+          notes?: string | null
+          purchase_order_id?: string
+          quantity_ordered?: number
+          quantity_received?: number | null
+          total_cost?: number | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          actual_delivery_date: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          created_by: string | null
+          expected_delivery_date: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          po_number: number
+          status: Database["public"]["Enums"]["po_status"] | null
+          supplier_id: string
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_delivery_date?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          po_number?: number
+          status?: Database["public"]["Enums"]["po_status"] | null
+          supplier_id: string
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_delivery_date?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          po_number?: number
+          status?: Database["public"]["Enums"]["po_status"] | null
+          supplier_id?: string
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_workers: {
         Row: {
           created_at: string | null
@@ -1404,6 +1899,54 @@ export type Database = {
         }
         Relationships: []
       }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_name: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          lead_time_days: number | null
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_time_days?: number | null
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_time_days?: number | null
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       task_logs: {
         Row: {
           created_at: string | null
@@ -1482,6 +2025,110 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          direction: string | null
+          id: string
+          message_id: string | null
+          message_type: string | null
+          metadata: Json | null
+          processed: boolean | null
+          processed_at: string | null
+          whatsapp_user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          direction?: string | null
+          id?: string
+          message_id?: string | null
+          message_type?: string | null
+          metadata?: Json | null
+          processed?: boolean | null
+          processed_at?: string | null
+          whatsapp_user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          direction?: string | null
+          id?: string
+          message_id?: string | null
+          message_type?: string | null
+          metadata?: Json | null
+          processed?: boolean | null
+          processed_at?: string | null
+          whatsapp_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_whatsapp_user_id_fkey"
+            columns: ["whatsapp_user_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_users: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          last_interaction: string | null
+          phone_number: string
+          preferred_language: string | null
+          user_id: string | null
+          verification_code: string | null
+          whatsapp_name: string | null
+          worker_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_interaction?: string | null
+          phone_number: string
+          preferred_language?: string | null
+          user_id?: string | null
+          verification_code?: string | null
+          whatsapp_name?: string | null
+          worker_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_interaction?: string | null
+          phone_number?: string
+          preferred_language?: string | null
+          user_id?: string | null
+          verification_code?: string | null
+          whatsapp_name?: string | null
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_users_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "worker_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_users_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       work_orders: {
         Row: {
@@ -1735,6 +2382,34 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_material_requirements: {
+        Args: { p_work_order_id: string }
+        Returns: {
+          current_stock: number
+          inventory_item_id: string
+          is_available: boolean
+          item_name: string
+          quantity_required: number
+        }[]
+      }
+      check_inventory_availability: {
+        Args: { p_work_order_id: string }
+        Returns: boolean
+      }
+      generate_purchase_suggestions: {
+        Args: never
+        Returns: {
+          current_stock: number
+          estimated_cost: number
+          inventory_item_id: string
+          item_name: string
+          reorder_point: number
+          sku: string
+          suggested_quantity: number
+          supplier_id: string
+          supplier_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1745,8 +2420,24 @@ export type Database = {
       is_own_worker_record: { Args: { _worker_id: string }; Returns: boolean }
     }
     Enums: {
+      alert_type: "low_stock" | "out_of_stock" | "expiring_soon" | "overstock"
       app_role: "supervisor" | "manager" | "admin" | "technician"
       cost_type: "per_unit" | "per_hour" | "fixed" | "percentage"
+      inventory_category:
+        | "substrate"
+        | "ink"
+        | "finishing_material"
+        | "consumable"
+        | "packaging"
+        | "other"
+      inventory_unit: "kg" | "units" | "rolls" | "liters" | "sheets" | "boxes"
+      issue_severity: "low" | "medium" | "high" | "critical"
+      issue_type:
+        | "machine_breakdown"
+        | "material_defect"
+        | "quality_issue"
+        | "shortage"
+        | "other"
       job_status: "pending" | "in_progress" | "completed" | "delivered"
       machine_status: "idle" | "running" | "maintenance" | "offline"
       machine_type:
@@ -1757,6 +2448,11 @@ export type Database = {
         | "pre_press"
         | "manual_workshop"
         | "delivery"
+      material_status:
+        | "pending"
+        | "allocated"
+        | "partially_consumed"
+        | "consumed"
       operation_category:
         | "PREPRESS"
         | "PRINTING"
@@ -1779,6 +2475,14 @@ export type Database = {
         | "ready_for_delivery"
         | "in_delivery"
         | "completed"
+      po_status:
+        | "draft"
+        | "sent"
+        | "confirmed"
+        | "partially_received"
+        | "received"
+        | "cancelled"
+      production_status: "in_progress" | "completed" | "paused" | "stopped"
       progress_type: "production" | "maintenance" | "idle"
       submission_status: "pending" | "approved" | "rejected" | "edited"
       task_type:
@@ -1788,6 +2492,12 @@ export type Database = {
         | "printing"
         | "cutting"
         | "delivery"
+      transaction_type:
+        | "purchase"
+        | "usage"
+        | "adjustment"
+        | "return"
+        | "transfer"
       work_order_status:
         | "draft"
         | "approved"
@@ -1922,8 +2632,26 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alert_type: ["low_stock", "out_of_stock", "expiring_soon", "overstock"],
       app_role: ["supervisor", "manager", "admin", "technician"],
       cost_type: ["per_unit", "per_hour", "fixed", "percentage"],
+      inventory_category: [
+        "substrate",
+        "ink",
+        "finishing_material",
+        "consumable",
+        "packaging",
+        "other",
+      ],
+      inventory_unit: ["kg", "units", "rolls", "liters", "sheets", "boxes"],
+      issue_severity: ["low", "medium", "high", "critical"],
+      issue_type: [
+        "machine_breakdown",
+        "material_defect",
+        "quality_issue",
+        "shortage",
+        "other",
+      ],
       job_status: ["pending", "in_progress", "completed", "delivered"],
       machine_status: ["idle", "running", "maintenance", "offline"],
       machine_type: [
@@ -1934,6 +2662,12 @@ export const Constants = {
         "pre_press",
         "manual_workshop",
         "delivery",
+      ],
+      material_status: [
+        "pending",
+        "allocated",
+        "partially_consumed",
+        "consumed",
       ],
       operation_category: [
         "PREPRESS",
@@ -1959,6 +2693,15 @@ export const Constants = {
         "in_delivery",
         "completed",
       ],
+      po_status: [
+        "draft",
+        "sent",
+        "confirmed",
+        "partially_received",
+        "received",
+        "cancelled",
+      ],
+      production_status: ["in_progress", "completed", "paused", "stopped"],
       progress_type: ["production", "maintenance", "idle"],
       submission_status: ["pending", "approved", "rejected", "edited"],
       task_type: [
@@ -1968,6 +2711,13 @@ export const Constants = {
         "printing",
         "cutting",
         "delivery",
+      ],
+      transaction_type: [
+        "purchase",
+        "usage",
+        "adjustment",
+        "return",
+        "transfer",
       ],
       work_order_status: [
         "draft",
