@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Users, Package, FileText, DollarSign,
   Factory, Wrench, MessageSquare, Settings, LogOut, ChevronLeft,
   ChevronRight, BarChart3, ClipboardList, Clock, UserCheck,
-  ShoppingCart, TrendingUp, Bell, HelpCircle, Globe
+  ShoppingCart, TrendingUp, Bell, HelpCircle, Globe, FileStack, PieChart
 } from 'lucide-react';
 
 interface NavItem {
@@ -69,6 +69,28 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
     }[];
   }[] = [
     {
+      id: 'ot-module',
+      label: 'Órdenes de Trabajo',
+      items: [
+        {
+          id: 'ot-dashboard',
+          label: 'OT Dashboard',
+          icon: FileStack,
+          href: '/ots/dashboard',
+          roles: ['admin', 'manager', 'supervisor'],
+          description: 'Gestión de OTs',
+        },
+        {
+          id: 'ot-templates',
+          label: 'Plantillas',
+          icon: FileText,
+          href: '/ots/templates',
+          roles: ['admin', 'manager', 'supervisor'],
+          description: 'Templates de OT',
+        },
+      ],
+    },
+    {
       id: 'operations',
       label: 'Operations',
       items: [
@@ -108,6 +130,14 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
       id: 'reports',
       label: 'Reports & Analytics',
       items: [
+        {
+          id: 'cost-analytics',
+          label: 'Cost Analytics',
+          icon: PieChart,
+          href: '/analytics/costs',
+          roles: ['admin', 'manager'],
+          description: 'Cost analysis & metrics',
+        },
         {
           id: 'custom-reports',
           label: 'Report Builder',
@@ -150,6 +180,14 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
       id: 'management',
       label: 'Management',
       items: [
+        {
+          id: 'admin-config',
+          label: 'System Config',
+          icon: Settings,
+          href: '/admin/config',
+          roles: ['admin'],
+          description: 'Margins, waste, speeds',
+        },
         {
           id: 'users',
           label: 'Users',
