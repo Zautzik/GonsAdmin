@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 const OTPage = lazy(() => import("./pages/OTPage"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const AdminConfigPage = lazy(() => import("./pages/AdminConfigPage"));
+const IndustryPage = lazy(() => import("./pages/IndustryPage"));
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,8 @@ const App = () => (
                   <Route path="/analytics/*" element={<AnalyticsPage />} />
                   {/* Admin Config */}
                   <Route path="/admin/config" element={<AdminConfigPage />} />
+                  {/* Industry Module */}
+                  <Route path="/industry/*" element={<IndustryPage />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
