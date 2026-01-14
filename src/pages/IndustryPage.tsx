@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load industry components
 const ProductionDashboard = lazy(() => import("@/components/industry/ProductionDashboard"));
 const OperatorView = lazy(() => import("@/components/industry/OperatorView"));
+const InventoryDashboard = lazy(() => import("@/components/industry/InventoryDashboard"));
+const ScanningInterface = lazy(() => import("@/components/industry/ScanningInterface"));
 
 const PageLoader = () => (
   <div className="p-6 space-y-4">
@@ -28,6 +30,8 @@ export default function IndustryPage() {
           <Route path="/" element={<Navigate to="production" replace />} />
           <Route path="production" element={<ProductionDashboard />} />
           <Route path="operator" element={<OperatorView />} />
+          <Route path="inventory" element={<InventoryDashboard />} />
+          <Route path="scan" element={<ScanningInterface />} />
         </Routes>
       </Suspense>
     </DashboardLayout>

@@ -62,7 +62,7 @@ export default function IssueReportDialog({
     setLoading(true);
     const result = await createProductionIssue({
       work_order_id: ot?.workOrder?.id || ot?.id,
-      issue_type: issueType,
+      issue_type: issueType as "machine_breakdown" | "material_defect" | "quality_issue" | "shortage" | "other",
       severity,
       description: description.trim(),
     });
