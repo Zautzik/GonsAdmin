@@ -252,7 +252,7 @@ export default function ControlCenter() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-yellow-500/10 rounded-lg p-4 text-center border border-yellow-500/20">
                 <div className="text-3xl font-bold text-yellow-600">
-                  {inventoryStats?.lowStock || 0}
+                  {inventoryStats?.lowStockAlerts || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Stock Bajo</div>
               </div>
