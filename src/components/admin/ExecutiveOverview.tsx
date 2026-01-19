@@ -9,11 +9,10 @@ import {
   Clock, Zap, Activity, BarChart3, PieChart, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RechartsPie, Pie, Cell, BarChart, Bar, Legend
+  PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
-interface OTByStatus {
+interface WorkOrderByStatus {
   status: string;
   count: number;
 }
@@ -32,17 +31,17 @@ interface WorkerPerformance {
 const ExecutiveOverview = () => {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [otsByStatus, setOtsByStatus] = useState<OTByStatus[]>([]);
+  const [workOrdersByStatus, setWorkOrdersByStatus] = useState<WorkOrderByStatus[]>([]);
   const [machineStatus, setMachineStatus] = useState<MachineStatus[]>([]);
   const [workerPerformance, setWorkerPerformance] = useState<WorkerPerformance[]>([]);
   const [kpis, setKpis] = useState({
-    activeOTs: 0,
+    activeWorkOrders: 0,
     completedThisMonth: 0,
     avgCycleTime: 0,
     machineUtilization: 0,
     onTimeDelivery: 0,
     workforceEfficiency: 0,
-    pendingMaintenance: 0,
+    pendingIssues: 0,
     criticalAlerts: 0,
   });
 
@@ -53,7 +52,7 @@ const ExecutiveOverview = () => {
   const fetchAllData = async () => {
     setLoading(true);
     await Promise.all([
-      fetchOTStats(),
+      fetchWorkOrderStats(),
       fetchMachineStats(),
       fetchWorkerStats(),
       fetchKPIs(),
@@ -61,14 +60,14 @@ const ExecutiveOverview = () => {
     setLoading(false);
   };
 
-  const fetchOTStats = async () => {
-    const { data } = await supabase.from('ots').select('status');
+  const fetchWorkOrderStats = async () => {
+    const { data } = await supabase.from('work_orders').select('status');
     if (data) {
-      const statusCounts = data.reduce((acc: Record<string, number>, ot) => {
-        acc[ot.status] = (acc[ot.status] || 0) + 1;
+      const statusCounts = data.reduce((acc: Record<string, number>, wo) => {
+        acc[wo.status] = (acc[wo.status] || 0) + 1;
         return acc;
       }, {});
-      setOtsByStatus(Object.entries(statusCounts).map(([status, count]) => ({ status, count })));
+      setWorkOrdersByStatus(Object.entries(statusCounts).map(([status, count]) => ({ status, count })));
     }
   };
 
@@ -104,48 +103,43 @@ const ExecutiveOverview = () => {
   };
 
   const fetchKPIs = async () => {
-    const [otsData, completedData, machinesData, maintenanceData] = await Promise.all([
-      supabase.from('ots').select('id, status, created_at, completed_at'),
-      supabase.from('ots').select('id').eq('status', 'completed'),
+    const [workOrdersData, completedData, machinesData, issuesData] = await Promise.all([
+      supabase.from('work_orders').select('id, status, created_at, completed_at'),
+      supabase.from('work_orders').select('id').eq('status', 'completed'),
       supabase.from('machines').select('status'),
-      supabase.from('maintenance_work_orders').select('status').eq('status', 'pending'),
+      supabase.from('production_activity').select('id').eq('activity_type', 'issue').eq('is_resolved', false),
     ]);
 
-    const activeOTs = otsData.data?.filter(ot => ot.status !== 'completed').length || 0;
+    const activeWorkOrders = workOrdersData.data?.filter(wo => 
+      wo.status !== 'completed' && wo.status !== 'delivered' && wo.status !== 'cancelled'
+    ).length || 0;
     const completedThisMonth = completedData.data?.length || 0;
     
     const runningMachines = machinesData.data?.filter(m => m.status === 'running').length || 0;
     const totalMachines = machinesData.data?.length || 1;
     const machineUtilization = Math.round((runningMachines / totalMachines) * 100);
 
-    const pendingMaintenance = maintenanceData.data?.length || 0;
+    const pendingIssues = issuesData.data?.length || 0;
 
     setKpis({
-      activeOTs,
+      activeWorkOrders,
       completedThisMonth,
       avgCycleTime: 4.2,
       machineUtilization,
       onTimeDelivery: 94,
       workforceEfficiency: 87,
-      pendingMaintenance,
-      criticalAlerts: pendingMaintenance > 3 ? pendingMaintenance - 3 : 0,
+      pendingIssues,
+      criticalAlerts: pendingIssues > 3 ? pendingIssues - 3 : 0,
     });
   };
 
   const statusColors: Record<string, string> = {
-    pre_press: 'hsl(var(--primary))',
-    visto_bueno: 'hsl(var(--accent))',
-    paper_purchase: 'hsl(var(--manager))',
-    paper_received: 'hsl(var(--supervisor))',
-    in_storage: 'hsl(var(--muted-foreground))',
-    guillotine_first_cut: 'hsl(45 93% 47%)',
-    offset_printing: 'hsl(199 89% 48%)',
-    die_cutting: 'hsl(280 65% 60%)',
-    guillotine_final_cut: 'hsl(45 93% 60%)',
-    workshop_revision: 'hsl(160 60% 45%)',
-    ready_for_delivery: 'hsl(142 76% 36%)',
-    in_delivery: 'hsl(262 83% 58%)',
+    draft: 'hsl(var(--muted-foreground))',
+    approved: 'hsl(var(--primary))',
+    in_production: 'hsl(199 89% 48%)',
     completed: 'hsl(142 76% 36%)',
+    delivered: 'hsl(262 83% 58%)',
+    cancelled: 'hsl(0 84% 60%)',
   };
 
   const machineColors: Record<string, string> = {
@@ -171,14 +165,13 @@ const ExecutiveOverview = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* KPI Scorecards - Balanced Scorecard Approach */}
+      {/* KPI Scorecards */}
       <section aria-label="Key Performance Indicators">
         <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           Strategic KPIs
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Financial Perspective */}
           <Card className="border-l-4 border-l-success card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -188,7 +181,7 @@ const ExecutiveOverview = () => {
             <CardContent>
               <div className="flex items-end justify-between">
                 <div>
-                  <div className="text-3xl font-bold text-foreground">{kpis.activeOTs}</div>
+                  <div className="text-3xl font-bold text-foreground">{kpis.activeWorkOrders}</div>
                   <p className="text-xs text-muted-foreground mt-1">In pipeline</p>
                 </div>
                 <div className="flex items-center text-success text-sm">
@@ -196,11 +189,10 @@ const ExecutiveOverview = () => {
                   <span>+12%</span>
                 </div>
               </div>
-              <Progress value={Math.min(kpis.activeOTs * 10, 100)} className="mt-3 h-1" />
+              <Progress value={Math.min(kpis.activeWorkOrders * 10, 100)} className="mt-3 h-1" />
             </CardContent>
           </Card>
 
-          {/* Customer Perspective */}
           <Card className="border-l-4 border-l-info card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -222,7 +214,6 @@ const ExecutiveOverview = () => {
             </CardContent>
           </Card>
 
-          {/* Internal Process Perspective */}
           <Card className="border-l-4 border-l-admin card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -243,7 +234,6 @@ const ExecutiveOverview = () => {
             </CardContent>
           </Card>
 
-          {/* Learning & Growth Perspective */}
           <Card className="border-l-4 border-l-warning card-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -268,17 +258,17 @@ const ExecutiveOverview = () => {
       </section>
 
       {/* Alert Banner */}
-      {(kpis.criticalAlerts > 0 || kpis.pendingMaintenance > 0) && (
+      {(kpis.criticalAlerts > 0 || kpis.pendingIssues > 0) && (
         <Card className="border-destructive/50 bg-destructive/5">
           <CardContent className="py-3">
             <div className="flex items-center gap-4">
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">
-                  {kpis.pendingMaintenance} pending maintenance orders require attention
+                  {kpis.pendingIssues} pending issues require attention
                 </p>
               </div>
-              <Badge variant="destructive">{kpis.pendingMaintenance} Actions</Badge>
+              <Badge variant="destructive">{kpis.pendingIssues} Actions</Badge>
             </div>
           </CardContent>
         </Card>
@@ -286,18 +276,17 @@ const ExecutiveOverview = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* OT Pipeline Funnel */}
         <Card className="card-hover">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Production Pipeline
+              Work Orders Pipeline
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={otsByStatus} layout="vertical">
+                <BarChart data={workOrdersByStatus} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
                   <YAxis 
@@ -314,7 +303,7 @@ const ExecutiveOverview = () => {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
-                    formatter={(value: number) => [value, 'OTs']}
+                    formatter={(value: number) => [value, 'Work Orders']}
                     labelFormatter={formatStatus}
                   />
                   <Bar 
@@ -328,7 +317,6 @@ const ExecutiveOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Machine Status Distribution */}
         <Card className="card-hover">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -381,12 +369,12 @@ const ExecutiveOverview = () => {
         </Card>
       </div>
 
-      {/* Department Performance - Lean Six Sigma */}
+      {/* Department Performance */}
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Activity className="h-5 w-5 text-primary" />
-            Department Performance Matrix - Lean Metrics
+            Department Performance Matrix
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -433,7 +421,7 @@ const ExecutiveOverview = () => {
         </CardContent>
       </Card>
 
-      {/* Quick Insights - Executive Summary */}
+      {/* Quick Insights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
           <CardContent className="pt-6">
@@ -444,8 +432,7 @@ const ExecutiveOverview = () => {
               <div>
                 <h4 className="font-semibold text-foreground">Operational Excellence</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Production throughput is {kpis.machineUtilization >= 70 ? 'meeting' : 'below'} targets. 
-                  Current OEE: {kpis.machineUtilization}%
+                  Machine utilization at {kpis.machineUtilization}% - {kpis.machineUtilization >= 75 ? 'above' : 'below'} target
                 </p>
               </div>
             </div>
@@ -459,9 +446,9 @@ const ExecutiveOverview = () => {
                 <TrendingUp className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <h4 className="font-semibold text-foreground">Growth Trajectory</h4>
+                <h4 className="font-semibold text-foreground">Growth Indicator</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {kpis.activeOTs} active orders in pipeline with {kpis.onTimeDelivery}% on-time delivery rate
+                  {kpis.completedThisMonth} work orders completed this period
                 </p>
               </div>
             </div>
@@ -475,9 +462,9 @@ const ExecutiveOverview = () => {
                 <Zap className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <h4 className="font-semibold text-foreground">Continuous Improvement</h4>
+                <h4 className="font-semibold text-foreground">Team Performance</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Kaizen initiatives driving {kpis.workforceEfficiency}% workforce efficiency across departments
+                  Workforce efficiency at {kpis.workforceEfficiency}%
                 </p>
               </div>
             </div>

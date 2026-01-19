@@ -3,42 +3,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay } from "date-fns";
 
-export interface ProductionReport {
+// Using the new consolidated production_activity table
+
+export interface ProductionActivity {
   id: string;
   work_order_id: string | null;
-  operation_code: string | null;
-  operator_id: string | null;
+  operation_id: string | null;
   machine_id: string | null;
-  units_produced: number;
+  activity_type: 'report' | 'issue' | 'note';
+  units_produced: number | null;
   units_rejected: number | null;
   time_started: string | null;
   time_ended: string | null;
   time_elapsed_minutes: number | null;
-  status: string | null;
+  issue_type: string | null;
+  severity: string | null;
+  is_resolved: boolean | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_notes: string | null;
+  operator_id: string | null;
+  description: string | null;
   notes: string | null;
   reported_via: string | null;
-  created_at: string | null;
-  work_order?: any;
-  operator?: any;
-  machine?: any;
-}
-
-export interface ProductionIssue {
-  id: string;
-  production_report_id: string | null;
-  work_order_id: string | null;
-  issue_type: string;
-  severity: string | null;
-  description: string;
-  reported_by: string | null;
-  resolved: boolean | null;
-  resolution_notes: string | null;
-  resolved_at: string | null;
   created_at: string | null;
 }
 
 export interface ProductionStats {
-  activeOTs: number;
+  activeWorkOrders: number;
   unitsProducedToday: number;
   operatorsWorkingToday: number;
   currentEfficiency: number;
@@ -48,7 +40,7 @@ export interface ProductionStats {
 
 export function useProductionStats() {
   const [stats, setStats] = useState<ProductionStats>({
-    activeOTs: 0,
+    activeWorkOrders: 0,
     unitsProducedToday: 0,
     operatorsWorkingToday: 0,
     currentEfficiency: 0,
@@ -63,32 +55,34 @@ export function useProductionStats() {
     const todayStart = startOfDay(today).toISOString();
     const todayEnd = endOfDay(today).toISOString();
 
-    const [otsRes, reportsRes, issuesRes] = await Promise.all([
-      supabase.from("ots").select("id, status").neq("status", "completed"),
+    const [workOrdersRes, activityRes] = await Promise.all([
+      supabase.from("work_orders").select("id, status").neq("status", "completed").neq("status", "delivered").neq("status", "cancelled"),
       supabase
-        .from("production_reports")
-        .select("units_produced, operator_id, time_elapsed_minutes")
+        .from("production_activity")
+        .select("*")
         .gte("created_at", todayStart)
         .lte("created_at", todayEnd),
-      supabase.from("production_issues").select("id").eq("resolved", false),
     ]);
 
-    const activeOTs = otsRes.data?.length || 0;
-    const reports = reportsRes.data || [];
+    const activeWorkOrders = workOrdersRes.data?.length || 0;
+    const activities = activityRes.data || [];
+    
+    const reports = activities.filter(a => a.activity_type === 'report');
+    const issues = activities.filter(a => a.activity_type === 'issue' && !a.is_resolved);
+    
     const unitsProducedToday = reports.reduce((sum, r) => sum + (r.units_produced || 0), 0);
     const uniqueOperators = new Set(reports.map((r) => r.operator_id).filter(Boolean));
     
-    // Calculate efficiency (rough estimation based on time)
     const totalMinutes = reports.reduce((sum, r) => sum + (r.time_elapsed_minutes || 0), 0);
-    const expectedMinutes = reports.length * 60; // Assume 60 min per report as baseline
+    const expectedMinutes = reports.length * 60;
     const currentEfficiency = expectedMinutes > 0 ? Math.round((expectedMinutes / Math.max(totalMinutes, 1)) * 100) : 100;
 
     setStats({
-      activeOTs,
+      activeWorkOrders,
       unitsProducedToday,
       operatorsWorkingToday: uniqueOperators.size,
-      currentEfficiency: Math.min(currentEfficiency, 150), // Cap at 150%
-      issuesOpenCount: issuesRes.data?.length || 0,
+      currentEfficiency: Math.min(currentEfficiency, 150),
+      issuesOpenCount: issues.length,
       reportsToday: reports.length,
     });
 
@@ -103,90 +97,80 @@ export function useProductionStats() {
 }
 
 export function useProductionBoard() {
-  const [otsWithProgress, setOtsWithProgress] = useState<any[]>([]);
+  const [workOrdersWithProgress, setWorkOrdersWithProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOTsWithProgress = useCallback(async () => {
+  const fetchWorkOrdersWithProgress = useCallback(async () => {
     setLoading(true);
     const today = new Date();
     const todayStart = startOfDay(today).toISOString();
 
-    // Fetch OTs
-    const { data: ots, error: otsError } = await supabase
-      .from("ots")
+    const { data: workOrders, error } = await supabase
+      .from("work_orders")
       .select("*")
-      .order("priority", { ascending: false })
-      .order("created_at", { ascending: false })
+      .order("ot_number", { ascending: false })
       .limit(50);
 
-    if (otsError) {
-      toast.error("Error loading OTs");
+    if (error) {
+      toast.error("Error loading work orders");
       setLoading(false);
       return;
     }
 
-    // Fetch work orders linked to OTs
-    const { data: workOrders } = await supabase
-      .from("work_orders")
-      .select("id, ot_number, quantity, status, product_name, client_name");
-
-    // Fetch today's production reports
-    const { data: reports } = await supabase
-      .from("production_reports")
-      .select("*, work_order:work_orders(*)")
+    const { data: activities } = await supabase
+      .from("production_activity")
+      .select("*")
+      .eq("activity_type", "report")
       .gte("created_at", todayStart)
       .order("created_at", { ascending: false });
 
-    // Build OT progress data
-    const enrichedOTs = (ots || []).map((ot) => {
-      const workOrder = workOrders?.find((wo) => wo.ot_number === parseInt(ot.ot_number.replace("OT-", "")));
-      const otReports = reports?.filter((r) => r.work_order?.ot_number === parseInt(ot.ot_number.replace("OT-", ""))) || [];
-      const totalProduced = otReports.reduce((sum, r) => sum + (r.units_produced || 0), 0);
-      const totalTime = otReports.reduce((sum, r) => sum + (r.time_elapsed_minutes || 0), 0);
-      const lastReport = otReports[0];
+    const enrichedWorkOrders = (workOrders || []).map((wo) => {
+      const woActivities = activities?.filter((a) => a.work_order_id === wo.id) || [];
+      const totalProduced = woActivities.reduce((sum, a) => sum + (a.units_produced || 0), 0);
+      const totalTime = woActivities.reduce((sum, a) => sum + (a.time_elapsed_minutes || 0), 0);
+      const lastReport = woActivities[0];
 
       return {
-        ...ot,
-        workOrder,
+        ...wo,
         totalProduced,
         totalTime,
-        progressPercent: ot.quantity > 0 ? Math.min(Math.round((totalProduced / ot.quantity) * 100), 100) : 0,
+        progressPercent: wo.quantity > 0 ? Math.min(Math.round((totalProduced / wo.quantity) * 100), 100) : 0,
         lastReport,
-        reportsCount: otReports.length,
+        reportsCount: woActivities.length,
       };
     });
 
-    setOtsWithProgress(enrichedOTs);
+    setWorkOrdersWithProgress(enrichedWorkOrders);
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchOTsWithProgress();
-  }, [fetchOTsWithProgress]);
+    fetchWorkOrdersWithProgress();
+  }, [fetchWorkOrdersWithProgress]);
 
-  return { otsWithProgress, loading, refetch: fetchOTsWithProgress };
+  return { workOrdersWithProgress, loading, refetch: fetchWorkOrdersWithProgress };
 }
 
 export function useRealtimeProduction(onUpdate: () => void) {
   useEffect(() => {
     const channel = supabase
       .channel("production-updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "production_reports" }, () => {
-        onUpdate();
-        toast.info("📊 Nuevo reporte de producción recibido");
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "production_issues" }, (payload) => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "production_activity" }, (payload) => {
         onUpdate();
         if (payload.eventType === "INSERT") {
-          const issue = payload.new as ProductionIssue;
-          if (issue.severity === "critical" || issue.severity === "high") {
-            toast.error(`⚠️ Problema reportado: ${issue.description.substring(0, 50)}...`);
-          } else {
-            toast.warning(`⚠️ Problema reportado: ${issue.description.substring(0, 50)}...`);
+          const activity = payload.new as ProductionActivity;
+          if (activity.activity_type === 'report') {
+            toast.info("📊 Nuevo reporte de producción recibido");
+          } else if (activity.activity_type === 'issue') {
+            if (activity.severity === "critical" || activity.severity === "high") {
+              toast.error(`⚠️ Problema reportado: ${activity.description?.substring(0, 50)}...`);
+            } else {
+              toast.warning(`⚠️ Problema reportado: ${activity.description?.substring(0, 50)}...`);
+            }
           }
         }
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "ots" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "work_orders" }, () => {
         onUpdate();
       })
       .subscribe();
@@ -198,14 +182,15 @@ export function useRealtimeProduction(onUpdate: () => void) {
 }
 
 export function useProductionReports(workOrderId?: string) {
-  const [reports, setReports] = useState<ProductionReport[]>([]);
+  const [reports, setReports] = useState<ProductionActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
     let query = supabase
-      .from("production_reports")
+      .from("production_activity")
       .select("*")
+      .eq("activity_type", "report")
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -231,19 +216,20 @@ export function useProductionReports(workOrderId?: string) {
 }
 
 export function useProductionIssues(resolved?: boolean) {
-  const [issues, setIssues] = useState<ProductionIssue[]>([]);
+  const [issues, setIssues] = useState<ProductionActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchIssues = useCallback(async () => {
     setLoading(true);
     let query = supabase
-      .from("production_issues")
+      .from("production_activity")
       .select("*")
+      .eq("activity_type", "issue")
       .order("created_at", { ascending: false })
       .limit(50);
 
     if (resolved !== undefined) {
-      query = query.eq("resolved", resolved);
+      query = query.eq("is_resolved", resolved);
     }
 
     const { data, error } = await query;
@@ -273,10 +259,16 @@ export async function createProductionReport(report: {
   units_rejected?: number;
 }) {
   const { data, error } = await supabase
-    .from("production_reports")
+    .from("production_activity")
     .insert({
-      ...report,
-      status: "completed",
+      work_order_id: report.work_order_id,
+      activity_type: 'report',
+      units_produced: report.units_produced,
+      units_rejected: report.units_rejected || 0,
+      time_elapsed_minutes: report.time_elapsed_minutes,
+      operator_id: report.operator_id,
+      machine_id: report.machine_id,
+      notes: report.notes,
       reported_via: "web",
       time_ended: new Date().toISOString(),
       time_started: new Date(Date.now() - report.time_elapsed_minutes * 60000).toISOString(),
@@ -295,21 +287,22 @@ export async function createProductionReport(report: {
 
 export async function createProductionIssue(issue: {
   work_order_id?: string;
-  production_report_id?: string;
-  issue_type: "machine_breakdown" | "material_defect" | "quality_issue" | "shortage" | "other";
+  issue_type: "machine_breakdown" | "material_defect" | "quality" | "delay" | "other";
   severity: string;
   description: string;
-  reported_by?: string;
+  operator_id?: string;
 }) {
   const { data, error } = await supabase
-    .from("production_issues")
+    .from("production_activity")
     .insert({
       work_order_id: issue.work_order_id,
-      production_report_id: issue.production_report_id,
+      activity_type: 'issue',
       issue_type: issue.issue_type,
-      severity: issue.severity as any,
+      severity: issue.severity,
       description: issue.description,
-      reported_by: issue.reported_by,
+      operator_id: issue.operator_id,
+      is_resolved: false,
+      reported_via: "web",
     })
     .select()
     .single();
@@ -325,9 +318,9 @@ export async function createProductionIssue(issue: {
 
 export async function resolveProductionIssue(issueId: string, resolutionNotes: string) {
   const { error } = await supabase
-    .from("production_issues")
+    .from("production_activity")
     .update({
-      resolved: true,
+      is_resolved: true,
       resolution_notes: resolutionNotes,
       resolved_at: new Date().toISOString(),
     })

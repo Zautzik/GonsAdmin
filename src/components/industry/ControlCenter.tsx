@@ -17,9 +17,9 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface OTProgress {
+interface WorkOrderProgress {
   id: string;
-  ot_number: string;
+  ot_number: number;
   client_name: string;
   quantity: number;
   produced: number;
@@ -38,47 +38,50 @@ export default function ControlCenter() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [autoRotate, setAutoRotate] = useState(false);
   const [currentView, setCurrentView] = useState(0);
-  const [otsInProduction, setOtsInProduction] = useState<OTProgress[]>([]);
+  const [workOrdersInProduction, setWorkOrdersInProduction] = useState<WorkOrderProgress[]>([]);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Fetch OTs in production
+  // Fetch work orders in production
   useEffect(() => {
-    const fetchOtsInProduction = async () => {
-      const { data: ots } = await supabase
-        .from('ots')
+    const fetchWorkOrdersInProduction = async () => {
+      const { data: workOrders } = await supabase
+        .from('work_orders')
         .select('*')
         .neq('status', 'completed')
-        .order('priority', { ascending: false });
+        .neq('status', 'delivered')
+        .neq('status', 'cancelled')
+        .order('ot_number', { ascending: false });
 
-      if (ots) {
-        const otsWithProgress = await Promise.all(
-          ots.map(async (ot) => {
-            const { data: reports } = await supabase
-              .from('production_reports')
+      if (workOrders) {
+        const workOrdersWithProgress = await Promise.all(
+          workOrders.map(async (wo) => {
+            const { data: activities } = await supabase
+              .from('production_activity')
               .select('units_produced')
-              .eq('work_order_id', ot.id);
+              .eq('work_order_id', wo.id)
+              .eq('activity_type', 'report');
             
-            const produced = reports?.reduce((sum, r) => sum + (r.units_produced || 0), 0) || 0;
-            const progress = ot.quantity > 0 ? Math.min((produced / ot.quantity) * 100, 100) : 0;
+            const produced = activities?.reduce((sum, a) => sum + (a.units_produced || 0), 0) || 0;
+            const progress = wo.quantity > 0 ? Math.min((produced / wo.quantity) * 100, 100) : 0;
             
             return {
-              id: ot.id,
-              ot_number: ot.ot_number,
-              client_name: ot.client_name,
-              quantity: ot.quantity,
+              id: wo.id,
+              ot_number: wo.ot_number,
+              client_name: wo.client_name,
+              quantity: wo.quantity,
               produced,
               progress,
-              status: ot.status,
+              status: wo.status,
             };
           })
         );
-        setOtsInProduction(otsWithProgress);
+        setWorkOrdersInProduction(workOrdersWithProgress);
       }
     };
 
-    fetchOtsInProduction();
+    fetchWorkOrdersInProduction();
     const interval = setInterval(() => {
-      fetchOtsInProduction();
+      fetchWorkOrdersInProduction();
       refetchProduction();
       refetchInventory();
       setLastUpdate(new Date());
@@ -91,17 +94,18 @@ export default function ControlCenter() {
   useEffect(() => {
     const channel = supabase
       .channel('control-center-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_reports' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_activity' }, () => {
         refetchProduction();
         setLastUpdate(new Date());
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_issues' }, () => {
-        if (soundEnabled) {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'production_activity' }, (payload) => {
+        const activity = payload.new as any;
+        if (activity.activity_type === 'issue' && soundEnabled) {
           const audio = new Audio('/alert.mp3');
           audio.play().catch(() => {});
         }
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_items' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => {
         refetchInventory();
       })
       .subscribe();
@@ -131,7 +135,7 @@ export default function ControlCenter() {
   };
 
   const totalOutputRate = Math.round((productionStats?.unitsProducedToday || 0) / 8);
-  const runningMachines = otsInProduction.length;
+  const runningWorkOrders = workOrdersInProduction.length;
   const totalMachines = 10;
   
   const oee = 85;
@@ -196,9 +200,9 @@ export default function ControlCenter() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-muted/50 rounded-lg p-4 text-center">
                 <div className="text-4xl font-bold text-primary">
-                  {runningMachines}/{totalMachines}
+                  {runningWorkOrders}/{totalMachines}
                 </div>
-                <div className="text-sm text-muted-foreground">Máquinas Activas</div>
+                <div className="text-sm text-muted-foreground">Órdenes Activas</div>
               </div>
               <div className="bg-muted/50 rounded-lg p-4 text-center">
                 <div className="text-4xl font-bold text-green-600">
@@ -215,24 +219,24 @@ export default function ControlCenter() {
 
             <ScrollArea className="h-[200px]">
               <div className="space-y-2">
-                {otsInProduction.map((ot) => (
-                  <div key={ot.id} className="bg-card border rounded-lg p-3">
+                {workOrdersInProduction.map((wo) => (
+                  <div key={wo.id} className="bg-card border rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{ot.ot_number}</span>
-                      <Badge variant={ot.progress >= 100 ? 'default' : 'secondary'}>
-                        {ot.progress.toFixed(0)}%
+                      <span className="font-medium">OT-{wo.ot_number}</span>
+                      <Badge variant={wo.progress >= 100 ? 'default' : 'secondary'}>
+                        {wo.progress.toFixed(0)}%
                       </Badge>
                     </div>
-                    <div className="text-sm text-muted-foreground mb-2">{ot.client_name}</div>
-                    <Progress value={ot.progress} className="h-2" />
+                    <div className="text-sm text-muted-foreground mb-2">{wo.client_name}</div>
+                    <Progress value={wo.progress} className="h-2" />
                     <div className="text-xs text-muted-foreground mt-1">
-                      {ot.produced.toLocaleString()} / {ot.quantity.toLocaleString()} unidades
+                      {wo.produced.toLocaleString()} / {wo.quantity.toLocaleString()} unidades
                     </div>
                   </div>
                 ))}
-                {otsInProduction.length === 0 && (
+                {workOrdersInProduction.length === 0 && (
                   <div className="text-center text-muted-foreground py-8">
-                    No hay OTs en producción actualmente
+                    No hay órdenes en producción actualmente
                   </div>
                 )}
               </div>
@@ -279,7 +283,7 @@ export default function ControlCenter() {
                 <div className="space-y-1">
                   {transactions.slice(0, 10).map((tx: any) => (
                     <div key={tx.id} className="flex items-center justify-between text-sm py-1 border-b">
-                      <span className="truncate flex-1">{tx.inventory_item_id?.slice(0, 8)}...</span>
+                      <span className="truncate flex-1">{tx.inventory_id?.slice(0, 8)}...</span>
                       <Badge variant={tx.transaction_type === 'purchase' ? 'default' : 'secondary'} className="text-xs">
                         {tx.transaction_type === 'purchase' ? '+' : '-'}{tx.quantity}
                       </Badge>
@@ -422,7 +426,7 @@ export default function ControlCenter() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {costVariance < 0 ? 'Por debajo del presupuesto' : 'Por encima del presupuesto'}
+                {costVariance < 0 ? 'Bajo presupuesto' : 'Sobre presupuesto'}
               </p>
             </div>
           </CardContent>

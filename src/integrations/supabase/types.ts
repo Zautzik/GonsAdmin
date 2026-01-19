@@ -47,98 +47,6 @@ export type Database = {
         }
         Relationships: []
       }
-      die_molds: {
-        Row: {
-          boca_count: number | null
-          client_id: string | null
-          created_at: string | null
-          creation_cost: number | null
-          description: string | null
-          id: string
-          last_used_at: string | null
-          location: string | null
-          name: string
-          size_height_cm: number | null
-          size_width_cm: number | null
-        }
-        Insert: {
-          boca_count?: number | null
-          client_id?: string | null
-          created_at?: string | null
-          creation_cost?: number | null
-          description?: string | null
-          id?: string
-          last_used_at?: string | null
-          location?: string | null
-          name: string
-          size_height_cm?: number | null
-          size_width_cm?: number | null
-        }
-        Update: {
-          boca_count?: number | null
-          client_id?: string | null
-          created_at?: string | null
-          creation_cost?: number | null
-          description?: string | null
-          id?: string
-          last_used_at?: string | null
-          location?: string | null
-          name?: string
-          size_height_cm?: number | null
-          size_width_cm?: number | null
-        }
-        Relationships: []
-      }
-      equipment_investments: {
-        Row: {
-          created_at: string | null
-          equipment_name: string
-          estimated_annual_savings: number | null
-          estimated_roi_months: number | null
-          id: string
-          machine_id: string | null
-          notes: string | null
-          payback_period_months: number | null
-          purchase_cost: number
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          equipment_name: string
-          estimated_annual_savings?: number | null
-          estimated_roi_months?: number | null
-          id?: string
-          machine_id?: string | null
-          notes?: string | null
-          payback_period_months?: number | null
-          purchase_cost: number
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          equipment_name?: string
-          estimated_annual_savings?: number | null
-          estimated_roi_months?: number | null
-          id?: string
-          machine_id?: string | null
-          notes?: string | null
-          payback_period_months?: number | null
-          purchase_cost?: number
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equipment_investments_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       inks: {
         Row: {
           color: string
@@ -175,57 +83,19 @@ export type Database = {
         }
         Relationships: []
       }
-      inventory_alerts: {
+      inventory: {
         Row: {
-          acknowledged_at: string | null
-          acknowledged_by: string | null
-          alert_type: Database["public"]["Enums"]["alert_type"]
-          created_at: string | null
-          id: string
-          inventory_item_id: string
-          is_acknowledged: boolean | null
-          message: string | null
-        }
-        Insert: {
-          acknowledged_at?: string | null
-          acknowledged_by?: string | null
-          alert_type: Database["public"]["Enums"]["alert_type"]
-          created_at?: string | null
-          id?: string
-          inventory_item_id: string
-          is_acknowledged?: boolean | null
-          message?: string | null
-        }
-        Update: {
-          acknowledged_at?: string | null
-          acknowledged_by?: string | null
-          alert_type?: Database["public"]["Enums"]["alert_type"]
-          created_at?: string | null
-          id?: string
-          inventory_item_id?: string
-          is_acknowledged?: boolean | null
-          message?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inventory_alerts_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
-            isOneToOne: false
-            referencedRelation: "inventory_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      inventory_items: {
-        Row: {
+          alert_acknowledged: boolean | null
+          alert_status: string | null
           barcode: string | null
-          category: Database["public"]["Enums"]["inventory_category"] | null
+          category: string
           created_at: string | null
           current_stock: number | null
           id: string
           is_active: boolean | null
           last_purchase_date: string | null
           last_purchase_price: number | null
+          last_restocked: string | null
           location: string | null
           maximum_stock: number | null
           minimum_stock: number | null
@@ -235,18 +105,21 @@ export type Database = {
           sku: string
           supplier_id: string | null
           unit_cost: number | null
-          unit_of_measure: Database["public"]["Enums"]["inventory_unit"] | null
+          unit_of_measure: string
           updated_at: string | null
         }
         Insert: {
+          alert_acknowledged?: boolean | null
+          alert_status?: string | null
           barcode?: string | null
-          category?: Database["public"]["Enums"]["inventory_category"] | null
+          category: string
           created_at?: string | null
           current_stock?: number | null
           id?: string
           is_active?: boolean | null
           last_purchase_date?: string | null
           last_purchase_price?: number | null
+          last_restocked?: string | null
           location?: string | null
           maximum_stock?: number | null
           minimum_stock?: number | null
@@ -256,18 +129,21 @@ export type Database = {
           sku: string
           supplier_id?: string | null
           unit_cost?: number | null
-          unit_of_measure?: Database["public"]["Enums"]["inventory_unit"] | null
+          unit_of_measure: string
           updated_at?: string | null
         }
         Update: {
+          alert_acknowledged?: boolean | null
+          alert_status?: string | null
           barcode?: string | null
-          category?: Database["public"]["Enums"]["inventory_category"] | null
+          category?: string
           created_at?: string | null
           current_stock?: number | null
           id?: string
           is_active?: boolean | null
           last_purchase_date?: string | null
           last_purchase_price?: number | null
+          last_restocked?: string | null
           location?: string | null
           maximum_stock?: number | null
           minimum_stock?: number | null
@@ -277,12 +153,12 @@ export type Database = {
           sku?: string
           supplier_id?: string | null
           unit_cost?: number | null
-          unit_of_measure?: Database["public"]["Enums"]["inventory_unit"] | null
+          unit_of_measure?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "inventory_items_supplier_id_fkey"
+            foreignKeyName: "inventory_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
@@ -294,74 +170,48 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          inventory_item_id: string
+          inventory_id: string
           notes: string | null
           performed_by: string | null
-          production_report_id: string | null
           purchase_order_id: string | null
           quantity: number
-          reference_id: string | null
-          reference_type: string | null
           scanned_via: string | null
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          transaction_type: string
           unit_cost: number | null
-          whatsapp_message_id: string | null
           work_order_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
-          inventory_item_id: string
+          inventory_id: string
           notes?: string | null
           performed_by?: string | null
-          production_report_id?: string | null
           purchase_order_id?: string | null
           quantity: number
-          reference_id?: string | null
-          reference_type?: string | null
           scanned_via?: string | null
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          transaction_type: string
           unit_cost?: number | null
-          whatsapp_message_id?: string | null
           work_order_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
-          inventory_item_id?: string
+          inventory_id?: string
           notes?: string | null
           performed_by?: string | null
-          production_report_id?: string | null
           purchase_order_id?: string | null
           quantity?: number
-          reference_id?: string | null
-          reference_type?: string | null
           scanned_via?: string | null
-          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          transaction_type?: string
           unit_cost?: number | null
-          whatsapp_message_id?: string | null
           work_order_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "inventory_transactions_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
+            foreignKeyName: "inventory_transactions_inventory_id_fkey"
+            columns: ["inventory_id"]
             isOneToOne: false
-            referencedRelation: "inventory_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_transactions_production_report_id_fkey"
-            columns: ["production_report_id"]
-            isOneToOne: false
-            referencedRelation: "production_reports"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_transactions_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_orders"
+            referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
           {
@@ -369,100 +219,6 @@ export type Database = {
             columns: ["work_order_id"]
             isOneToOne: false
             referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      jobs: {
-        Row: {
-          assigned_machine_id: string | null
-          created_at: string | null
-          created_by: string | null
-          description: string
-          id: string
-          status: Database["public"]["Enums"]["job_status"]
-          updated_at: string | null
-        }
-        Insert: {
-          assigned_machine_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description: string
-          id?: string
-          status?: Database["public"]["Enums"]["job_status"]
-          updated_at?: string | null
-        }
-        Update: {
-          assigned_machine_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string
-          id?: string
-          status?: Database["public"]["Enums"]["job_status"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "jobs_assigned_machine_id_fkey"
-            columns: ["assigned_machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      machine_costs: {
-        Row: {
-          created_at: string | null
-          energy_cost: number | null
-          id: string
-          labor_cost: number | null
-          machine_id: string
-          maintenance_cost: number | null
-          month: string
-          notes: string | null
-          outsourcing_cost: number | null
-          revenue_generated: number | null
-          spare_parts_cost: number | null
-          total_operating_cost: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          energy_cost?: number | null
-          id?: string
-          labor_cost?: number | null
-          machine_id: string
-          maintenance_cost?: number | null
-          month: string
-          notes?: string | null
-          outsourcing_cost?: number | null
-          revenue_generated?: number | null
-          spare_parts_cost?: number | null
-          total_operating_cost?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          energy_cost?: number | null
-          id?: string
-          labor_cost?: number | null
-          machine_id?: string
-          maintenance_cost?: number | null
-          month?: string
-          notes?: string | null
-          outsourcing_cost?: number | null
-          revenue_generated?: number | null
-          spare_parts_cost?: number | null
-          total_operating_cost?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "machine_costs_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
             referencedColumns: ["id"]
           },
         ]
@@ -494,256 +250,110 @@ export type Database = {
         }
         Relationships: []
       }
-      maintenance_checklists: {
+      notifications: {
         Row: {
           created_at: string | null
-          created_by: string | null
-          description: string | null
-          frequency: string
           id: string
-          machine_id: string | null
-          name: string
-          updated_at: string | null
+          is_archived: boolean | null
+          is_read: boolean | null
+          link_text: string | null
+          link_url: string | null
+          message: string
+          title: string
+          type: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          frequency: string
           id?: string
-          machine_id?: string | null
-          name: string
-          updated_at?: string | null
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          link_text?: string | null
+          link_url?: string | null
+          message: string
+          title: string
+          type?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          frequency?: string
           id?: string
-          machine_id?: string | null
-          name?: string
-          updated_at?: string | null
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          link_text?: string | null
+          link_url?: string | null
+          message?: string
+          title?: string
+          type?: string | null
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_checklists_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      maintenance_task_completions: {
+      operations: {
         Row: {
-          completed: boolean | null
-          completed_at: string | null
-          completed_by: string | null
+          category: string
           created_at: string | null
           id: string
           notes: string | null
-          task_id: string
-          time_spent_minutes: number | null
+          operation_code: string
+          operation_name: string
+          quantity_actual: number | null
+          quantity_budgeted: number
+          sequence_order: number | null
+          status: string | null
+          total_cost_actual: number | null
+          total_cost_budgeted: number
+          unit_cost_actual: number | null
+          unit_cost_budgeted: number
+          unit_of_measure: string
           work_order_id: string
         }
         Insert: {
-          completed?: boolean | null
-          completed_at?: string | null
-          completed_by?: string | null
+          category: string
           created_at?: string | null
           id?: string
           notes?: string | null
-          task_id: string
-          time_spent_minutes?: number | null
+          operation_code: string
+          operation_name: string
+          quantity_actual?: number | null
+          quantity_budgeted: number
+          sequence_order?: number | null
+          status?: string | null
+          total_cost_actual?: number | null
+          total_cost_budgeted: number
+          unit_cost_actual?: number | null
+          unit_cost_budgeted: number
+          unit_of_measure: string
           work_order_id: string
         }
         Update: {
-          completed?: boolean | null
-          completed_at?: string | null
-          completed_by?: string | null
+          category?: string
           created_at?: string | null
           id?: string
           notes?: string | null
-          task_id?: string
-          time_spent_minutes?: number | null
+          operation_code?: string
+          operation_name?: string
+          quantity_actual?: number | null
+          quantity_budgeted?: number
+          sequence_order?: number | null
+          status?: string | null
+          total_cost_actual?: number | null
+          total_cost_budgeted?: number
+          unit_cost_actual?: number | null
+          unit_cost_budgeted?: number
+          unit_of_measure?: string
           work_order_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "maintenance_task_completions_task_id_fkey"
-            columns: ["task_id"]
+            foreignKeyName: "operations_operation_code_fkey"
+            columns: ["operation_code"]
             isOneToOne: false
-            referencedRelation: "maintenance_tasks"
-            referencedColumns: ["id"]
+            referencedRelation: "operations_catalog"
+            referencedColumns: ["code"]
           },
           {
-            foreignKeyName: "maintenance_task_completions_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      maintenance_tasks: {
-        Row: {
-          checklist_id: string
-          created_at: string | null
-          description: string
-          estimated_minutes: number | null
-          id: string
-          notes: string | null
-          requires_parts: boolean | null
-          task_number: number
-        }
-        Insert: {
-          checklist_id: string
-          created_at?: string | null
-          description: string
-          estimated_minutes?: number | null
-          id?: string
-          notes?: string | null
-          requires_parts?: boolean | null
-          task_number: number
-        }
-        Update: {
-          checklist_id?: string
-          created_at?: string | null
-          description?: string
-          estimated_minutes?: number | null
-          id?: string
-          notes?: string | null
-          requires_parts?: boolean | null
-          task_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_tasks_checklist_id_fkey"
-            columns: ["checklist_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_checklists"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      maintenance_work_orders: {
-        Row: {
-          assigned_to: string | null
-          checklist_id: string
-          completed_at: string | null
-          created_at: string | null
-          created_by: string | null
-          id: string
-          machine_id: string
-          notes: string | null
-          ot_id: string | null
-          priority: number | null
-          scheduled_date: string
-          started_at: string | null
-          status: string
-          total_time_minutes: number | null
-        }
-        Insert: {
-          assigned_to?: string | null
-          checklist_id: string
-          completed_at?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          machine_id: string
-          notes?: string | null
-          ot_id?: string | null
-          priority?: number | null
-          scheduled_date: string
-          started_at?: string | null
-          status?: string
-          total_time_minutes?: number | null
-        }
-        Update: {
-          assigned_to?: string | null
-          checklist_id?: string
-          completed_at?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          machine_id?: string
-          notes?: string | null
-          ot_id?: string | null
-          priority?: number | null
-          scheduled_date?: string
-          started_at?: string | null
-          status?: string
-          total_time_minutes?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_work_orders_checklist_id_fkey"
-            columns: ["checklist_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_checklists"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_work_orders_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_work_orders_ot_id_fkey"
-            columns: ["ot_id"]
-            isOneToOne: false
-            referencedRelation: "ots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      material_requirements: {
-        Row: {
-          created_at: string | null
-          id: string
-          inventory_item_id: string
-          notes: string | null
-          quantity_allocated: number | null
-          quantity_consumed: number | null
-          quantity_required: number
-          status: Database["public"]["Enums"]["material_status"] | null
-          work_order_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          inventory_item_id: string
-          notes?: string | null
-          quantity_allocated?: number | null
-          quantity_consumed?: number | null
-          quantity_required: number
-          status?: Database["public"]["Enums"]["material_status"] | null
-          work_order_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          inventory_item_id?: string
-          notes?: string | null
-          quantity_allocated?: number | null
-          quantity_consumed?: number | null
-          quantity_required?: number
-          status?: Database["public"]["Enums"]["material_status"] | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "material_requirements_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
-            isOneToOne: false
-            referencedRelation: "inventory_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "material_requirements_work_order_id_fkey"
+            foreignKeyName: "operations_work_order_id_fkey"
             columns: ["work_order_id"]
             isOneToOne: false
             referencedRelation: "work_orders"
@@ -753,956 +363,134 @@ export type Database = {
       }
       operations_catalog: {
         Row: {
-          category: Database["public"]["Enums"]["operation_category"]
+          category: string
           code: string
-          cost_type: Database["public"]["Enums"]["cost_type"]
           created_at: string | null
-          default_cost: number
+          default_cost: number | null
           description: string | null
-          id: string
           is_active: boolean | null
           name: string
           unit_of_measure: string
-          updated_at: string | null
         }
         Insert: {
-          category: Database["public"]["Enums"]["operation_category"]
+          category: string
           code: string
-          cost_type: Database["public"]["Enums"]["cost_type"]
           created_at?: string | null
-          default_cost?: number
+          default_cost?: number | null
           description?: string | null
-          id?: string
           is_active?: boolean | null
           name: string
           unit_of_measure: string
-          updated_at?: string | null
         }
         Update: {
-          category?: Database["public"]["Enums"]["operation_category"]
+          category?: string
           code?: string
-          cost_type?: Database["public"]["Enums"]["cost_type"]
           created_at?: string | null
-          default_cost?: number
+          default_cost?: number | null
           description?: string | null
-          id?: string
           is_active?: boolean | null
           name?: string
           unit_of_measure?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
-      ot_calculations: {
+      production_activity: {
         Row: {
-          bocas_per_sheet: number | null
+          activity_type: string
           created_at: string | null
-          ctp_plates: number | null
-          finishing_hours_estimated: number | null
-          id: string
-          imposition_layout: Json | null
-          ink_calculations: Json | null
-          printing_hours_estimated: number | null
-          setup_sheets: number | null
-          sheet_format: string | null
-          sheet_height_cm: number | null
-          sheet_width_cm: number | null
-          substrate_kg: number | null
-          total_sheets: number | null
-          updated_at: string | null
-          waste_factor_percent: number | null
-          work_order_id: string
-        }
-        Insert: {
-          bocas_per_sheet?: number | null
-          created_at?: string | null
-          ctp_plates?: number | null
-          finishing_hours_estimated?: number | null
-          id?: string
-          imposition_layout?: Json | null
-          ink_calculations?: Json | null
-          printing_hours_estimated?: number | null
-          setup_sheets?: number | null
-          sheet_format?: string | null
-          sheet_height_cm?: number | null
-          sheet_width_cm?: number | null
-          substrate_kg?: number | null
-          total_sheets?: number | null
-          updated_at?: string | null
-          waste_factor_percent?: number | null
-          work_order_id: string
-        }
-        Update: {
-          bocas_per_sheet?: number | null
-          created_at?: string | null
-          ctp_plates?: number | null
-          finishing_hours_estimated?: number | null
-          id?: string
-          imposition_layout?: Json | null
-          ink_calculations?: Json | null
-          printing_hours_estimated?: number | null
-          setup_sheets?: number | null
-          sheet_format?: string | null
-          sheet_height_cm?: number | null
-          sheet_width_cm?: number | null
-          substrate_kg?: number | null
-          total_sheets?: number | null
-          updated_at?: string | null
-          waste_factor_percent?: number | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_calculations_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: true
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_cost_items: {
-        Row: {
-          category: string | null
-          cost_actual: number | null
-          cost_estimated: number | null
-          created_at: string | null
-          description: string
-          deviation_percent: number | null
-          deviation_reason: string | null
-          id: string
-          item_code: string
-          ot_id: string
-          quantity_actual: number | null
-          quantity_estimated: number | null
-          unit: string | null
-          unit_cost: number | null
-        }
-        Insert: {
-          category?: string | null
-          cost_actual?: number | null
-          cost_estimated?: number | null
-          created_at?: string | null
-          description: string
-          deviation_percent?: number | null
-          deviation_reason?: string | null
-          id?: string
-          item_code: string
-          ot_id: string
-          quantity_actual?: number | null
-          quantity_estimated?: number | null
-          unit?: string | null
-          unit_cost?: number | null
-        }
-        Update: {
-          category?: string | null
-          cost_actual?: number | null
-          cost_estimated?: number | null
-          created_at?: string | null
-          description?: string
-          deviation_percent?: number | null
-          deviation_reason?: string | null
-          id?: string
-          item_code?: string
-          ot_id?: string
-          quantity_actual?: number | null
-          quantity_estimated?: number | null
-          unit?: string | null
-          unit_cost?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_cost_items_ot_id_fkey"
-            columns: ["ot_id"]
-            isOneToOne: false
-            referencedRelation: "ots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_deviations: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          deviation_amount: number | null
-          deviation_percent: number | null
-          id: string
-          notes: string | null
-          operation_id: string | null
-          reason: string | null
-          work_order_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          deviation_amount?: number | null
-          deviation_percent?: number | null
-          id?: string
-          notes?: string | null
-          operation_id?: string | null
-          reason?: string | null
-          work_order_id: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          deviation_amount?: number | null
-          deviation_percent?: number | null
-          id?: string
-          notes?: string | null
-          operation_id?: string | null
-          reason?: string | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_deviations_operation_id_fkey"
-            columns: ["operation_id"]
-            isOneToOne: false
-            referencedRelation: "ot_operations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ot_deviations_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_financials: {
-        Row: {
-          created_at: string | null
-          energy_cost: number | null
-          hours_spent: number | null
-          id: string
-          labor_cost: number | null
-          machine_cost: number | null
-          material_cost: number | null
-          notes: string | null
-          ot_id: string
-          outsourcing_cost: number | null
-          overhead_cost: number | null
-          profit: number | null
-          revenue: number | null
-          total_cost: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          energy_cost?: number | null
-          hours_spent?: number | null
-          id?: string
-          labor_cost?: number | null
-          machine_cost?: number | null
-          material_cost?: number | null
-          notes?: string | null
-          ot_id: string
-          outsourcing_cost?: number | null
-          overhead_cost?: number | null
-          profit?: number | null
-          revenue?: number | null
-          total_cost?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          energy_cost?: number | null
-          hours_spent?: number | null
-          id?: string
-          labor_cost?: number | null
-          machine_cost?: number | null
-          material_cost?: number | null
-          notes?: string | null
-          ot_id?: string
-          outsourcing_cost?: number | null
-          overhead_cost?: number | null
-          profit?: number | null
-          revenue?: number | null
-          total_cost?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_financials_ot_id_fkey"
-            columns: ["ot_id"]
-            isOneToOne: true
-            referencedRelation: "ots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_history: {
-        Row: {
-          action: string
-          changed_at: string | null
-          changed_by: string | null
-          field_changed: string | null
-          id: string
-          new_value: Json | null
-          notes: string | null
-          old_value: Json | null
-          work_order_id: string
-        }
-        Insert: {
-          action: string
-          changed_at?: string | null
-          changed_by?: string | null
-          field_changed?: string | null
-          id?: string
-          new_value?: Json | null
-          notes?: string | null
-          old_value?: Json | null
-          work_order_id: string
-        }
-        Update: {
-          action?: string
-          changed_at?: string | null
-          changed_by?: string | null
-          field_changed?: string | null
-          id?: string
-          new_value?: Json | null
-          notes?: string | null
-          old_value?: Json | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_history_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_operations: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          operation_code: string
-          quantity_actual: number | null
-          quantity_budgeted: number | null
-          sequence_order: number
-          status: Database["public"]["Enums"]["ot_operation_status"] | null
-          total_cost_actual: number | null
-          total_cost_budgeted: number | null
-          unit_cost_actual: number | null
-          unit_cost_budgeted: number | null
-          unit_of_measure: string | null
-          updated_at: string | null
-          work_order_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          operation_code: string
-          quantity_actual?: number | null
-          quantity_budgeted?: number | null
-          sequence_order?: number
-          status?: Database["public"]["Enums"]["ot_operation_status"] | null
-          total_cost_actual?: number | null
-          total_cost_budgeted?: number | null
-          unit_cost_actual?: number | null
-          unit_cost_budgeted?: number | null
-          unit_of_measure?: string | null
-          updated_at?: string | null
-          work_order_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          operation_code?: string
-          quantity_actual?: number | null
-          quantity_budgeted?: number | null
-          sequence_order?: number
-          status?: Database["public"]["Enums"]["ot_operation_status"] | null
-          total_cost_actual?: number | null
-          total_cost_budgeted?: number | null
-          unit_cost_actual?: number | null
-          unit_cost_budgeted?: number | null
-          unit_of_measure?: string | null
-          updated_at?: string | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_operations_operation_code_fkey"
-            columns: ["operation_code"]
-            isOneToOne: false
-            referencedRelation: "operations_catalog"
-            referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "ot_operations_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_pricing: {
-        Row: {
-          commission1_amount: number | null
-          commission1_percent: number | null
-          commission2_amount: number | null
-          commission2_percent: number | null
-          commission3_amount: number | null
-          commission3_percent: number | null
-          created_at: string | null
-          id: string
-          increment_amount: number | null
-          increment_percent: number | null
-          labor_cost: number | null
-          margin_amount: number | null
-          margin_percent: number | null
-          materials_cost: number | null
-          other_cost: number | null
-          subtotal: number | null
-          third_party_cost: number | null
-          total_price: number | null
-          unit_price: number | null
-          updated_at: string | null
-          work_order_id: string
-        }
-        Insert: {
-          commission1_amount?: number | null
-          commission1_percent?: number | null
-          commission2_amount?: number | null
-          commission2_percent?: number | null
-          commission3_amount?: number | null
-          commission3_percent?: number | null
-          created_at?: string | null
-          id?: string
-          increment_amount?: number | null
-          increment_percent?: number | null
-          labor_cost?: number | null
-          margin_amount?: number | null
-          margin_percent?: number | null
-          materials_cost?: number | null
-          other_cost?: number | null
-          subtotal?: number | null
-          third_party_cost?: number | null
-          total_price?: number | null
-          unit_price?: number | null
-          updated_at?: string | null
-          work_order_id: string
-        }
-        Update: {
-          commission1_amount?: number | null
-          commission1_percent?: number | null
-          commission2_amount?: number | null
-          commission2_percent?: number | null
-          commission3_amount?: number | null
-          commission3_percent?: number | null
-          created_at?: string | null
-          id?: string
-          increment_amount?: number | null
-          increment_percent?: number | null
-          labor_cost?: number | null
-          margin_amount?: number | null
-          margin_percent?: number | null
-          materials_cost?: number | null
-          other_cost?: number | null
-          subtotal?: number | null
-          third_party_cost?: number | null
-          total_price?: number | null
-          unit_price?: number | null
-          updated_at?: string | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_pricing_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: true
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_specifications: {
-        Row: {
-          colors_back: number | null
-          colors_front: number | null
-          created_at: string | null
-          finished_height_cm: number | null
-          finished_width_cm: number | null
-          finishing_operations: Json | null
-          id: string
-          packaging_notes: string | null
-          pantone_colors: Json | null
-          product_type: string | null
-          substrate_brand: string | null
-          substrate_type: string | null
-          substrate_weight_gsm: number | null
-          updated_at: string | null
-          work_order_id: string
-        }
-        Insert: {
-          colors_back?: number | null
-          colors_front?: number | null
-          created_at?: string | null
-          finished_height_cm?: number | null
-          finished_width_cm?: number | null
-          finishing_operations?: Json | null
-          id?: string
-          packaging_notes?: string | null
-          pantone_colors?: Json | null
-          product_type?: string | null
-          substrate_brand?: string | null
-          substrate_type?: string | null
-          substrate_weight_gsm?: number | null
-          updated_at?: string | null
-          work_order_id: string
-        }
-        Update: {
-          colors_back?: number | null
-          colors_front?: number | null
-          created_at?: string | null
-          finished_height_cm?: number | null
-          finished_width_cm?: number | null
-          finishing_operations?: Json | null
-          id?: string
-          packaging_notes?: string | null
-          pantone_colors?: Json | null
-          product_type?: string | null
-          substrate_brand?: string | null
-          substrate_type?: string | null
-          substrate_weight_gsm?: number | null
-          updated_at?: string | null
-          work_order_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ot_specifications_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: true
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ot_templates: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
           description: string | null
           id: string
-          name: string
-          operations: Json | null
-          product_type: string | null
-          specifications: Json | null
-          updated_at: string | null
-          use_count: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          operations?: Json | null
-          product_type?: string | null
-          specifications?: Json | null
-          updated_at?: string | null
-          use_count?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          operations?: Json | null
-          product_type?: string | null
-          specifications?: Json | null
-          updated_at?: string | null
-          use_count?: number | null
-        }
-        Relationships: []
-      }
-      ots: {
-        Row: {
-          client_name: string
-          completed_at: string | null
-          created_at: string
-          current_workstation_id: string | null
-          deadline: string | null
-          description: string | null
-          id: string
-          ot_number: string
-          priority: number
-          quantity: number
-          status: Database["public"]["Enums"]["ot_status"]
-          updated_at: string
-        }
-        Insert: {
-          client_name: string
-          completed_at?: string | null
-          created_at?: string
-          current_workstation_id?: string | null
-          deadline?: string | null
-          description?: string | null
-          id?: string
-          ot_number: string
-          priority?: number
-          quantity?: number
-          status?: Database["public"]["Enums"]["ot_status"]
-          updated_at?: string
-        }
-        Update: {
-          client_name?: string
-          completed_at?: string | null
-          created_at?: string
-          current_workstation_id?: string | null
-          deadline?: string | null
-          description?: string | null
-          id?: string
-          ot_number?: string
-          priority?: number
-          quantity?: number
-          status?: Database["public"]["Enums"]["ot_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ots_current_workstation_id_fkey"
-            columns: ["current_workstation_id"]
-            isOneToOne: false
-            referencedRelation: "workstations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      production_issues: {
-        Row: {
-          created_at: string | null
-          description: string
-          id: string
-          issue_type: Database["public"]["Enums"]["issue_type"]
-          production_report_id: string | null
-          reported_by: string | null
-          resolution_notes: string | null
-          resolved: boolean | null
-          resolved_at: string | null
-          resolved_by: string | null
-          severity: Database["public"]["Enums"]["issue_severity"] | null
-          work_order_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description: string
-          id?: string
-          issue_type: Database["public"]["Enums"]["issue_type"]
-          production_report_id?: string | null
-          reported_by?: string | null
-          resolution_notes?: string | null
-          resolved?: boolean | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          severity?: Database["public"]["Enums"]["issue_severity"] | null
-          work_order_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string
-          id?: string
-          issue_type?: Database["public"]["Enums"]["issue_type"]
-          production_report_id?: string | null
-          reported_by?: string | null
-          resolution_notes?: string | null
-          resolved?: boolean | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          severity?: Database["public"]["Enums"]["issue_severity"] | null
-          work_order_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "production_issues_production_report_id_fkey"
-            columns: ["production_report_id"]
-            isOneToOne: false
-            referencedRelation: "production_reports"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "production_issues_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      production_reports: {
-        Row: {
-          created_at: string | null
-          id: string
+          is_resolved: boolean | null
+          issue_type: string | null
           machine_id: string | null
           notes: string | null
-          operation_code: string | null
+          operation_id: string | null
           operator_id: string | null
           reported_via: string | null
-          status: Database["public"]["Enums"]["production_status"] | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
           time_elapsed_minutes: number | null
           time_ended: string | null
           time_started: string | null
-          units_produced: number
+          units_produced: number | null
           units_rejected: number | null
-          updated_at: string | null
-          whatsapp_message_id: string | null
           work_order_id: string | null
         }
         Insert: {
+          activity_type?: string
           created_at?: string | null
+          description?: string | null
           id?: string
+          is_resolved?: boolean | null
+          issue_type?: string | null
           machine_id?: string | null
           notes?: string | null
-          operation_code?: string | null
+          operation_id?: string | null
           operator_id?: string | null
           reported_via?: string | null
-          status?: Database["public"]["Enums"]["production_status"] | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
           time_elapsed_minutes?: number | null
           time_ended?: string | null
           time_started?: string | null
-          units_produced: number
+          units_produced?: number | null
           units_rejected?: number | null
-          updated_at?: string | null
-          whatsapp_message_id?: string | null
           work_order_id?: string | null
         }
         Update: {
+          activity_type?: string
           created_at?: string | null
+          description?: string | null
           id?: string
+          is_resolved?: boolean | null
+          issue_type?: string | null
           machine_id?: string | null
           notes?: string | null
-          operation_code?: string | null
+          operation_id?: string | null
           operator_id?: string | null
           reported_via?: string | null
-          status?: Database["public"]["Enums"]["production_status"] | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
           time_elapsed_minutes?: number | null
           time_ended?: string | null
           time_started?: string | null
-          units_produced?: number
+          units_produced?: number | null
           units_rejected?: number | null
-          updated_at?: string | null
-          whatsapp_message_id?: string | null
           work_order_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "production_reports_machine_id_fkey"
+            foreignKeyName: "production_activity_machine_id_fkey"
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "machines"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "production_reports_operation_code_fkey"
-            columns: ["operation_code"]
+            foreignKeyName: "production_activity_operation_id_fkey"
+            columns: ["operation_id"]
             isOneToOne: false
-            referencedRelation: "operations_catalog"
-            referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "production_reports_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      progress_submissions: {
-        Row: {
-          created_at: string
-          edited_ot_id: string | null
-          edited_time_minutes: number | null
-          edited_units: number | null
-          id: string
-          idle_reason: string | null
-          machine_id: string | null
-          maintenance_description: string | null
-          ot_id: string | null
-          quality_notes: string | null
-          raw_message: string
-          rejection_reason: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          shift_id: string | null
-          status: Database["public"]["Enums"]["submission_status"]
-          submission_type: Database["public"]["Enums"]["progress_type"]
-          submitted_at: string
-          supervisor_notes: string | null
-          time_reported_minutes: number
-          units_reported: number
-          updated_at: string
-          whatsapp_group: string | null
-          worker_code: string | null
-          worker_id: string | null
-          worker_phone: string
-          workstation_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          edited_ot_id?: string | null
-          edited_time_minutes?: number | null
-          edited_units?: number | null
-          id?: string
-          idle_reason?: string | null
-          machine_id?: string | null
-          maintenance_description?: string | null
-          ot_id?: string | null
-          quality_notes?: string | null
-          raw_message: string
-          rejection_reason?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          shift_id?: string | null
-          status?: Database["public"]["Enums"]["submission_status"]
-          submission_type?: Database["public"]["Enums"]["progress_type"]
-          submitted_at?: string
-          supervisor_notes?: string | null
-          time_reported_minutes?: number
-          units_reported?: number
-          updated_at?: string
-          whatsapp_group?: string | null
-          worker_code?: string | null
-          worker_id?: string | null
-          worker_phone: string
-          workstation_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          edited_ot_id?: string | null
-          edited_time_minutes?: number | null
-          edited_units?: number | null
-          id?: string
-          idle_reason?: string | null
-          machine_id?: string | null
-          maintenance_description?: string | null
-          ot_id?: string | null
-          quality_notes?: string | null
-          raw_message?: string
-          rejection_reason?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          shift_id?: string | null
-          status?: Database["public"]["Enums"]["submission_status"]
-          submission_type?: Database["public"]["Enums"]["progress_type"]
-          submitted_at?: string
-          supervisor_notes?: string | null
-          time_reported_minutes?: number
-          units_reported?: number
-          updated_at?: string
-          whatsapp_group?: string | null
-          worker_code?: string | null
-          worker_id?: string | null
-          worker_phone?: string
-          workstation_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "progress_submissions_edited_ot_id_fkey"
-            columns: ["edited_ot_id"]
-            isOneToOne: false
-            referencedRelation: "ots"
+            referencedRelation: "operations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "progress_submissions_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "progress_submissions_ot_id_fkey"
-            columns: ["ot_id"]
-            isOneToOne: false
-            referencedRelation: "ots"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "progress_submissions_shift_id_fkey"
-            columns: ["shift_id"]
-            isOneToOne: false
-            referencedRelation: "shifts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "progress_submissions_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "worker_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "progress_submissions_worker_id_fkey"
-            columns: ["worker_id"]
+            foreignKeyName: "production_activity_operator_id_fkey"
+            columns: ["operator_id"]
             isOneToOne: false
             referencedRelation: "workers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "progress_submissions_workstation_id_fkey"
-            columns: ["workstation_id"]
+            foreignKeyName: "production_activity_work_order_id_fkey"
+            columns: ["work_order_id"]
             isOneToOne: false
-            referencedRelation: "workstations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      purchase_order_items: {
-        Row: {
-          id: string
-          inventory_item_id: string
-          notes: string | null
-          purchase_order_id: string
-          quantity_ordered: number
-          quantity_received: number | null
-          total_cost: number | null
-          unit_cost: number
-        }
-        Insert: {
-          id?: string
-          inventory_item_id: string
-          notes?: string | null
-          purchase_order_id: string
-          quantity_ordered: number
-          quantity_received?: number | null
-          total_cost?: number | null
-          unit_cost: number
-        }
-        Update: {
-          id?: string
-          inventory_item_id?: string
-          notes?: string | null
-          purchase_order_id?: string
-          quantity_ordered?: number
-          quantity_received?: number | null
-          total_cost?: number | null
-          unit_cost?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "purchase_order_items_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
-            isOneToOne: false
-            referencedRelation: "inventory_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_orders"
+            referencedRelation: "work_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1716,10 +504,11 @@ export type Database = {
           created_by: string | null
           expected_delivery_date: string | null
           id: string
+          items: Json | null
           notes: string | null
-          order_date: string
+          order_date: string | null
           po_number: number
-          status: Database["public"]["Enums"]["po_status"] | null
+          status: string | null
           supplier_id: string
           total_amount: number | null
           updated_at: string | null
@@ -1732,10 +521,11 @@ export type Database = {
           created_by?: string | null
           expected_delivery_date?: string | null
           id?: string
+          items?: Json | null
           notes?: string | null
-          order_date?: string
+          order_date?: string | null
           po_number?: number
-          status?: Database["public"]["Enums"]["po_status"] | null
+          status?: string | null
           supplier_id: string
           total_amount?: number | null
           updated_at?: string | null
@@ -1748,10 +538,11 @@ export type Database = {
           created_by?: string | null
           expected_delivery_date?: string | null
           id?: string
+          items?: Json | null
           notes?: string | null
-          order_date?: string
+          order_date?: string | null
           po_number?: number
-          status?: Database["public"]["Enums"]["po_status"] | null
+          status?: string | null
           supplier_id?: string
           total_amount?: number | null
           updated_at?: string | null
@@ -1765,76 +556,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      roster_workers: {
-        Row: {
-          created_at: string | null
-          id: string
-          roster_id: string
-          worker_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          roster_id: string
-          worker_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          roster_id?: string
-          worker_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "roster_workers_roster_id_fkey"
-            columns: ["roster_id"]
-            isOneToOne: false
-            referencedRelation: "rosters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "roster_workers_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "worker_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "roster_workers_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "workers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rosters: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          department: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          department?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          department?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       shifts: {
         Row: {
@@ -1947,64 +668,6 @@ export type Database = {
         }
         Relationships: []
       }
-      task_logs: {
-        Row: {
-          created_at: string | null
-          id: string
-          job_id: string | null
-          notes: string | null
-          ot_id: string | null
-          performance_rating: number
-          task_type: Database["public"]["Enums"]["task_type"]
-          time_spent_minutes: number
-          worker_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          job_id?: string | null
-          notes?: string | null
-          ot_id?: string | null
-          performance_rating?: number
-          task_type: Database["public"]["Enums"]["task_type"]
-          time_spent_minutes?: number
-          worker_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          job_id?: string | null
-          notes?: string | null
-          ot_id?: string | null
-          performance_rating?: number
-          task_type?: Database["public"]["Enums"]["task_type"]
-          time_spent_minutes?: number
-          worker_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_logs_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_logs_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "worker_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_logs_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "workers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2026,170 +689,78 @@ export type Database = {
         }
         Relationships: []
       }
-      whatsapp_messages: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          direction: string | null
-          id: string
-          message_id: string | null
-          message_type: string | null
-          metadata: Json | null
-          processed: boolean | null
-          processed_at: string | null
-          whatsapp_user_id: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          direction?: string | null
-          id?: string
-          message_id?: string | null
-          message_type?: string | null
-          metadata?: Json | null
-          processed?: boolean | null
-          processed_at?: string | null
-          whatsapp_user_id?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          direction?: string | null
-          id?: string
-          message_id?: string | null
-          message_type?: string | null
-          metadata?: Json | null
-          processed?: boolean | null
-          processed_at?: string | null
-          whatsapp_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_messages_whatsapp_user_id_fkey"
-            columns: ["whatsapp_user_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_users: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          is_verified: boolean | null
-          last_interaction: string | null
-          phone_number: string
-          preferred_language: string | null
-          user_id: string | null
-          verification_code: string | null
-          whatsapp_name: string | null
-          worker_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_verified?: boolean | null
-          last_interaction?: string | null
-          phone_number: string
-          preferred_language?: string | null
-          user_id?: string | null
-          verification_code?: string | null
-          whatsapp_name?: string | null
-          worker_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_verified?: boolean | null
-          last_interaction?: string | null
-          phone_number?: string
-          preferred_language?: string | null
-          user_id?: string | null
-          verification_code?: string | null
-          whatsapp_name?: string | null
-          worker_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_users_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "worker_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_users_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "workers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       work_orders: {
         Row: {
-          budget_code: string | null
+          calculations: Json | null
           client_id: string | null
           client_name: string
-          created_at: string
+          completed_at: string | null
+          cost_actual: number | null
+          cost_budgeted: number | null
+          created_at: string | null
           created_by: string | null
+          current_workstation_id: string | null
           delivery_date: string | null
           id: string
           notes: string | null
           ot_number: number
-          priority: number | null
+          priority: string | null
           product_description: string | null
           product_name: string
           quantity: number
-          sales_rep_id: string | null
-          status: Database["public"]["Enums"]["work_order_status"]
+          specifications: Json | null
+          status: string | null
           total_price: number | null
           unit_price: number | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          budget_code?: string | null
+          calculations?: Json | null
           client_id?: string | null
           client_name: string
-          created_at?: string
+          completed_at?: string | null
+          cost_actual?: number | null
+          cost_budgeted?: number | null
+          created_at?: string | null
           created_by?: string | null
+          current_workstation_id?: string | null
           delivery_date?: string | null
           id?: string
           notes?: string | null
           ot_number?: number
-          priority?: number | null
+          priority?: string | null
           product_description?: string | null
           product_name: string
-          quantity?: number
-          sales_rep_id?: string | null
-          status?: Database["public"]["Enums"]["work_order_status"]
+          quantity: number
+          specifications?: Json | null
+          status?: string | null
           total_price?: number | null
           unit_price?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          budget_code?: string | null
+          calculations?: Json | null
           client_id?: string | null
           client_name?: string
-          created_at?: string
+          completed_at?: string | null
+          cost_actual?: number | null
+          cost_budgeted?: number | null
+          created_at?: string | null
           created_by?: string | null
+          current_workstation_id?: string | null
           delivery_date?: string | null
           id?: string
           notes?: string | null
           ot_number?: number
-          priority?: number | null
+          priority?: string | null
           product_description?: string | null
           product_name?: string
           quantity?: number
-          sales_rep_id?: string | null
-          status?: Database["public"]["Enums"]["work_order_status"]
+          specifications?: Json | null
+          status?: string | null
           total_price?: number | null
           unit_price?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -2199,74 +770,9 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      worker_assignments: {
-        Row: {
-          created_at: string | null
-          date: string
-          id: string
-          ot_id: string | null
-          role: string
-          shift_id: string
-          updated_at: string | null
-          worker_id: string
-          workstation_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          date?: string
-          id?: string
-          ot_id?: string | null
-          role: string
-          shift_id: string
-          updated_at?: string | null
-          worker_id: string
-          workstation_id: string
-        }
-        Update: {
-          created_at?: string | null
-          date?: string
-          id?: string
-          ot_id?: string | null
-          role?: string
-          shift_id?: string
-          updated_at?: string | null
-          worker_id?: string
-          workstation_id?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "worker_assignments_ot_id_fkey"
-            columns: ["ot_id"]
-            isOneToOne: false
-            referencedRelation: "rosters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "worker_assignments_shift_id_fkey"
-            columns: ["shift_id"]
-            isOneToOne: false
-            referencedRelation: "shifts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "worker_assignments_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "worker_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "worker_assignments_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "workers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "worker_assignments_workstation_id_fkey"
-            columns: ["workstation_id"]
+            foreignKeyName: "work_orders_current_workstation_id_fkey"
+            columns: ["current_workstation_id"]
             isOneToOne: false
             referencedRelation: "workstations"
             referencedColumns: ["id"]
@@ -2368,18 +874,7 @@ export type Database = {
       }
     }
     Views: {
-      worker_stats: {
-        Row: {
-          avg_rating: number | null
-          avg_time_minutes: number | null
-          department: string | null
-          efficiency_score: number | null
-          id: string | null
-          name: string | null
-          total_tasks: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       calculate_material_requirements: {

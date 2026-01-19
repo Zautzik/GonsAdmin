@@ -14,7 +14,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   LineChart, Line, ScatterChart, Scatter, ZAxis, Cell, PieChart as RechartsPie, Pie
 } from 'recharts';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -31,7 +31,9 @@ interface WorkOrderData {
   ot_number: number;
   client_name: string;
   product_name: string;
-  total_price: number;
+  total_price: number | null;
+  cost_budgeted: number | null;
+  cost_actual: number | null;
   status: string;
   created_at: string;
 }
@@ -52,7 +54,6 @@ export default function CostAnalyticsDashboard() {
   const [dateRange, setDateRange] = useState('30d');
   const [workOrders, setWorkOrders] = useState<WorkOrderData[]>([]);
   const [operations, setOperations] = useState<any[]>([]);
-  const [pricing, setPricing] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   useEffect(() => {
@@ -64,15 +65,13 @@ export default function CostAnalyticsDashboard() {
     const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : dateRange === '90d' ? 90 : 365;
     const startDate = subDays(new Date(), daysAgo).toISOString();
 
-    const [woResult, opsResult, pricingResult] = await Promise.all([
+    const [woResult, opsResult] = await Promise.all([
       supabase.from('work_orders').select('*').gte('created_at', startDate),
-      supabase.from('ot_operations').select('*').gte('created_at', startDate),
-      supabase.from('ot_pricing').select('*').gte('created_at', startDate),
+      supabase.from('operations').select('*').gte('created_at', startDate),
     ]);
 
     if (woResult.data) setWorkOrders(woResult.data);
     if (opsResult.data) setOperations(opsResult.data);
-    if (pricingResult.data) setPricing(pricingResult.data);
     
     setLastUpdated(new Date());
     setLoading(false);
@@ -84,18 +83,13 @@ export default function CostAnalyticsDashboard() {
 
   // Calculate metrics
   const totalRevenue = workOrders.reduce((sum, wo) => sum + (wo.total_price || 0), 0);
-  const totalCosts = pricing.reduce((sum, p) => sum + (p.subtotal || 0), 0);
-  const avgMargin = pricing.length > 0 
-    ? pricing.reduce((sum, p) => sum + (p.margin_percent || 0), 0) / pricing.length 
-    : 0;
-  
   const totalBudgeted = operations.reduce((sum, op) => sum + (op.total_cost_budgeted || 0), 0);
   const totalActual = operations.reduce((sum, op) => sum + (op.total_cost_actual || 0), 0);
   const avgDeviation = totalBudgeted > 0 ? ((totalActual - totalBudgeted) / totalBudgeted) * 100 : 0;
 
   const metrics: MetricCard[] = [
     {
-      title: 'Total OTs',
+      title: 'Total Work Orders',
       value: workOrders.length,
       change: 12,
       trend: 'up',
@@ -109,10 +103,10 @@ export default function CostAnalyticsDashboard() {
       icon: DollarSign,
     },
     {
-      title: 'Margen Promedio',
-      value: `${avgMargin.toFixed(1)}%`,
-      change: -2.3,
-      trend: 'down',
+      title: 'Costo Presupuestado',
+      value: formatCurrency(totalBudgeted),
+      change: 5.2,
+      trend: 'up',
       icon: Percent,
     },
     {
@@ -123,22 +117,6 @@ export default function CostAnalyticsDashboard() {
       icon: TrendingUp,
     },
   ];
-
-  // Cost categories over time (monthly)
-  const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const date = subDays(new Date(), i * 30);
-    const monthPricing = pricing.filter(p => {
-      const pDate = new Date(p.created_at);
-      return pDate.getMonth() === date.getMonth();
-    });
-    return {
-      month: format(date, 'MMM', { locale: es }),
-      Materiales: monthPricing.reduce((s, p) => s + (p.materials_cost || 0), 0) / 1000,
-      'Mano de Obra': monthPricing.reduce((s, p) => s + (p.labor_cost || 0), 0) / 1000,
-      Terceros: monthPricing.reduce((s, p) => s + (p.third_party_cost || 0), 0) / 1000,
-      Otros: monthPricing.reduce((s, p) => s + (p.other_cost || 0), 0) / 1000,
-    };
-  }).reverse();
 
   // Operations analysis
   const operationStats = operations.reduce((acc, op) => {
@@ -174,8 +152,8 @@ export default function CostAnalyticsDashboard() {
   const scatterData = operations
     .filter(op => op.total_cost_actual != null)
     .map(op => ({
-      budget: op.total_cost_budgeted / 1000,
-      actual: op.total_cost_actual / 1000,
+      budget: (op.total_cost_budgeted || 0) / 1000,
+      actual: (op.total_cost_actual || 0) / 1000,
       deviation: op.total_cost_budgeted > 0 
         ? ((op.total_cost_actual - op.total_cost_budgeted) / op.total_cost_budgeted) * 100 
         : 0,
@@ -276,81 +254,12 @@ export default function CostAnalyticsDashboard() {
         })}
       </div>
 
-      <Tabs defaultValue="costs">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="costs" className="gap-2"><BarChart3 className="h-4 w-4" /> Costos</TabsTrigger>
+      <Tabs defaultValue="operations">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="operations" className="gap-2"><Package className="h-4 w-4" /> Operaciones</TabsTrigger>
           <TabsTrigger value="products" className="gap-2"><PieChart className="h-4 w-4" /> Productos</TabsTrigger>
           <TabsTrigger value="clients" className="gap-2"><Users className="h-4 w-4" /> Clientes</TabsTrigger>
         </TabsList>
-
-        {/* Costs Tab */}
-        <TabsContent value="costs" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Costos por Categoría</CardTitle>
-                <CardDescription>Evolución mensual (miles $CLP)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData}>
-                      <XAxis dataKey="month" />
-                      <YAxis tickFormatter={(v) => `$${v}k`} />
-                      <Tooltip formatter={(value: number) => formatCurrency(value * 1000)} />
-                      <Legend />
-                      <Bar dataKey="Materiales" stackId="a" fill={CATEGORY_COLORS[0]} />
-                      <Bar dataKey="Mano de Obra" stackId="a" fill={CATEGORY_COLORS[1]} />
-                      <Bar dataKey="Terceros" stackId="a" fill={CATEGORY_COLORS[2]} />
-                      <Bar dataKey="Otros" stackId="a" fill={CATEGORY_COLORS[3]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Presupuesto vs Real</CardTitle>
-                <CardDescription>Scatter plot por operación</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart>
-                      <XAxis type="number" dataKey="budget" name="Presupuesto" unit="k" />
-                      <YAxis type="number" dataKey="actual" name="Real" unit="k" />
-                      <ZAxis type="number" dataKey="deviation" range={[50, 400]} />
-                      <Tooltip 
-                        formatter={(value: number) => formatCurrency(value * 1000)}
-                        content={({ payload }) => {
-                          if (!payload?.[0]) return null;
-                          const data = payload[0].payload;
-                          return (
-                            <div className="bg-background border rounded p-2 shadow-lg text-sm">
-                              <p className="font-medium">{data.code}</p>
-                              <p>Presup: {formatCurrency(data.budget * 1000)}</p>
-                              <p>Real: {formatCurrency(data.actual * 1000)}</p>
-                              <p className={cn(getDeviationColor(data.deviation).replace('hsl(var(--', 'text-').replace('))', ''))}>
-                                Desvío: {data.deviation.toFixed(1)}%
-                              </p>
-                            </div>
-                          );
-                        }}
-                      />
-                      <Scatter data={scatterData}>
-                        {scatterData.map((entry, index) => (
-                          <Cell key={index} fill={getDeviationColor(entry.deviation)} />
-                        ))}
-                      </Scatter>
-                    </ScatterChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         {/* Operations Tab */}
         <TabsContent value="operations" className="space-y-6">
@@ -372,55 +281,67 @@ export default function CostAnalyticsDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {topOperations.map((op: any) => (
-                    <TableRow key={op.operation_code}>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono">{op.operation_code}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{op.times_used}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(op.avg_budget)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(op.avg_actual)}</TableCell>
-                      <TableCell className={cn(
-                        'text-right font-medium',
-                        Math.abs(op.deviation_percent) < 5 ? 'text-success' :
-                        Math.abs(op.deviation_percent) < 15 ? 'text-warning' : 'text-destructive'
-                      )}>
-                        {op.deviation_percent > 0 ? '+' : ''}{op.deviation_percent.toFixed(1)}%
-                      </TableCell>
-                      <TableCell className={cn(
-                        'text-right',
-                        op.total_variance > 0 ? 'text-destructive' : 'text-success'
-                      )}>
-                        {formatCurrency(op.total_variance)}
+                  {topOperations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No hay datos de operaciones en este período
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    topOperations.map((op: any) => (
+                      <TableRow key={op.operation_code}>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono">{op.operation_code}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{op.times_used}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(op.avg_budget)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(op.avg_actual)}</TableCell>
+                        <TableCell className={cn(
+                          'text-right font-medium',
+                          Math.abs(op.deviation_percent) < 5 ? 'text-success' :
+                          Math.abs(op.deviation_percent) < 15 ? 'text-warning' : 'text-destructive'
+                        )}>
+                          {op.deviation_percent > 0 ? '+' : ''}{op.deviation_percent.toFixed(1)}%
+                        </TableCell>
+                        <TableCell className={cn(
+                          'text-right',
+                          op.total_variance > 0 ? 'text-destructive' : 'text-success'
+                        )}>
+                          {formatCurrency(op.total_variance)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
 
-          <div className="h-80">
+          {scatterData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Desvío por Operación</CardTitle>
+                <CardTitle>Presupuesto vs Real</CardTitle>
+                <CardDescription>Scatter plot por operación</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={topOperations} layout="vertical">
-                    <XAxis type="number" tickFormatter={(v) => `${v.toFixed(0)}%`} />
-                    <YAxis type="category" dataKey="operation_code" width={60} />
-                    <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
-                    <Bar dataKey="deviation_percent" fill="hsl(var(--primary))">
-                      {topOperations.map((entry: any, index: number) => (
-                        <Cell key={index} fill={getDeviationColor(entry.deviation_percent)} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart>
+                      <XAxis type="number" dataKey="budget" name="Presupuesto" unit="k" />
+                      <YAxis type="number" dataKey="actual" name="Real" unit="k" />
+                      <ZAxis type="number" dataKey="deviation" range={[50, 400]} />
+                      <Tooltip formatter={(value: number) => formatCurrency(value * 1000)} />
+                      <Scatter data={scatterData}>
+                        {scatterData.map((entry, index) => (
+                          <Cell key={index} fill={getDeviationColor(entry.deviation)} />
+                        ))}
+                      </Scatter>
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
-          </div>
+          )}
         </TabsContent>
 
         {/* Products Tab */}
@@ -428,52 +349,47 @@ export default function CostAnalyticsDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Top 10 Productos Más Rentables</CardTitle>
+                <CardTitle>Ingresos por Producto</CardTitle>
+                <CardDescription>Top productos por valor</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead className="text-right"># OTs</TableHead>
-                      <TableHead className="text-right">Ingresos</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topProducts.map((p: any, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{p.type}</TableCell>
-                        <TableCell className="text-right">{p.count}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(p.revenue)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={topProducts} layout="vertical">
+                      <XAxis type="number" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                      <YAxis type="category" dataKey="type" width={120} tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Distribución de Ingresos</CardTitle>
+                <CardTitle>Distribución por Producto</CardTitle>
+                <CardDescription>Cantidad de órdenes</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPie>
                       <Pie
-                        data={topProducts.slice(0, 5)}
-                        dataKey="revenue"
-                        nameKey="type"
+                        data={topProducts}
                         cx="50%"
                         cy="50%"
-                        outerRadius={80}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        innerRadius={60}
+                        outerRadius={100}
+                        dataKey="count"
+                        nameKey="type"
+                        label={({ type, count }) => `${type}: ${count}`}
                       >
-                        {topProducts.slice(0, 5).map((_: any, index: number) => (
+                        {topProducts.map((_, index) => (
                           <Cell key={index} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip />
                     </RechartsPie>
                   </ResponsiveContainer>
                 </div>
@@ -486,64 +402,13 @@ export default function CostAnalyticsDashboard() {
         <TabsContent value="clients" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Rentabilidad por Cliente</CardTitle>
-              <CardDescription>Análisis de clientes por volumen y margen</CardDescription>
+              <CardTitle>Análisis por Cliente</CardTitle>
+              <CardDescription>Próximamente...</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 rounded-lg bg-success/10 border border-success/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full bg-success" />
-                    <span className="text-sm font-medium">Alto Valor, Alto Margen</span>
-                  </div>
-                  <p className="text-2xl font-bold text-success">
-                    {Object.values(productProfitability).filter((c: any) => c.revenue > 1000000).length}
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg bg-warning/10 border border-warning/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full bg-warning" />
-                    <span className="text-sm font-medium">Alto Valor, Bajo Margen</span>
-                  </div>
-                  <p className="text-2xl font-bold text-warning">0</p>
-                </div>
-                <div className="p-4 rounded-lg bg-info/10 border border-info/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full bg-info" />
-                    <span className="text-sm font-medium">Bajo Valor, Alto Margen</span>
-                  </div>
-                  <p className="text-2xl font-bold text-info">0</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full bg-muted-foreground" />
-                    <span className="text-sm font-medium">Bajo Valor, Bajo Margen</span>
-                  </div>
-                  <p className="text-2xl font-bold">0</p>
-                </div>
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <p>Análisis de clientes en desarrollo</p>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="text-right"># OTs</TableHead>
-                    <TableHead className="text-right">Ingresos</TableHead>
-                    <TableHead className="text-right">Segmento</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workOrders.slice(0, 10).map((wo) => (
-                    <TableRow key={wo.id}>
-                      <TableCell className="font-medium">{wo.client_name}</TableCell>
-                      <TableCell className="text-right">1</TableCell>
-                      <TableCell className="text-right">{formatCurrency(wo.total_price)}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline" className="bg-success/10 text-success">Premium</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </CardContent>
           </Card>
         </TabsContent>
