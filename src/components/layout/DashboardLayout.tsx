@@ -13,7 +13,8 @@ import {
   LayoutDashboard, Users, Package, FileText, DollarSign,
   Factory, Wrench, MessageSquare, Settings, LogOut, ChevronLeft,
   ChevronRight, BarChart3, ClipboardList, Clock, UserCheck,
-  ShoppingCart, TrendingUp, Bell, HelpCircle, Globe, FileStack, PieChart
+  ShoppingCart, TrendingUp, Bell, HelpCircle, Globe, FileStack, PieChart,
+  Activity, Boxes, Truck, LineChart, Gauge
 } from 'lucide-react';
 
 interface NavItem {
@@ -40,7 +41,7 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['operations', 'reports']);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['industry', 'operations', 'reports']);
 
   const handleLogout = async () => {
     await signOut();
@@ -68,6 +69,52 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
       badge?: number;
     }[];
   }[] = [
+    {
+      id: 'industry',
+      label: 'Industry 6.0',
+      items: [
+        {
+          id: 'control-center',
+          label: 'Control Center',
+          icon: Gauge,
+          href: '/industry/control-center',
+          roles: ['admin', 'manager', 'supervisor'],
+          description: 'Real-time monitoring',
+        },
+        {
+          id: 'production',
+          label: 'Production',
+          icon: Factory,
+          href: '/industry/production',
+          roles: ['admin', 'manager', 'supervisor'],
+          description: 'Production dashboard',
+        },
+        {
+          id: 'industry-inventory',
+          label: 'Inventory',
+          icon: Boxes,
+          href: '/industry/inventory',
+          roles: ['admin', 'manager', 'supervisor'],
+          description: 'Warehouse management',
+        },
+        {
+          id: 'procurement',
+          label: 'Procurement',
+          icon: Truck,
+          href: '/industry/procurement',
+          roles: ['admin', 'manager'],
+          description: 'Purchase orders & MRP',
+        },
+        {
+          id: 'industry-analytics',
+          label: 'Analytics',
+          icon: LineChart,
+          href: '/industry/analytics/production',
+          roles: ['admin', 'manager'],
+          description: 'Reports & insights',
+        },
+      ],
+    },
     {
       id: 'ot-module',
       label: 'Órdenes de Trabajo',

@@ -150,7 +150,7 @@ export default function InventoryAnalytics() {
 
   const stockHealthData = [
     { name: 'En Stock', value: stats?.totalItems || 0, color: 'hsl(var(--chart-1))' },
-    { name: 'Stock Bajo', value: stats?.lowStock || 0, color: 'hsl(var(--chart-4))' },
+    { name: 'Stock Bajo', value: stats?.lowStockAlerts || 0, color: 'hsl(var(--chart-4))' },
     { name: 'Sin Stock', value: stats?.outOfStock || 0, color: 'hsl(var(--destructive))' },
   ];
 
@@ -434,7 +434,7 @@ export default function InventoryAnalytics() {
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-sm text-muted-foreground">Por Reordenar</p>
-                <p className="text-2xl font-bold mt-1 text-orange-600">{stats?.toReorder || 0}</p>
+                <p className="text-2xl font-bold mt-1 text-orange-600">{stats?.itemsToReorder || 0}</p>
               </CardContent>
             </Card>
             <Card>

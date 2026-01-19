@@ -137,7 +137,7 @@ export default function ProcurementAnalytics() {
 
   const totalSpend = purchaseOrders?.reduce((sum, po) => sum + (po.total_amount || 0), 0) || 0;
   const avgOrderValue = purchaseOrders?.length ? totalSpend / purchaseOrders.length : 0;
-  const pendingPOs = purchaseOrders?.filter(po => po.status === 'draft' || po.status === 'pending_approval').length || 0;
+  const pendingPOs = purchaseOrders?.filter(po => po.status === 'draft' || po.status === 'sent').length || 0;
 
   const renderStars = (rating: number) => {
     return (
