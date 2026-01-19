@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Unified data hooks for consistency across the application
+// Unified data hooks for the consolidated schema
 
 export interface Worker {
   id: string;
@@ -41,15 +41,22 @@ export interface Shift {
   end_time: string;
 }
 
-export interface OT {
+export interface WorkOrder {
   id: string;
-  ot_number: string;
+  ot_number: number;
   client_name: string;
-  description: string | null;
+  product_name: string;
+  product_description: string | null;
   quantity: number;
   status: string;
-  priority: number;
-  deadline: string | null;
+  priority: string;
+  delivery_date: string | null;
+  specifications: any;
+  calculations: any;
+  unit_price: number | null;
+  total_price: number | null;
+  cost_budgeted: number | null;
+  cost_actual: number | null;
   created_at: string;
 }
 
@@ -157,41 +164,39 @@ export function useShifts() {
   return { shifts, loading, refetch: fetchShifts };
 }
 
-export function useOTs() {
-  const [ots, setOts] = useState<OT[]>([]);
+export function useWorkOrders() {
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOTs = useCallback(async () => {
+  const fetchWorkOrders = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('ots')
+      .from('work_orders')
       .select('*')
-      .order('priority', { ascending: true })
-      .order('created_at', { ascending: false });
+      .order('ot_number', { ascending: false });
 
     if (error) {
       toast.error('Error fetching work orders');
     } else {
-      setOts(data || []);
+      setWorkOrders(data || []);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchOTs();
-  }, [fetchOTs]);
+    fetchWorkOrders();
+  }, [fetchWorkOrders]);
 
-  return { ots, loading, refetch: fetchOTs };
+  return { workOrders, loading, refetch: fetchWorkOrders };
 }
 
 // Aggregate statistics hook
 export function useProductionStats() {
   const [stats, setStats] = useState({
     totalWorkers: 0,
-    activeOTs: 0,
+    activeWorkOrders: 0,
     runningMachines: 0,
     totalMachines: 0,
-    pendingSubmissions: 0,
     completedToday: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -199,23 +204,23 @@ export function useProductionStats() {
   const fetchStats = useCallback(async () => {
     setLoading(true);
     
-    const [workersRes, otsRes, machinesRes, submissionsRes] = await Promise.all([
+    const [workersRes, workOrdersRes, machinesRes] = await Promise.all([
       supabase.from('workers').select('id', { count: 'exact', head: true }),
-      supabase.from('ots').select('status'),
+      supabase.from('work_orders').select('status'),
       supabase.from('machines').select('status'),
-      supabase.from('progress_submissions').select('status').eq('status', 'pending'),
     ]);
 
-    const activeOTs = otsRes.data?.filter(ot => ot.status !== 'completed').length || 0;
+    const activeWorkOrders = workOrdersRes.data?.filter(wo => 
+      wo.status !== 'completed' && wo.status !== 'delivered' && wo.status !== 'cancelled'
+    ).length || 0;
     const runningMachines = machinesRes.data?.filter(m => m.status === 'running').length || 0;
 
     setStats({
       totalWorkers: workersRes.count || 0,
-      activeOTs,
+      activeWorkOrders,
       runningMachines,
       totalMachines: machinesRes.data?.length || 0,
-      pendingSubmissions: submissionsRes.data?.length || 0,
-      completedToday: otsRes.data?.filter(ot => ot.status === 'completed').length || 0,
+      completedToday: workOrdersRes.data?.filter(wo => wo.status === 'completed').length || 0,
     });
 
     setLoading(false);
