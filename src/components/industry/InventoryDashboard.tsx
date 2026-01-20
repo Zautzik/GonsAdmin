@@ -97,14 +97,12 @@ export default function InventoryDashboard() {
     return { label: "En Stock", color: "default" as const };
   };
 
-  const getAlertIcon = (type: string) => {
-    switch (type) {
+  const getAlertIcon = (alertStatus: string | null) => {
+    switch (alertStatus) {
       case "out_of_stock":
         return "🔴";
       case "low_stock":
         return "🟡";
-      case "overstock":
-        return "🟠";
       default:
         return "⚪";
     }
@@ -240,10 +238,10 @@ export default function InventoryDashboard() {
                   key={alert.id}
                   variant="outline"
                   className="py-1.5 px-3 cursor-pointer hover:bg-muted"
-                  onClick={() => setSelectedItem(alert.item)}
+                  onClick={() => { setSelectedItem(alert); setShowItemDialog(true); }}
                 >
-                  <span className="mr-1">{getAlertIcon(alert.alert_type)}</span>
-                  {alert.item?.name || "Item"}
+                  <span className="mr-1">{getAlertIcon(alert.alert_status)}</span>
+                  {alert.name || "Item"}
                   <button
                     className="ml-2 hover:text-destructive"
                     onClick={(e) => {

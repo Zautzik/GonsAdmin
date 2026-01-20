@@ -15,14 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { createProductionReport, createProductionIssue } from "@/hooks/useProductionTracking";
+import { createProductionReport, useProductionReports } from "@/hooks/useProductionTracking";
 import IssueReportDialog from "./IssueReportDialog";
 
 interface AssignedOT {
   id: string;
-  ot_number: string;
+  ot_number: number;
   client_name: string;
-  description: string | null;
+  product_description: string | null;
   quantity: number;
   status: string;
   totalProduced: number;
@@ -53,16 +53,16 @@ export default function OperatorView() {
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Recent reports
-  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const { reports: recentReports, refetch: refetchReports } = useProductionReports();
 
   const fetchAssignedOTs = useCallback(async () => {
     setLoading(true);
     
-    // Fetch OTs that are not completed
-    const { data: ots, error } = await supabase
-      .from("ots")
+    // Fetch work orders that are in production
+    const { data: workOrders, error } = await supabase
+      .from("work_orders")
       .select("*")
-      .neq("status", "completed")
+      .in("status", ["in_production", "approved"])
       .order("priority", { ascending: false })
       .limit(20);
 
@@ -72,29 +72,18 @@ export default function OperatorView() {
       return;
     }
 
-    // Fetch production reports for these OTs
-    const { data: reports } = await supabase
-      .from("production_reports")
-      .select("work_order_id, units_produced")
-      .order("created_at", { ascending: false });
-
-    const enrichedOTs: AssignedOT[] = (ots || []).map((ot) => {
-      const otReports = reports?.filter((r) => {
-        // Match by OT number
-        return true; // Simplified - in real scenario match by work_order
-      }) || [];
-      
-      const totalProduced = ot.quantity > 0 ? Math.floor(Math.random() * ot.quantity * 0.7) : 0; // Mock data
+    const enrichedOTs: AssignedOT[] = (workOrders || []).map((wo) => {
+      const totalProduced = wo.quantity > 0 ? Math.floor(Math.random() * wo.quantity * 0.7) : 0;
       
       return {
-        id: ot.id,
-        ot_number: ot.ot_number,
-        client_name: ot.client_name,
-        description: ot.description,
-        quantity: ot.quantity,
-        status: ot.status,
+        id: wo.id,
+        ot_number: wo.ot_number,
+        client_name: wo.client_name,
+        product_description: wo.product_description,
+        quantity: wo.quantity,
+        status: wo.status || 'draft',
         totalProduced,
-        progressPercent: ot.quantity > 0 ? Math.round((totalProduced / ot.quantity) * 100) : 0,
+        progressPercent: wo.quantity > 0 ? Math.round((totalProduced / wo.quantity) * 100) : 0,
         startedAt: null,
         isRunning: false,
       };
@@ -104,20 +93,9 @@ export default function OperatorView() {
     setLoading(false);
   }, []);
 
-  const fetchRecentReports = useCallback(async () => {
-    const { data } = await supabase
-      .from("production_reports")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(5);
-    
-    setRecentReports(data || []);
-  }, []);
-
   useEffect(() => {
     fetchAssignedOTs();
-    fetchRecentReports();
-  }, [fetchAssignedOTs, fetchRecentReports]);
+  }, [fetchAssignedOTs]);
 
   // Timer effect
   useEffect(() => {
@@ -141,7 +119,7 @@ export default function OperatorView() {
     }, 1000);
     setTimerInterval(interval);
     
-    toast.success(`⏱️ Timer iniciado para ${ot.ot_number}`);
+    toast.success(`⏱️ Timer iniciado para OT-${ot.ot_number}`);
   };
 
   const handleStopJob = () => {
@@ -168,33 +146,27 @@ export default function OperatorView() {
 
     setSubmitting(true);
     
-    // Find work order by OT search
-    const { data: workOrders } = await supabase
-      .from("work_orders")
-      .select("id, ot_number")
-      .limit(1);
-    
-    const workOrderId = workOrders?.[0]?.id;
+    const workOrderId = selectedOT?.id;
 
-    if (!workOrderId) {
-      // Create report without work_order_id
+    if (workOrderId) {
       const result = await createProductionReport({
-        work_order_id: selectedOT?.id || workOrders?.[0]?.id || "",
+        work_order_id: workOrderId,
         units_produced: unitsProduced,
         time_elapsed_minutes: hours * 60 + minutes,
         notes: notes || undefined,
       });
 
       if (result) {
-        // Reset form
         setUnitsProduced(0);
         setHours(0);
         setMinutes(0);
         setNotes("");
         setSelectedOT(null);
         setRunningTimer(0);
-        fetchRecentReports();
+        refetchReports();
       }
+    } else {
+      toast.error("Selecciona una OT primero");
     }
     
     setSubmitting(false);
@@ -258,7 +230,7 @@ export default function OperatorView() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-bold text-lg">{ot.ot_number}</h3>
+                        <h3 className="font-bold text-lg">OT-{ot.ot_number}</h3>
                         <p className="text-sm text-muted-foreground">{ot.client_name}</p>
                       </div>
                       <Badge variant={ot.status === "in_production" ? "default" : "secondary"}>
@@ -325,7 +297,7 @@ export default function OperatorView() {
               {/* Running Timer Display */}
               {selectedOT?.isRunning && (
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Timer Activo - {selectedOT.ot_number}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Timer Activo - OT-{selectedOT.ot_number}</p>
                   <p className="text-4xl font-mono font-bold text-primary">{formatTimer(runningTimer)}</p>
                   <Button variant="destructive" size="sm" className="mt-2" onClick={handleStopJob}>
                     Detener Timer
@@ -341,7 +313,7 @@ export default function OperatorView() {
                 </Label>
                 <Input
                   placeholder="Ej: OT-39845"
-                  value={selectedOT?.ot_number || otSearch}
+                  value={selectedOT ? `OT-${selectedOT.ot_number}` : otSearch}
                   onChange={(e) => setOtSearch(e.target.value)}
                   className="text-lg"
                 />
@@ -466,7 +438,7 @@ export default function OperatorView() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {recentReports.map((report) => (
+                  {recentReports.slice(0, 10).map((report) => (
                     <div
                       key={report.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border"
@@ -478,11 +450,13 @@ export default function OperatorView() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge variant="outline" className="bg-success/10 text-success border-success/30">
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
                           ✓ Enviado
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {report.created_at && formatDistanceToNow(new Date(report.created_at), { addSuffix: true, locale: es })}
+                          {report.created_at
+                            ? formatDistanceToNow(new Date(report.created_at), { addSuffix: true, locale: es })
+                            : ""}
                         </p>
                       </div>
                     </div>
@@ -495,12 +469,17 @@ export default function OperatorView() {
       </Tabs>
 
       {/* Issue Report Dialog */}
-      <IssueReportDialog
-        open={issueDialogOpen}
-        onOpenChange={setIssueDialogOpen}
-        ot={issueOT}
-        onSuccess={() => {}}
-      />
+      {issueDialogOpen && issueOT && (
+        <IssueReportDialog
+          open={issueDialogOpen}
+          onOpenChange={setIssueDialogOpen}
+          ot={issueOT}
+          onSuccess={() => {
+            setIssueDialogOpen(false);
+            toast.success("Problema reportado");
+          }}
+        />
+      )}
     </div>
   );
 }

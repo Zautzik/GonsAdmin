@@ -30,8 +30,8 @@ interface IssueReportDialogProps {
 const issueTypes = [
   { value: "machine_breakdown", label: "Falla de Máquina", icon: "🔧" },
   { value: "material_defect", label: "Defecto de Material", icon: "📦" },
-  { value: "quality_issue", label: "Problema de Calidad", icon: "⚠️" },
-  { value: "shortage", label: "Falta de Material", icon: "📋" },
+  { value: "quality", label: "Problema de Calidad", icon: "⚠️" },
+  { value: "delay", label: "Retraso", icon: "⏰" },
   { value: "other", label: "Otro", icon: "❓" },
 ];
 
@@ -62,7 +62,7 @@ export default function IssueReportDialog({
     setLoading(true);
     const result = await createProductionIssue({
       work_order_id: ot?.workOrder?.id || ot?.id,
-      issue_type: issueType as "machine_breakdown" | "material_defect" | "quality_issue" | "shortage" | "other",
+      issue_type: issueType as "machine_breakdown" | "material_defect" | "quality" | "delay" | "other",
       severity,
       description: description.trim(),
     });

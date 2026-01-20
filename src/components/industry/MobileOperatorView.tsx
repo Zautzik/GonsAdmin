@@ -19,9 +19,9 @@ import IssueReportDialog from "./IssueReportDialog";
 
 interface AssignedJob {
   id: string;
-  ot_number: string;
+  ot_number: number;
   client_name: string;
-  description: string | null;
+  product_description: string | null;
   quantity: number;
   produced: number;
   status: string;
@@ -57,9 +57,9 @@ export default function MobileOperatorView() {
   const fetchJobs = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("ots")
+      .from("work_orders")
       .select("*")
-      .in("status", ["offset_printing", "die_cutting", "guillotine_first_cut", "workshop_revision"])
+      .in("status", ["in_production", "approved"])
       .order("priority", { ascending: true })
       .limit(10);
 
@@ -69,14 +69,14 @@ export default function MobileOperatorView() {
       return;
     }
 
-    const enrichedJobs: AssignedJob[] = (data || []).map(ot => ({
-      id: ot.id,
-      ot_number: ot.ot_number,
-      client_name: ot.client_name,
-      description: ot.description,
-      quantity: ot.quantity,
-      produced: Math.floor(ot.quantity * 0.3),
-      status: ot.status,
+    const enrichedJobs: AssignedJob[] = (data || []).map(wo => ({
+      id: wo.id,
+      ot_number: wo.ot_number,
+      client_name: wo.client_name,
+      product_description: wo.product_description,
+      quantity: wo.quantity,
+      produced: Math.floor(wo.quantity * 0.3),
+      status: wo.status || 'draft',
       isActive: false,
       elapsedSeconds: 0,
     }));
@@ -104,7 +104,7 @@ export default function MobileOperatorView() {
 
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(50);
-    toast.success(`Started: ${job.ot_number}`);
+    toast.success(`Started: OT-${job.ot_number}`);
   };
 
   const handleStopJob = (job: AssignedJob) => {
@@ -135,7 +135,7 @@ export default function MobileOperatorView() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    toast.success(`Reported ${unitsProduced} units for ${selectedJob.ot_number}`);
+    toast.success(`Reported ${unitsProduced} units for OT-${selectedJob.ot_number}`);
     if (navigator.vibrate) navigator.vibrate(100);
     
     // Play success sound
@@ -190,11 +190,11 @@ export default function MobileOperatorView() {
   };
 
   const handleScan = (code: string) => {
-    const job = jobs.find(j => j.ot_number === code);
+    const job = jobs.find(j => `OT-${j.ot_number}` === code || String(j.ot_number) === code);
     if (job) {
       setSelectedJob(job);
       setActiveTab("report");
-      toast.success(`Found: ${job.ot_number}`);
+      toast.success(`Found: OT-${job.ot_number}`);
     } else {
       toast.error("Job not found");
     }
@@ -229,7 +229,7 @@ export default function MobileOperatorView() {
           <div className="mt-3 bg-primary/10 rounded-lg p-3 border border-primary/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-primary">{activeJob.ot_number}</p>
+                <p className="font-medium text-primary">OT-{activeJob.ot_number}</p>
                 <p className="text-2xl font-mono font-bold">{formatTime(activeJob.elapsedSeconds)}</p>
               </div>
               <Button 
@@ -277,7 +277,7 @@ export default function MobileOperatorView() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-lg">{job.ot_number}</span>
+                            <span className="font-bold text-lg">OT-{job.ot_number}</span>
                             {job.isActive && <Badge variant="default">Active</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground">{job.client_name}</p>
@@ -285,8 +285,8 @@ export default function MobileOperatorView() {
                         <Badge variant="outline">{job.status}</Badge>
                       </div>
                       
-                      {job.description && (
-                        <p className="text-sm mb-3 line-clamp-2">{job.description}</p>
+                      {job.product_description && (
+                        <p className="text-sm mb-3 line-clamp-2">{job.product_description}</p>
                       )}
                       
                       <div className="mb-3">
@@ -348,7 +348,7 @@ export default function MobileOperatorView() {
                 {selectedJob ? (
                   <>
                     <div className="bg-muted rounded-lg p-3">
-                      <p className="font-bold">{selectedJob.ot_number}</p>
+                      <p className="font-bold">OT-{selectedJob.ot_number}</p>
                       <p className="text-sm text-muted-foreground">{selectedJob.client_name}</p>
                     </div>
                     
@@ -473,7 +473,7 @@ export default function MobileOperatorView() {
                   }}
                 >
                   <AlertTriangle className="h-5 w-5 mr-2" />
-                  Report Issue
+                  Report an Issue
                 </Button>
               </CardContent>
             </Card>
@@ -481,29 +481,36 @@ export default function MobileOperatorView() {
 
           <TabsContent value="profile" className="mt-0">
             <Card>
-              <CardContent className="p-4">
-                <div className="text-center py-4">
-                  <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                    <User className="h-10 w-10 text-primary" />
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Profile
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold">{user?.email?.split('@')[0]}</h3>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <Badge className="mt-2">Operator</Badge>
+                  <div>
+                    <p className="font-semibold">{user?.email?.split('@')[0]}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  </div>
                 </div>
                 
-                <div className="space-y-3 mt-6">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Jobs Today</span>
-                    <span className="font-medium">{jobs.length}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Units Today</span>
-                    <span className="font-medium">1,240</span>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-muted-foreground">Efficiency</span>
-                    <span className="font-medium text-green-600">94%</span>
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-primary">12</p>
+                      <p className="text-sm text-muted-foreground">Jobs Today</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-green-600">2,450</p>
+                      <p className="text-sm text-muted-foreground">Units Today</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
@@ -512,67 +519,49 @@ export default function MobileOperatorView() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t safe-area-inset-bottom">
-        <TabsList className="grid grid-cols-5 h-16 bg-transparent rounded-none">
-          <TabsTrigger 
-            value="home" 
-            onClick={() => setActiveTab("home")}
-            className="flex flex-col gap-1 data-[state=active]:bg-primary/10"
-          >
-            <Home className="h-5 w-5" />
-            <span className="text-xs">Home</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="report"
-            onClick={() => setActiveTab("report")}
-            className="flex flex-col gap-1 data-[state=active]:bg-primary/10"
-          >
-            <CheckCircle className="h-5 w-5" />
-            <span className="text-xs">Report</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="scan"
-            onClick={() => setActiveTab("scan")}
-            className="flex flex-col gap-1 data-[state=active]:bg-primary/10"
-          >
-            <ScanLine className="h-5 w-5" />
-            <span className="text-xs">Scan</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="issues"
-            onClick={() => setActiveTab("issues")}
-            className="flex flex-col gap-1 data-[state=active]:bg-primary/10"
-          >
-            <AlertTriangle className="h-5 w-5" />
-            <span className="text-xs">Issues</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="profile"
-            onClick={() => setActiveTab("profile")}
-            className="flex flex-col gap-1 data-[state=active]:bg-primary/10"
-          >
-            <User className="h-5 w-5" />
-            <span className="text-xs">Profile</span>
-          </TabsTrigger>
-        </TabsList>
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t z-50">
+        <div className="grid grid-cols-5 h-16">
+          {[
+            { value: "home", icon: Home, label: "Home" },
+            { value: "report", icon: Send, label: "Report" },
+            { value: "scan", icon: ScanLine, label: "Scan" },
+            { value: "issues", icon: AlertTriangle, label: "Issues" },
+            { value: "profile", icon: User, label: "Profile" },
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setActiveTab(item.value)}
+              className={`flex flex-col items-center justify-center gap-0.5 ${
+                activeTab === item.value ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="text-xs">{item.label}</span>
+            </button>
+          ))}
+        </div>
       </nav>
 
       {/* Dialogs */}
-      <ScannerDialog 
-        open={showScanner} 
-        onOpenChange={setShowScanner}
-        onScan={handleScan}
-      />
-      
-      <IssueReportDialog
-        open={showIssueDialog}
-        onOpenChange={setShowIssueDialog}
-        ot={selectedJob ? { id: selectedJob.id, ot_number: selectedJob.ot_number } : null}
-        onSuccess={() => {
-          setShowIssueDialog(false);
-          toast.success("Issue reported");
-        }}
-      />
+      {showScanner && (
+        <ScannerDialog
+          open={showScanner}
+          onOpenChange={setShowScanner}
+          onScan={handleScan}
+        />
+      )}
+
+      {showIssueDialog && selectedJob && (
+        <IssueReportDialog
+          open={showIssueDialog}
+          onOpenChange={setShowIssueDialog}
+          ot={selectedJob}
+          onSuccess={() => {
+            setShowIssueDialog(false);
+            toast.success("Issue reported successfully");
+          }}
+        />
+      )}
     </div>
   );
 }
