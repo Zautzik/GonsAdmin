@@ -44,11 +44,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { createInventoryTransaction, useInventoryTransactions } from "@/hooks/useInventoryData";
-import type { Database } from "@/integrations/supabase/types";
+import { createInventoryTransaction, useInventoryTransactions, InventoryItem } from "@/hooks/useInventoryData";
 
-type InventoryItem = Database["public"]["Tables"]["inventory_items"]["Row"];
-type Supplier = Database["public"]["Tables"]["suppliers"]["Row"];
+interface Supplier {
+  id: string;
+  name: string;
+}
 
 interface InventoryItemDialogProps {
   open: boolean;
@@ -158,8 +159,8 @@ export default function InventoryItemDialog({
         name: formData.name,
         barcode: formData.barcode || null,
         qr_code: formData.qr_code || null,
-        category: formData.category as any,
-        unit_of_measure: formData.unit_of_measure as any,
+        category: formData.category,
+        unit_of_measure: formData.unit_of_measure,
         current_stock: formData.current_stock,
         minimum_stock: formData.minimum_stock,
         maximum_stock: formData.maximum_stock,
@@ -170,12 +171,12 @@ export default function InventoryItemDialog({
       };
       
       if (isNew) {
-        const { error } = await supabase.from("inventory_items").insert(insertData);
+        const { error } = await supabase.from("inventory").insert(insertData);
         if (error) throw error;
         toast.success("Item creado exitosamente");
       } else {
         const { error } = await supabase
-          .from("inventory_items")
+          .from("inventory")
           .update({ ...insertData, updated_at: new Date().toISOString() })
           .eq("id", item.id);
         if (error) throw error;
@@ -223,7 +224,7 @@ export default function InventoryItemDialog({
     setSaving(true);
     try {
       await createInventoryTransaction({
-        inventory_item_id: item.id,
+        inventory_id: item.id,
         transaction_type: "adjustment",
         quantity: Math.abs(transactionQty),
         notes: `${adjustmentReason}: ${adjustmentNotes}`,
