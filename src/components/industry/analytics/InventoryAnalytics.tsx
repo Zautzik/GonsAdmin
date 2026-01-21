@@ -14,11 +14,10 @@ import {
   AreaChart, Area
 } from 'recharts';
 import { 
-  Package, TrendingUp, TrendingDown, AlertTriangle, Download, Calendar,
+  Package, TrendingUp, TrendingDown, Download, Calendar,
   ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import { format, subDays, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -60,7 +59,7 @@ export default function InventoryAnalytics() {
       // Fetch transactions
       const { data: transactions } = await supabase
         .from('inventory_transactions')
-        .select('*, inventory_items(*)')
+        .select('*, inventory(*)')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true });
 
@@ -97,7 +96,7 @@ export default function InventoryAnalytics() {
       // Item movements analysis
       const itemMovements: Record<string, { movements: number; lastDate: string }> = {};
       transactions?.forEach(tx => {
-        const itemId = tx.inventory_item_id;
+        const itemId = tx.inventory_id;
         if (!itemMovements[itemId]) {
           itemMovements[itemId] = { movements: 0, lastDate: tx.created_at! };
         }
@@ -123,7 +122,7 @@ export default function InventoryAnalytics() {
       // Top movers
       setTopItems(itemsWithMovements.sort((a, b) => b.movements - a.movements).slice(0, 10));
       
-      // Slow movers (90+ days without movement or very low turnover)
+      // Slow movers
       setSlowMovers(itemsWithMovements
         .filter(i => i.movements === 0 || i.turnoverRate < 5)
         .sort((a, b) => a.movements - b.movements)
@@ -150,7 +149,7 @@ export default function InventoryAnalytics() {
 
   const stockHealthData = [
     { name: 'En Stock', value: stats?.totalItems || 0, color: 'hsl(var(--chart-1))' },
-    { name: 'Stock Bajo', value: stats?.lowStockAlerts || 0, color: 'hsl(var(--chart-4))' },
+    { name: 'Stock Bajo', value: stats?.itemsToReorder || 0, color: 'hsl(var(--chart-4))' },
     { name: 'Sin Stock', value: stats?.outOfStock || 0, color: 'hsl(var(--destructive))' },
   ];
 
@@ -192,7 +191,6 @@ export default function InventoryAnalytics() {
         {/* Stock Health */}
         <TabsContent value="health" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Stock Distribution Pie */}
             <Card>
               <CardHeader>
                 <CardTitle>Distribución de Stock</CardTitle>
@@ -220,7 +218,6 @@ export default function InventoryAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Value by Category */}
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>Valor por Categoría</CardTitle>
@@ -326,7 +323,6 @@ export default function InventoryAnalytics() {
           </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Fast Movers */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -361,7 +357,6 @@ export default function InventoryAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Slow Movers */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -402,7 +397,7 @@ export default function InventoryAnalytics() {
         <TabsContent value="trends" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tendencia de Costos por Categoría</CardTitle>
+              <CardTitle>Balance Neto de Inventario</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
@@ -417,33 +412,6 @@ export default function InventoryAnalytics() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">Valor Total Inventario</p>
-                <p className="text-2xl font-bold mt-1">${stats?.totalValue?.toLocaleString() || 0}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">Items Únicos</p>
-                <p className="text-2xl font-bold mt-1">{items?.length || 0}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">Por Reordenar</p>
-                <p className="text-2xl font-bold mt-1 text-orange-600">{stats?.itemsToReorder || 0}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">Rotación Promedio</p>
-                <p className="text-2xl font-bold mt-1">4.2x</p>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
         {/* Forecast */}
@@ -451,7 +419,7 @@ export default function InventoryAnalytics() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <Package className="h-5 w-5" />
                 Proyección de Agotamiento
               </CardTitle>
             </CardHeader>
@@ -463,12 +431,11 @@ export default function InventoryAnalytics() {
                     <TableHead>Stock Actual</TableHead>
                     <TableHead>Días Restantes</TableHead>
                     <TableHead>Fecha Reorden</TableHead>
-                    <TableHead>Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {forecast.map((item) => (
-                    <TableRow key={item.name}>
+                  {forecast.map((item, index) => (
+                    <TableRow key={index}>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>{item.current}</TableCell>
                       <TableCell>
@@ -477,31 +444,10 @@ export default function InventoryAnalytics() {
                         </Badge>
                       </TableCell>
                       <TableCell>{item.reorderDate}</TableCell>
-                      <TableCell>
-                        {item.daysRemaining < 7 ? (
-                          <Badge variant="destructive">Urgente</Badge>
-                        ) : item.daysRemaining < 14 ? (
-                          <Badge variant="secondary">Pronto</Badge>
-                        ) : (
-                          <Badge variant="outline">OK</Badge>
-                        )}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Patrones Estacionales</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center text-muted-foreground py-8">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Se requieren al menos 12 meses de datos para análisis estacional</p>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

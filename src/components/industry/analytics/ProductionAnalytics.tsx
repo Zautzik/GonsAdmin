@@ -8,16 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { 
   TrendingUp, Users, Factory, AlertTriangle, Download, Calendar
 } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
-import { es } from 'date-fns/locale';
-
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+import { format, subDays } from 'date-fns';
 
 interface ProductionData {
   date: string;
@@ -69,10 +65,11 @@ export default function ProductionAnalytics() {
       const days = timeRange === 'today' ? 1 : timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90;
       const startDate = subDays(new Date(), days);
 
-      // Fetch production reports
+      // Fetch production activity (reports)
       const { data: reports } = await supabase
-        .from('production_reports')
+        .from('production_activity')
         .select('*')
+        .eq('activity_type', 'report')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true });
 
@@ -146,7 +143,6 @@ export default function ProductionAnalytics() {
   }, [timeRange]);
 
   const exportToExcel = () => {
-    // Export functionality placeholder
     console.log('Exporting to Excel...');
   };
 
@@ -184,13 +180,11 @@ export default function ProductionAnalytics() {
           <TabsTrigger value="machines">Máquinas</TabsTrigger>
           <TabsTrigger value="quality">Calidad</TabsTrigger>
           <TabsTrigger value="operators">Operadores</TabsTrigger>
-          <TabsTrigger value="bottlenecks">Cuellos de Botella</TabsTrigger>
         </TabsList>
 
         {/* Production Volume */}
         <TabsContent value="volume" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Production Over Time */}
             <Card className="col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -219,7 +213,6 @@ export default function ProductionAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Production by Shift */}
             <Card>
               <CardHeader>
                 <CardTitle>Producción por Turno</CardTitle>
@@ -240,7 +233,6 @@ export default function ProductionAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Efficiency Trend */}
             <Card>
               <CardHeader>
                 <CardTitle>Tendencia de Eficiencia</CardTitle>
@@ -401,132 +393,22 @@ export default function ProductionAnalytics() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top 10 por Unidades</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={operatorPerformance.sort((a, b) => b.unitsProduced - a.unitsProduced).slice(0, 10)} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis type="number" className="text-xs" />
-                    <YAxis dataKey="name" type="category" width={80} className="text-xs" />
-                    <Tooltip />
-                    <Bar dataKey="unitsProduced" fill="hsl(var(--primary))" name="Unidades" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribución de Eficiencia</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: '>95%', value: operatorPerformance.filter(o => o.avgEfficiency > 95).length },
-                        { name: '90-95%', value: operatorPerformance.filter(o => o.avgEfficiency > 90 && o.avgEfficiency <= 95).length },
-                        { name: '80-90%', value: operatorPerformance.filter(o => o.avgEfficiency > 80 && o.avgEfficiency <= 90).length },
-                        { name: '<80%', value: operatorPerformance.filter(o => o.avgEfficiency <= 80).length },
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {COLORS.map((color, index) => (
-                        <Cell key={`cell-${index}`} fill={color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Bottleneck Analysis */}
-        <TabsContent value="bottlenecks" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Operaciones Más Lentas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {['Troquelado', 'Impresión Offset', 'Barnizado UV', 'Plegado', 'Pegado'].map((op, i) => (
-                    <div key={op} className="flex items-center justify-between">
-                      <span>{op}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={i < 2 ? 'destructive' : 'secondary'}>
-                          {120 - i * 15} min promedio
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Máquinas con Mayor Downtime</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {machinePerformance.sort((a, b) => b.downtime - a.downtime).slice(0, 5).map((m) => (
-                    <div key={m.id} className="flex items-center justify-between">
-                      <span>{m.name}</span>
-                      <Badge variant={m.downtime > 5 ? 'destructive' : 'secondary'}>
-                        {m.downtime}h inactiva
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Materiales con Mayor Escasez</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>Datos de inventario insuficientes para análisis</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Sugerencias de Mejora</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                    <p className="text-sm font-medium">⚠️ Troquelado es cuello de botella</p>
-                    <p className="text-xs text-muted-foreground mt-1">Considerar turno adicional o nueva máquina</p>
-                  </div>
-                  <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <p className="text-sm font-medium">📊 Turno 3 bajo rendimiento</p>
-                    <p className="text-xs text-muted-foreground mt-1">Revisar capacitación y supervisión nocturna</p>
-                  </div>
-                  <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <p className="text-sm font-medium">✅ Calidad en niveles óptimos</p>
-                    <p className="text-xs text-muted-foreground mt-1">Mantener protocolos actuales</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Top 10 por Unidades</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={operatorPerformance.sort((a, b) => b.unitsProduced - a.unitsProduced).slice(0, 10)} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" className="text-xs" />
+                  <YAxis dataKey="name" type="category" width={80} className="text-xs" />
+                  <Tooltip />
+                  <Bar dataKey="unitsProduced" fill="hsl(var(--primary))" name="Unidades" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -2,177 +2,56 @@ import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  Factory, Package, Users, Gauge, AlertTriangle, Clock, 
-  RefreshCw, Eye, FileWarning, ChevronRight, Zap
+  Factory, Package, Users, Gauge, Clock, 
+  RefreshCw, FileWarning, ChevronRight, Zap
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format, formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import { useProductionStats, useProductionBoard, useRealtimeProduction, useProductionIssues } from "@/hooks/useProductionTracking";
+import { StatCard } from "./shared/StatCard";
+import { ProductionCard } from "./ProductionCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductionReportDialog from "./ProductionReportDialog";
 import IssueReportDialog from "./IssueReportDialog";
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  pending: { label: "Pendiente", color: "text-yellow-600", bgColor: "bg-yellow-100 dark:bg-yellow-900/30" },
-  in_progress: { label: "En Progreso", color: "text-blue-600", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
-  in_production: { label: "En Producción", color: "text-purple-600", bgColor: "bg-purple-100 dark:bg-purple-900/30" },
-  completed: { label: "Completado", color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30" },
-  on_hold: { label: "En Espera", color: "text-orange-600", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
-};
-
-function StatCard({ title, value, icon: Icon, subtitle, trend, loading }: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  subtitle?: string;
-  trend?: "up" | "down" | "neutral";
-  loading?: boolean;
-}) {
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-4">
-          <Skeleton className="h-4 w-24 mb-2" />
-          <Skeleton className="h-8 w-16" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const trendColors = {
-    up: "text-success",
-    down: "text-destructive",
-    neutral: "text-muted-foreground",
-  };
-
-  return (
-    <Card className="card-hover">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {subtitle && (
-              <p className={`text-xs ${trend ? trendColors[trend] : "text-muted-foreground"}`}>
-                {subtitle}
-              </p>
-            )}
-          </div>
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function OTCard({ ot, onReport, onIssue }: { ot: any; onReport: () => void; onIssue: () => void }) {
-  const navigate = useNavigate();
-  const status = statusConfig[ot.status] || statusConfig.pending;
-  const progressColor = ot.progressPercent >= 75 ? "bg-success" : ot.progressPercent >= 50 ? "bg-warning" : "bg-primary";
-
-  // Determine time status
-  const timeSpent = ot.totalTime || 0;
-  const estimatedTime = 480; // 8 hours in minutes as baseline
-  const timeEfficiency = estimatedTime > 0 ? (estimatedTime / Math.max(timeSpent, 1)) * 100 : 100;
-  const timeStatus = timeEfficiency >= 100 ? "good" : timeEfficiency >= 75 ? "warning" : "bad";
-  const timeColors = { good: "text-success", warning: "text-warning", bad: "text-destructive" };
-
-  return (
-    <Card className="card-hover group">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div 
-            className="cursor-pointer hover:text-primary transition-colors"
-            onClick={() => navigate(`/ots/${ot.id}`)}
-          >
-            <h3 className="font-bold text-lg">{ot.ot_number}</h3>
-            <p className="text-sm text-muted-foreground truncate max-w-[180px]">{ot.description || "Sin descripción"}</p>
-          </div>
-          <Badge className={`${status.bgColor} ${status.color} border-0`}>{status.label}</Badge>
-        </div>
-
-        <div className="text-sm text-muted-foreground mb-2">
-          <p className="truncate">{ot.client_name}</p>
-        </div>
-
-        {/* Progress */}
-        <div className="mb-3">
-          <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-muted-foreground">Progreso</span>
-            <span className="font-medium">{ot.totalProduced?.toLocaleString() || 0}/{ot.quantity?.toLocaleString() || 0}</span>
-          </div>
-          <div className="relative h-2 bg-secondary rounded-full overflow-hidden">
-            <div className={`h-full ${progressColor} transition-all`} style={{ width: `${ot.progressPercent || 0}%` }} />
-          </div>
-          <p className="text-xs text-right text-muted-foreground mt-0.5">{ot.progressPercent || 0}%</p>
-        </div>
-
-        {/* Time Info */}
-        <div className="flex items-center justify-between text-sm mb-3">
-          <div className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            <span className={timeColors[timeStatus]}>
-              {Math.floor(timeSpent / 60)}h {timeSpent % 60}m
-            </span>
-          </div>
-          {ot.lastReport && (
-            <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(ot.lastReport.created_at), { addSuffix: true, locale: es })}
-            </span>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="sm" variant="default" className="flex-1" onClick={onReport}>
-            <Package className="h-3.5 w-3.5 mr-1" />
-            Reportar
-          </Button>
-          <Button size="sm" variant="outline" onClick={onIssue}>
-            <AlertTriangle className="h-3.5 w-3.5" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/ots/${ot.id}`)}>
-            <Eye className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function KanbanColumn({ title, icon: Icon, ots, color, onReport, onIssue }: {
+function KanbanColumn({ title, icon: Icon, workOrders, color, onReport, onIssue, onView }: {
   title: string;
   icon: React.ElementType;
-  ots: any[];
+  workOrders: any[];
   color: string;
-  onReport: (ot: any) => void;
-  onIssue: (ot: any) => void;
+  onReport: (wo: any) => void;
+  onIssue: (wo: any) => void;
+  onView: (wo: any) => void;
 }) {
   return (
     <div className="flex flex-col h-full">
       <div className={`flex items-center gap-2 p-3 rounded-t-lg ${color}`}>
         <Icon className="h-5 w-5 text-white" />
         <h3 className="font-semibold text-white">{title}</h3>
-        <Badge variant="secondary" className="ml-auto">{ots.length}</Badge>
+        <Badge variant="secondary" className="ml-auto">{workOrders.length}</Badge>
       </div>
       <ScrollArea className="flex-1 p-2 bg-muted/30 rounded-b-lg min-h-[400px]">
         <div className="space-y-3">
-          {ots.map((ot) => (
-            <OTCard 
-              key={ot.id} 
-              ot={ot} 
-              onReport={() => onReport(ot)}
-              onIssue={() => onIssue(ot)}
+          {workOrders.map((wo) => (
+            <ProductionCard
+              key={wo.id}
+              id={wo.id}
+              otNumber={wo.ot_number}
+              productName={wo.product_name || "Sin descripción"}
+              clientName={wo.client_name}
+              quantity={wo.quantity || 0}
+              produced={wo.totalProduced || 0}
+              status={wo.status}
+              lastUpdate={wo.lastReport?.created_at}
+              timeSpentMinutes={wo.totalTime || 0}
+              onReport={() => onReport(wo)}
+              onIssue={() => onIssue(wo)}
+              onViewDetails={() => onView(wo)}
             />
           ))}
-          {ots.length === 0 && (
+          {workOrders.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Sin OTs</p>
@@ -185,11 +64,12 @@ function KanbanColumn({ title, icon: Icon, ots, color, onReport, onIssue }: {
 }
 
 export default function ProductionDashboard() {
+  const navigate = useNavigate();
   const { stats, loading: statsLoading, refetch: refetchStats } = useProductionStats();
-  const { otsWithProgress, loading: boardLoading, refetch: refetchBoard } = useProductionBoard();
+  const { workOrdersWithProgress, loading: boardLoading, refetch: refetchBoard } = useProductionBoard();
   const { issues, loading: issuesLoading, refetch: refetchIssues } = useProductionIssues(false);
   
-  const [selectedOT, setSelectedOT] = useState<any>(null);
+  const [selectedWO, setSelectedWO] = useState<any>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
 
@@ -202,25 +82,29 @@ export default function ProductionDashboard() {
   // Real-time updates
   useRealtimeProduction(handleRefresh);
 
-  // Group OTs by status for Kanban
-  const pendingOTs = otsWithProgress.filter((ot) => ot.status === "pending" || ot.status === "on_hold");
-  const inProgressOTs = otsWithProgress.filter((ot) => ot.status === "in_progress" || ot.status === "in_production");
-  const completedTodayOTs = otsWithProgress.filter((ot) => {
-    if (ot.status !== "completed") return false;
-    if (!ot.completed_at) return false;
-    const completedDate = new Date(ot.completed_at);
+  // Group work orders by status for Kanban
+  const pendingWOs = workOrdersWithProgress.filter((wo) => wo.status === "draft" || wo.status === "approved");
+  const inProgressWOs = workOrdersWithProgress.filter((wo) => wo.status === "in_production");
+  const completedTodayWOs = workOrdersWithProgress.filter((wo) => {
+    if (wo.status !== "completed") return false;
+    if (!wo.completed_at) return false;
+    const completedDate = new Date(wo.completed_at);
     const today = new Date();
     return completedDate.toDateString() === today.toDateString();
   });
 
-  const handleOpenReport = (ot: any) => {
-    setSelectedOT(ot);
+  const handleOpenReport = (wo: any) => {
+    setSelectedWO(wo);
     setReportDialogOpen(true);
   };
 
-  const handleOpenIssue = (ot: any) => {
-    setSelectedOT(ot);
+  const handleOpenIssue = (wo: any) => {
+    setSelectedWO(wo);
     setIssueDialogOpen(true);
+  };
+
+  const handleViewDetails = (wo: any) => {
+    navigate(`/ots/${wo.id}`);
   };
 
   return (
@@ -244,7 +128,7 @@ export default function ProductionDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="OTs Activas"
-          value={stats.activeOTs}
+          value={stats.activeWorkOrders}
           icon={Package}
           loading={statsLoading}
         />
@@ -265,7 +149,10 @@ export default function ProductionDashboard() {
           title="Eficiencia"
           value={`${stats.currentEfficiency}%`}
           icon={Gauge}
-          trend={stats.currentEfficiency >= 100 ? "up" : stats.currentEfficiency >= 80 ? "neutral" : "down"}
+          trend={{
+            value: stats.currentEfficiency >= 100 ? "+5%" : "-3%",
+            isPositive: stats.currentEfficiency >= 100
+          }}
           loading={statsLoading}
         />
       </div>
@@ -320,26 +207,29 @@ export default function ProductionDashboard() {
               <KanbanColumn
                 title="Pendiente"
                 icon={Clock}
-                ots={pendingOTs}
+                workOrders={pendingWOs}
                 color="bg-yellow-500"
                 onReport={handleOpenReport}
                 onIssue={handleOpenIssue}
+                onView={handleViewDetails}
               />
               <KanbanColumn
                 title="En Progreso"
                 icon={Factory}
-                ots={inProgressOTs}
+                workOrders={inProgressWOs}
                 color="bg-blue-500"
                 onReport={handleOpenReport}
                 onIssue={handleOpenIssue}
+                onView={handleViewDetails}
               />
               <KanbanColumn
                 title="Completado Hoy"
                 icon={Package}
-                ots={completedTodayOTs}
+                workOrders={completedTodayWOs}
                 color="bg-green-500"
                 onReport={handleOpenReport}
                 onIssue={handleOpenIssue}
+                onView={handleViewDetails}
               />
             </div>
           )}
@@ -352,14 +242,23 @@ export default function ProductionDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {otsWithProgress
-                  .filter((ot) => ot.status !== "completed")
-                  .map((ot) => (
-                    <OTCard
-                      key={ot.id}
-                      ot={ot}
-                      onReport={() => handleOpenReport(ot)}
-                      onIssue={() => handleOpenIssue(ot)}
+                {workOrdersWithProgress
+                  .filter((wo) => wo.status !== "completed" && wo.status !== "delivered")
+                  .map((wo) => (
+                    <ProductionCard
+                      key={wo.id}
+                      id={wo.id}
+                      otNumber={wo.ot_number}
+                      productName={wo.product_name || "Sin descripción"}
+                      clientName={wo.client_name}
+                      quantity={wo.quantity || 0}
+                      produced={wo.totalProduced || 0}
+                      status={wo.status}
+                      lastUpdate={wo.lastReport?.created_at}
+                      timeSpentMinutes={wo.totalTime || 0}
+                      onReport={() => handleOpenReport(wo)}
+                      onIssue={() => handleOpenIssue(wo)}
+                      onViewDetails={() => handleViewDetails(wo)}
                     />
                   ))}
               </div>
@@ -372,14 +271,14 @@ export default function ProductionDashboard() {
       <ProductionReportDialog
         open={reportDialogOpen}
         onOpenChange={setReportDialogOpen}
-        ot={selectedOT}
+        ot={selectedWO}
         onSuccess={handleRefresh}
       />
 
       <IssueReportDialog
         open={issueDialogOpen}
         onOpenChange={setIssueDialogOpen}
-        ot={selectedOT}
+        ot={selectedWO}
         onSuccess={handleRefresh}
       />
     </div>

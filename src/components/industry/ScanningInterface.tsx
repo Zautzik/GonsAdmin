@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -16,25 +16,31 @@ import {
 import {
   Package,
   Scan,
-  Check,
   Plus,
   Minus,
   Camera,
   Volume2,
   VolumeX,
-  RotateCcw,
   ArrowRight,
-  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { findItemByCode, createInventoryTransaction, useSuppliers } from "@/hooks/useInventoryData";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-
-type InventoryItem = Database["public"]["Tables"]["inventory_items"]["Row"];
 
 type ScanMode = "receive" | "usage" | "adjustment";
+
+interface InventoryItem {
+  id: string;
+  sku: string;
+  name: string;
+  category: string;
+  current_stock: number | null;
+  reorder_point: number | null;
+  unit_of_measure: string;
+  unit_cost: number | null;
+  location: string | null;
+}
 
 export default function ScanningInterface() {
   const [mode, setMode] = useState<ScanMode>("receive");
@@ -52,23 +58,24 @@ export default function ScanningInterface() {
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scanHistory, setScanHistory] = useState<{ code: string; item: string; time: Date }[]>([]);
-  const [ots, setOts] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const { suppliers } = useSuppliers();
 
-  // Fetch active OTs for autocomplete
+  // Fetch active work orders for autocomplete
   useEffect(() => {
-    const fetchOTs = async () => {
+    const fetchWorkOrders = async () => {
       const { data } = await supabase
-        .from("ots")
+        .from("work_orders")
         .select("id, ot_number, client_name")
         .neq("status", "completed")
+        .neq("status", "delivered")
         .order("ot_number", { ascending: false })
         .limit(50);
-      setOts(data || []);
+      setWorkOrders(data || []);
     };
-    fetchOTs();
+    fetchWorkOrders();
   }, []);
 
   const playBeep = useCallback((success: boolean) => {
@@ -103,7 +110,7 @@ export default function ScanningInterface() {
     if (item) {
       playBeep(true);
       vibrate(100);
-      setScannedItem(item);
+      setScannedItem(item as InventoryItem);
       setUnitCost(item.unit_cost?.toString() || "");
       setLocation(item.location || "");
       setScanHistory(prev => [{ code, item: item.name, time: new Date() }, ...prev.slice(0, 9)]);
@@ -177,7 +184,7 @@ export default function ScanningInterface() {
     setLoading(true);
     try {
       await createInventoryTransaction({
-        inventory_item_id: scannedItem.id,
+        inventory_id: scannedItem.id,
         transaction_type: "purchase",
         quantity: qty,
         unit_cost: parseFloat(unitCost) || undefined,
@@ -215,22 +222,15 @@ export default function ScanningInterface() {
 
     setLoading(true);
     try {
-      // Find OT ID if provided
+      // Find work order ID if provided
       let workOrderId: string | undefined;
       if (otNumber) {
-        const ot = ots.find(o => o.ot_number === otNumber || o.ot_number.includes(otNumber));
-        if (ot) {
-          const { data: wo } = await supabase
-            .from("work_orders")
-            .select("id")
-            .eq("ot_number", parseInt(ot.ot_number.replace("OT-", "")))
-            .single();
-          workOrderId = wo?.id;
-        }
+        const wo = workOrders.find(w => w.ot_number?.toString() === otNumber || w.ot_number === parseInt(otNumber));
+        workOrderId = wo?.id;
       }
 
       await createInventoryTransaction({
-        inventory_item_id: scannedItem.id,
+        inventory_id: scannedItem.id,
         transaction_type: "usage",
         quantity: qty,
         work_order_id: workOrderId,
@@ -242,7 +242,7 @@ export default function ScanningInterface() {
       const reorderWarning = scannedItem.reorder_point && newStock <= scannedItem.reorder_point;
       
       toast.success(
-        `✅ Registrado uso: ${scannedItem.name} ${qty}${scannedItem.unit_of_measure}${otNumber ? ` para ${otNumber}` : ""}. Stock: ${newStock}${reorderWarning ? " (reordenar pronto)" : ""}`
+        `✅ Registrado uso: ${scannedItem.name} ${qty}${scannedItem.unit_of_measure}${otNumber ? ` para OT-${otNumber}` : ""}. Stock: ${newStock}${reorderWarning ? " (reordenar pronto)" : ""}`
       );
       playBeep(true);
       vibrate(200);
@@ -261,7 +261,7 @@ export default function ScanningInterface() {
     }
 
     const qty = parseFloat(quantity);
-    if (isNaN(qty) || qty < 0) {
+    if (isNaN(qty)) {
       toast.error("Cantidad inválida");
       return;
     }
@@ -269,7 +269,7 @@ export default function ScanningInterface() {
     setLoading(true);
     try {
       await createInventoryTransaction({
-        inventory_item_id: scannedItem.id,
+        inventory_id: scannedItem.id,
         transaction_type: "adjustment",
         quantity: qty,
         notes: `${adjustmentReason}: ${notes}`,
@@ -481,9 +481,9 @@ export default function ScanningInterface() {
                     <SelectValue placeholder="Seleccionar OT..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {ots.map((ot) => (
-                      <SelectItem key={ot.id} value={ot.ot_number}>
-                        {ot.ot_number} - {ot.client_name}
+                    {workOrders.map((wo) => (
+                      <SelectItem key={wo.id} value={wo.ot_number?.toString()}>
+                        OT-{wo.ot_number} - {wo.client_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -499,45 +499,42 @@ export default function ScanningInterface() {
                     <SelectValue placeholder="Seleccionar razón..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="damaged">Dañado</SelectItem>
-                    <SelectItem value="lost">Perdido</SelectItem>
-                    <SelectItem value="found">Encontrado</SelectItem>
-                    <SelectItem value="correction">Corrección</SelectItem>
-                    <SelectItem value="inventory">Inventario físico</SelectItem>
+                    <SelectItem value="Conteo físico">Conteo físico</SelectItem>
+                    <SelectItem value="Dañado">Dañado</SelectItem>
+                    <SelectItem value="Vencido">Vencido</SelectItem>
+                    <SelectItem value="Corrección de error">Corrección de error</SelectItem>
+                    <SelectItem value="Otro">Otro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
 
+            {/* Notes */}
             <div className="space-y-2">
               <Label>Notas (opcional)</Label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notas adicionales..."
+                placeholder="Detalles adicionales..."
                 rows={2}
               />
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={resetForm} className="flex-1">
-                <RotateCcw className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
               <Button
                 onClick={
-                  mode === "receive"
-                    ? handleConfirmReceive
-                    : mode === "usage"
-                    ? handleConfirmUsage
-                    : handleConfirmAdjustment
+                  mode === "receive" ? handleConfirmReceive :
+                  mode === "usage" ? handleConfirmUsage :
+                  handleConfirmAdjustment
                 }
-                disabled={loading || !quantity}
-                className="flex-1 h-12 text-lg"
+                disabled={loading}
+                className="flex-1"
               >
-                <Check className="h-5 w-5 mr-2" />
-                Confirmar
+                {loading ? "Procesando..." : "Confirmar"}
               </Button>
             </div>
           </CardContent>
@@ -548,21 +545,19 @@ export default function ScanningInterface() {
       {scanHistory.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <ClipboardList className="h-4 w-4" />
-              Historial Reciente
-            </CardTitle>
+            <CardTitle className="text-sm">Historial Reciente</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {scanHistory.slice(0, 5).map((h, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded cursor-pointer hover:bg-muted"
-                  onClick={() => handleScan(h.code)}
-                >
-                  <span className="font-medium">{h.item}</span>
-                  <span className="text-muted-foreground font-mono text-xs">{h.code}</span>
+              {scanHistory.slice(0, 5).map((entry, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-3 w-3 text-muted-foreground" />
+                    <span className="truncate max-w-[150px]">{entry.item}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {entry.time.toLocaleTimeString()}
+                  </span>
                 </div>
               ))}
             </div>
