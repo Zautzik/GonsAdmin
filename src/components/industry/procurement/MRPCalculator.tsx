@@ -152,6 +152,8 @@ export default function MRPCalculator() {
         supplierId,
         data.items.map((item) => ({
           inventoryItemId: item.itemId,
+          name: item.itemName,
+          sku: '',
           quantity: item.quantity,
           unitCost: item.unitCost,
         })),

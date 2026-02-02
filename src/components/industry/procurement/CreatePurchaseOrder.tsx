@@ -117,6 +117,8 @@ export default function CreatePurchaseOrder() {
       supplierId,
       orderItems.map((item) => ({
         inventoryItemId: item.inventoryItemId,
+        name: item.name,
+        sku: item.sku,
         quantity: item.quantity,
         unitCost: item.unitCost,
       })),

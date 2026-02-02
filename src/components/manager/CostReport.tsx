@@ -13,44 +13,63 @@ const CostReport = () => {
     materialCost: 0,
     laborCost: 0,
     machineCost: 0,
-    jobCount: 0,
+    orderCount: 0,
   });
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
 
   useEffect(() => {
     fetchCostData();
   }, []);
 
   const fetchCostData = async () => {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*, ot(ot_number), machines(name), workers(name), batches(paper_type)') as any;
+    // Fetch work orders with their operations for cost breakdown
+    const { data: orders, error } = await supabase
+      .from('work_orders')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast.error('Error loading cost data');
       return;
     }
 
-    setJobs(data || []);
+    // Fetch operations to calculate category costs
+    const { data: operations } = await supabase
+      .from('operations')
+      .select('*');
 
-    const totalCost = data?.reduce((sum, job) => sum + (job.cost || 0), 0) || 0;
-    // Mock breakdown (in real app, store separately)
-    const materialCost = totalCost * 0.3;
-    const laborCost = totalCost * 0.5;
-    const machineCost = totalCost * 0.2;
+    setWorkOrders(orders || []);
+
+    // Calculate costs from operations
+    const materialCost = (operations || [])
+      .filter(op => op.category === 'MATERIALS')
+      .reduce((sum, op) => sum + (op.total_cost_actual || op.total_cost_budgeted || 0), 0);
+    
+    const laborCost = (operations || [])
+      .filter(op => ['PRINTING', 'FINISHING'].includes(op.category))
+      .reduce((sum, op) => sum + (op.total_cost_actual || op.total_cost_budgeted || 0), 0);
+    
+    const machineCost = (operations || [])
+      .filter(op => op.category === 'OTHER')
+      .reduce((sum, op) => sum + (op.total_cost_actual || op.total_cost_budgeted || 0), 0);
+
+    const totalCost = materialCost + laborCost + machineCost;
 
     setStats({
       totalCost,
       materialCost,
       laborCost,
       machineCost,
-      jobCount: data?.length || 0,
+      orderCount: orders?.length || 0,
     });
   };
 
   const exportToPDF = () => {
     toast.success('PDF export functionality would be implemented here');
-    // In production, use jsPDF or similar library
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
   };
 
   return (
@@ -72,8 +91,8 @@ const CostReport = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">${stats.totalCost.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">{stats.jobCount} jobs</p>
+            <div className="text-3xl font-bold text-foreground">{formatCurrency(stats.totalCost)}</div>
+            <p className="text-xs text-muted-foreground mt-1">{stats.orderCount} OTs</p>
           </CardContent>
         </Card>
 
@@ -84,8 +103,10 @@ const CostReport = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">${stats.materialCost.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">30% of total</p>
+            <div className="text-3xl font-bold text-foreground">{formatCurrency(stats.materialCost)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.totalCost > 0 ? ((stats.materialCost / stats.totalCost) * 100).toFixed(0) : 0}% del total
+            </p>
           </CardContent>
         </Card>
 
@@ -96,8 +117,10 @@ const CostReport = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">${stats.laborCost.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">50% of total</p>
+            <div className="text-3xl font-bold text-foreground">{formatCurrency(stats.laborCost)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.totalCost > 0 ? ((stats.laborCost / stats.totalCost) * 100).toFixed(0) : 0}% del total
+            </p>
           </CardContent>
         </Card>
 
@@ -108,8 +131,10 @@ const CostReport = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">${stats.machineCost.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">20% of total</p>
+            <div className="text-3xl font-bold text-foreground">{formatCurrency(stats.machineCost)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.totalCost > 0 ? ((stats.machineCost / stats.totalCost) * 100).toFixed(0) : 0}% del total
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -124,19 +149,23 @@ const CostReport = () => {
               <thead>
                 <tr className="border-b bg-muted/30">
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground">OT</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('description')}</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">{t('machine')}</th>
-                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">{t('totalCost')}</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Cliente</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Producto</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">Costo Presup.</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">Costo Real</th>
                 </tr>
               </thead>
               <tbody>
-                {jobs.map((job) => (
-                  <tr key={job.id} className="border-b hover:bg-muted/50 transition-colors">
-                    <td className="py-3 px-4 font-medium">{job.ot?.ot_number || '-'}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{job.description}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{job.machines?.name || '-'}</td>
+                {workOrders.slice(0, 20).map((order) => (
+                  <tr key={order.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <td className="py-3 px-4 font-medium">OT-{order.ot_number}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{order.client_name}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{order.product_name}</td>
+                    <td className="py-3 px-4 text-right">
+                      {formatCurrency(order.cost_budgeted || 0)}
+                    </td>
                     <td className="py-3 px-4 text-right font-bold text-foreground">
-                      ${(job.cost || 0).toFixed(2)}
+                      {formatCurrency(order.cost_actual || 0)}
                     </td>
                   </tr>
                 ))}
