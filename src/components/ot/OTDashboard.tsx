@@ -10,26 +10,15 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Plus, Search, FileText, Calendar as CalendarIcon, 
-  Eye, Edit, Copy, Printer, Package, TrendingUp, TrendingDown
+  Eye, Edit, Copy, Printer, Package, TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useOTFormStore } from '@/stores/otFormStore';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface WorkOrder {
-  id: string;
-  ot_number: number;
-  client_name: string;
-  product_name: string;
-  quantity: number;
-  status: string;
-  priority: number;
-  delivery_date: string | null;
-  total_price: number;
-  unit_price: number;
-  created_at: string;
-}
+type WorkOrder = Tables<'work_orders'>;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: 'Borrador', color: 'bg-muted text-muted-foreground' },
@@ -40,12 +29,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   cancelled: { label: 'Cancelada', color: 'bg-destructive/20 text-destructive' },
 };
 
-const PRIORITY_CONFIG: Record<number, { label: string; color: string }> = {
-  1: { label: 'Urgente', color: 'text-destructive' },
-  2: { label: 'Alta', color: 'text-warning' },
-  3: { label: 'Normal', color: 'text-muted-foreground' },
-  4: { label: 'Baja', color: 'text-info' },
-  5: { label: 'Mínima', color: 'text-muted' },
+const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
+  urgent: { label: 'Urgente', color: 'text-destructive' },
+  high: { label: 'Alta', color: 'text-warning' },
+  normal: { label: 'Normal', color: 'text-muted-foreground' },
+  low: { label: 'Baja', color: 'text-info' },
 };
 
 export default function OTDashboard() {
@@ -63,7 +51,6 @@ export default function OTDashboard() {
   useEffect(() => {
     fetchWorkOrders();
     
-    // Real-time subscription
     const channel = supabase
       .channel('work_orders_changes')
       .on(
@@ -117,11 +104,11 @@ export default function OTDashboard() {
   };
 
   const handleDuplicate = async (order: WorkOrder) => {
-    // TODO: Implement duplication logic
     console.log('Duplicating order:', order.ot_number);
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | null) => {
+    if (value === null) return '-';
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
   };
 
@@ -129,12 +116,11 @@ export default function OTDashboard() {
     total: workOrders.length,
     draft: workOrders.filter((o) => o.status === 'draft').length,
     inProduction: workOrders.filter((o) => o.status === 'in_production').length,
-    completed: workOrders.filter((o) => ['completed', 'delivered'].includes(o.status)).length,
+    completed: workOrders.filter((o) => ['completed', 'delivered'].includes(o.status || '')).length,
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">Órdenes de Trabajo</h1>
@@ -146,7 +132,6 @@ export default function OTDashboard() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="card-hover">
           <CardContent className="p-4">
@@ -202,7 +187,6 @@ export default function OTDashboard() {
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -259,7 +243,6 @@ export default function OTDashboard() {
         </CardContent>
       </Card>
 
-      {/* OT Cards Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -298,8 +281,8 @@ export default function OTDashboard() {
                     <p className="text-sm text-muted-foreground">OT #{order.ot_number}</p>
                     <CardTitle className="text-lg mt-1">{order.product_name}</CardTitle>
                   </div>
-                  <Badge className={cn('text-xs', STATUS_CONFIG[order.status]?.color)}>
-                    {STATUS_CONFIG[order.status]?.label || order.status}
+                  <Badge className={cn('text-xs', STATUS_CONFIG[order.status || 'draft']?.color)}>
+                    {STATUS_CONFIG[order.status || 'draft']?.label || order.status}
                   </Badge>
                 </div>
               </CardHeader>
@@ -323,13 +306,12 @@ export default function OTDashboard() {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Prioridad</span>
-                    <span className={cn('font-medium', PRIORITY_CONFIG[order.priority]?.color)}>
-                      {PRIORITY_CONFIG[order.priority]?.label || 'Normal'}
+                    <span className={cn('font-medium', PRIORITY_CONFIG[order.priority || 'normal']?.color)}>
+                      {PRIORITY_CONFIG[order.priority || 'normal']?.label || 'Normal'}
                     </span>
                   </div>
                 </div>
 
-                {/* Budget vs Actual Indicator */}
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{formatCurrency(order.total_price)}</span>
@@ -339,7 +321,6 @@ export default function OTDashboard() {
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex gap-2 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"

@@ -38,7 +38,9 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useSuppliers } from "@/hooks/useInventoryData";
-import { useSupplierDetails, usePurchaseOrders, createSupplier, updateSupplier } from "@/hooks/useProcurementData";
+import { useSupplierDetails } from "@/hooks/useProcurementData";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
 type Supplier = Database["public"]["Tables"]["suppliers"]["Row"];
@@ -108,14 +110,27 @@ export default function SupplierManagement() {
     if (!formData.name.trim()) return;
 
     setSaving(true);
-    if (editSupplier) {
-      await updateSupplier(editSupplier.id, formData);
-    } else {
-      await createSupplier(formData);
+    try {
+      if (editSupplier) {
+        const { error } = await supabase
+          .from("suppliers")
+          .update(formData)
+          .eq("id", editSupplier.id);
+        if (error) throw error;
+        toast.success("Proveedor actualizado");
+      } else {
+        const { error } = await supabase
+          .from("suppliers")
+          .insert([formData]);
+        if (error) throw error;
+        toast.success("Proveedor creado");
+      }
+      setShowForm(false);
+      refetch();
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
     }
     setSaving(false);
-    setShowForm(false);
-    refetch();
   };
 
   const totalSpent = purchaseHistory.reduce((sum, po) => sum + (po.total_amount || 0), 0);

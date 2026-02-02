@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOTFormStore } from '@/stores/otFormStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,9 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, DollarSign, Save, FileCheck, Loader2, TrendingUp, Calculator, BadgePercent } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { ArrowLeft, Save, FileCheck, Loader2, Calculator, BadgePercent } from 'lucide-react';
 
 interface Step5Props {
   onPrev: () => void;
@@ -47,98 +45,67 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
     else setApproving(true);
 
     try {
-      // Create work order
+      // Build specifications JSONB
+      const specsJson = {
+        dimensions: { width_cm: specifications.finishedWidthCm, height_cm: specifications.finishedHeightCm },
+        substrate: { type: specifications.substrateType, weight_gsm: specifications.substrateWeightGsm, brand: specifications.substrateBrand },
+        colors: { front: specifications.colorsFront, back: specifications.colorsBack, pantones: specifications.pantoneColors },
+        finishing: specifications.finishingOperations,
+      };
+
+      // Build calculations JSONB
+      const calcsJson = {
+        sheet_format: calculations.sheetFormat,
+        bocas_per_sheet: calculations.bocasPerSheet,
+        total_sheets: calculations.totalSheets,
+        substrate_kg: calculations.substrateKg,
+        ink_kg: 0,
+        ctp_plates: calculations.ctpPlates,
+      };
+
+      // Create work order with consolidated schema
       const { data: workOrder, error: woError } = await supabase
         .from('work_orders')
-        .insert({
+        .insert([{
           client_name: jobInfo.clientName,
           client_id: jobInfo.clientId || null,
           product_name: jobInfo.productName,
           product_description: jobInfo.productDescription,
           quantity: jobInfo.quantity,
           delivery_date: jobInfo.deliveryDate || null,
-          budget_code: jobInfo.budgetCode,
-          priority: jobInfo.priority,
+          priority: jobInfo.priority || 'normal',
           notes: jobInfo.notes,
           status,
+          specifications: specsJson,
+          calculations: calcsJson,
           unit_price: pricing.unitPrice,
           total_price: pricing.totalPrice,
+          cost_budgeted: pricing.subtotal,
           created_by: user?.id,
-        })
+        }])
         .select()
         .single();
 
       if (woError) throw woError;
 
-      // Save specifications
-      await supabase.from('ot_specifications').insert({
-        work_order_id: workOrder.id,
-        product_type: specifications.productType,
-        finished_width_cm: specifications.finishedWidthCm,
-        finished_height_cm: specifications.finishedHeightCm,
-        substrate_type: specifications.substrateType,
-        substrate_weight_gsm: specifications.substrateWeightGsm,
-        substrate_brand: specifications.substrateBrand,
-        colors_front: specifications.colorsFront,
-        colors_back: specifications.colorsBack,
-        pantone_colors: specifications.pantoneColors,
-        finishing_operations: specifications.finishingOperations,
-        packaging_notes: specifications.packagingNotes,
-      });
-
-      // Save calculations
-      await supabase.from('ot_calculations').insert({
-        work_order_id: workOrder.id,
-        sheet_format: calculations.sheetFormat,
-        sheet_width_cm: calculations.sheetWidthCm,
-        sheet_height_cm: calculations.sheetHeightCm,
-        bocas_per_sheet: calculations.bocasPerSheet,
-        total_sheets: calculations.totalSheets,
-        setup_sheets: calculations.setupSheets,
-        substrate_kg: calculations.substrateKg,
-        waste_factor_percent: calculations.wasteFactorPercent,
-        ctp_plates: calculations.ctpPlates,
-        printing_hours_estimated: calculations.printingHoursEstimated,
-      });
-
-      // Save operations
+      // Save operations to operations table
       if (operations.length > 0) {
-        await supabase.from('ot_operations').insert(
-          operations.map(op => ({
+        await supabase.from('operations').insert(
+          operations.map((op, index) => ({
             work_order_id: workOrder.id,
             operation_code: op.operationCode,
-            sequence_order: op.sequenceOrder,
+            operation_name: op.operationCode,
+            category: 'OTHER',
+            sequence_order: index,
             quantity_budgeted: op.quantityBudgeted,
             unit_cost_budgeted: op.unitCostBudgeted,
             total_cost_budgeted: op.totalCostBudgeted,
-            unit_of_measure: op.unitOfMeasure,
+            unit_of_measure: op.unitOfMeasure || 'units',
             notes: op.notes,
-            status: 'pending' as const,
+            status: 'pending',
           }))
         );
       }
-
-      // Save pricing
-      await supabase.from('ot_pricing').insert({
-        work_order_id: workOrder.id,
-        materials_cost: pricing.materialsCost,
-        labor_cost: pricing.laborCost,
-        third_party_cost: pricing.thirdPartyCost,
-        other_cost: pricing.otherCost,
-        subtotal: pricing.subtotal,
-        margin_percent: pricing.marginPercent,
-        margin_amount: pricing.marginAmount,
-        increment_percent: pricing.incrementPercent,
-        increment_amount: pricing.incrementAmount,
-        commission1_percent: pricing.commission1Percent,
-        commission1_amount: pricing.commission1Amount,
-        commission2_percent: pricing.commission2Percent,
-        commission2_amount: pricing.commission2Amount,
-        commission3_percent: pricing.commission3Percent,
-        commission3_amount: pricing.commission3Amount,
-        total_price: pricing.totalPrice,
-        unit_price: pricing.unitPrice,
-      });
 
       setLastSaved(new Date());
       toast({ 
@@ -165,14 +132,12 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Cost Breakdown */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5" />
               Desglose de Costos
             </CardTitle>
-            <CardDescription>Resumen por categoría</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -201,14 +166,12 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
           </CardContent>
         </Card>
 
-        {/* Pricing Calculator */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BadgePercent className="h-5 w-5" />
               Calculadora de Precio
             </CardTitle>
-            <CardDescription>Márgenes y comisiones</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-4 items-end">
@@ -221,9 +184,7 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
                   onChange={(e) => handlePercentChange('marginPercent', parseFloat(e.target.value) || 0)}
                 />
               </div>
-              <div className="col-span-2 text-right font-medium">
-                + {formatCurrency(pricing.marginAmount)}
-              </div>
+              <div className="col-span-2 text-right font-medium">+ {formatCurrency(pricing.marginAmount)}</div>
             </div>
             
             <div className="grid grid-cols-3 gap-4 items-end">
@@ -236,16 +197,14 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
                   onChange={(e) => handlePercentChange('incrementPercent', parseFloat(e.target.value) || 0)}
                 />
               </div>
-              <div className="col-span-2 text-right font-medium">
-                + {formatCurrency(pricing.incrementAmount)}
-              </div>
+              <div className="col-span-2 text-right font-medium">+ {formatCurrency(pricing.incrementAmount)}</div>
             </div>
 
             <Separator />
 
             <div className="grid grid-cols-3 gap-4 items-end">
               <div>
-                <Label>Comisión 1 %</Label>
+                <Label>Comisión %</Label>
                 <Input
                   type="number"
                   step="0.5"
@@ -253,125 +212,43 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
                   onChange={(e) => handlePercentChange('commission1Percent', parseFloat(e.target.value) || 0)}
                 />
               </div>
-              <div className="col-span-2 text-right font-medium">
-                + {formatCurrency(pricing.commission1Amount)}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Comisión 2 %</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={pricing.commission2Percent}
-                  onChange={(e) => handlePercentChange('commission2Percent', parseFloat(e.target.value) || 0)}
-                />
-              </div>
-              <div className="col-span-2 text-right font-medium">
-                + {formatCurrency(pricing.commission2Amount)}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Comisión 3 %</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={pricing.commission3Percent}
-                  onChange={(e) => handlePercentChange('commission3Percent', parseFloat(e.target.value) || 0)}
-                />
-              </div>
-              <div className="col-span-2 text-right font-medium">
-                + {formatCurrency(pricing.commission3Amount)}
-              </div>
+              <div className="col-span-2 text-right font-medium">+ {formatCurrency(pricing.commission1Amount)}</div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Final Price Summary */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div>
               <p className="text-sm text-muted-foreground mb-1">Cantidad</p>
               <p className="text-2xl font-bold">{jobInfo.quantity.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">unidades</p>
             </div>
-            <div className="text-center">
+            <div>
               <p className="text-sm text-muted-foreground mb-1">Precio Unitario</p>
               <p className="text-2xl font-bold text-primary">{formatCurrency(pricing.unitPrice)}</p>
-              <p className="text-xs text-muted-foreground">por unidad</p>
             </div>
-            <div className="text-center">
+            <div>
               <p className="text-sm text-muted-foreground mb-1">Total</p>
               <p className="text-3xl font-bold text-primary">{formatCurrency(pricing.totalPrice)}</p>
-              <p className="text-xs text-muted-foreground">IVA no incluido</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Profitability Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Margen Bruto</p>
-            <p className="text-xl font-bold text-success">
-              {pricing.subtotal > 0 ? ((pricing.totalPrice - pricing.subtotal) / pricing.totalPrice * 100).toFixed(1) : 0}%
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Costo/Unidad</p>
-            <p className="text-xl font-bold">
-              {formatCurrency(jobInfo.quantity > 0 ? pricing.subtotal / jobInfo.quantity : 0)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Ganancia/Unidad</p>
-            <p className="text-xl font-bold text-success">
-              {formatCurrency(pricing.unitPrice - (jobInfo.quantity > 0 ? pricing.subtotal / jobInfo.quantity : 0))}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Ganancia Total</p>
-            <p className="text-xl font-bold text-success">
-              {formatCurrency(pricing.totalPrice - pricing.subtotal)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Actions */}
       <div className="flex justify-between">
         <Button type="button" variant="outline" onClick={onPrev} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Anterior
         </Button>
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => saveWorkOrder('draft')} 
-            disabled={saving || approving}
-            className="gap-2"
-          >
+          <Button variant="outline" onClick={() => saveWorkOrder('draft')} disabled={saving || approving} className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar Borrador
           </Button>
-          <Button 
-            onClick={() => saveWorkOrder('approved')} 
-            disabled={saving || approving}
-            className="gap-2"
-          >
+          <Button onClick={() => saveWorkOrder('approved')} disabled={saving || approving} className="gap-2">
             {approving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
-            Aprobar y Generar OT
+            Aprobar OT
           </Button>
         </div>
       </div>

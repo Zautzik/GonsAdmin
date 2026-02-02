@@ -21,17 +21,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  FileText,
   ArrowLeft,
   Check,
   X,
   Truck,
   Printer,
   Calendar,
-  User,
   Package,
   DollarSign,
-  Clock,
   Edit,
   Send,
 } from "lucide-react";
@@ -45,6 +42,16 @@ import {
   receiveOrderItems,
 } from "@/hooks/useProcurementData";
 
+interface POItem {
+  inventory_id: string;
+  name: string;
+  sku: string;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_cost: number;
+  total_cost: number;
+}
+
 export default function PurchaseOrderDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -54,16 +61,19 @@ export default function PurchaseOrderDetail() {
 
   const { order, loading, refetch } = usePurchaseOrderDetail(id || null);
 
+  // Parse items from JSONB
+  const items: POItem[] = order?.parsedItems || [];
+
   useEffect(() => {
-    if (order?.items) {
+    if (items.length > 0) {
       const initial: Record<string, number> = {};
-      order.items.forEach((item) => {
+      items.forEach((item) => {
         const remaining = item.quantity_ordered - (item.quantity_received || 0);
-        initial[item.inventory_item_id] = remaining;
+        initial[item.inventory_id] = remaining;
       });
       setReceiveQuantities(initial);
     }
-  }, [order]);
+  }, [items]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(value);
@@ -113,8 +123,8 @@ export default function PurchaseOrderDetail() {
 
     const receivedItems = Object.entries(receiveQuantities)
       .filter(([_, qty]) => qty > 0)
-      .map(([itemId, qty]) => ({
-        itemId,
+      .map(([inventoryId, qty]) => ({
+        inventoryId,
         quantityReceived: qty,
       }));
 
@@ -137,8 +147,8 @@ export default function PurchaseOrderDetail() {
     );
   }
 
-  const totalReceived = order.items?.reduce((sum, item) => sum + (item.quantity_received || 0), 0) || 0;
-  const totalOrdered = order.items?.reduce((sum, item) => sum + item.quantity_ordered, 0) || 0;
+  const totalReceived = items.reduce((sum, item) => sum + (item.quantity_received || 0), 0);
+  const totalOrdered = items.reduce((sum, item) => sum + item.quantity_ordered, 0);
   const receiveProgress = totalOrdered > 0 ? (totalReceived / totalOrdered) * 100 : 0;
 
   return (
@@ -203,7 +213,7 @@ export default function PurchaseOrderDetail() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Fecha Orden</p>
-                <p className="font-semibold">{format(new Date(order.order_date), "dd/MM/yyyy", { locale: es })}</p>
+                <p className="font-semibold">{order.order_date ? format(new Date(order.order_date), "dd/MM/yyyy", { locale: es }) : '-'}</p>
               </div>
             </div>
           </CardContent>
@@ -325,13 +335,13 @@ export default function PurchaseOrderDetail() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.items?.map((item) => {
+              {items.map((item, index) => {
                 const received = item.quantity_received || 0;
                 const pending = item.quantity_ordered - received;
                 return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.item?.name || "Item"}</TableCell>
-                    <TableCell className="font-mono text-sm">{item.item?.sku || "-"}</TableCell>
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{item.name || "Item"}</TableCell>
+                    <TableCell className="font-mono text-sm">{item.sku || "-"}</TableCell>
                     <TableCell className="text-right">{item.quantity_ordered.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       <span className={received > 0 ? "text-green-600 font-medium" : ""}>
@@ -386,13 +396,13 @@ export default function PurchaseOrderDetail() {
               Ingrese las cantidades recibidas para cada item:
             </p>
             <div className="space-y-3">
-              {order.items?.map((item) => {
+              {items.map((item, index) => {
                 const remaining = item.quantity_ordered - (item.quantity_received || 0);
                 if (remaining <= 0) return null;
                 return (
-                  <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border">
+                  <div key={index} className="flex items-center gap-4 p-3 rounded-lg border">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.item?.name}</p>
+                      <p className="font-medium truncate">{item.name}</p>
                       <p className="text-sm text-muted-foreground">
                         Ordenado: {item.quantity_ordered} | Recibido: {item.quantity_received || 0} | Pendiente: {remaining}
                       </p>
@@ -403,11 +413,11 @@ export default function PurchaseOrderDetail() {
                         type="number"
                         min={0}
                         max={remaining}
-                        value={receiveQuantities[item.inventory_item_id] || 0}
+                        value={receiveQuantities[item.inventory_id] || 0}
                         onChange={(e) =>
                           setReceiveQuantities((prev) => ({
                             ...prev,
-                            [item.inventory_item_id]: Math.min(Number(e.target.value), remaining),
+                            [item.inventory_id]: Math.min(Number(e.target.value), remaining),
                           }))
                         }
                       />

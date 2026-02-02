@@ -1,12 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
+import type { Tables, Json } from "@/integrations/supabase/types";
 
-type PurchaseOrder = Database["public"]["Tables"]["purchase_orders"]["Row"];
-type PurchaseOrderItem = Database["public"]["Tables"]["purchase_order_items"]["Row"];
-type Supplier = Database["public"]["Tables"]["suppliers"]["Row"];
-type InventoryItem = Database["public"]["Tables"]["inventory_items"]["Row"];
+type PurchaseOrder = Tables<"purchase_orders">;
+type Supplier = Tables<"suppliers">;
+type InventoryItem = Tables<"inventory">;
+
+// Purchase order items stored in JSONB
+interface POItem {
+  inventory_id: string;
+  name: string;
+  sku: string;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_cost: number;
+  total_cost: number;
+}
 
 export interface ProcurementStats {
   activePOs: number;
@@ -48,14 +58,11 @@ export function useProcurementStats() {
     const weekEnd = new Date(now);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
-    const [posRes] = await Promise.all([
-      supabase.from("purchase_orders").select("*"),
-    ]);
+    const { data: allPOs } = await supabase.from("purchase_orders").select("*");
 
-    const allPOs = posRes.data || [];
-    const activePOs = allPOs.filter((po) => !["received", "cancelled"].includes(po.status || ""));
-    const pendingApprovals = allPOs.filter((po) => po.status === "draft");
-    const expectedThisWeek = allPOs.filter((po) => {
+    const activePOs = (allPOs || []).filter((po) => !["received", "cancelled"].includes(po.status || ""));
+    const pendingApprovals = (allPOs || []).filter((po) => po.status === "draft");
+    const expectedThisWeek = (allPOs || []).filter((po) => {
       if (!po.expected_delivery_date) return false;
       const deliveryDate = new Date(po.expected_delivery_date);
       return deliveryDate >= now && deliveryDate <= weekEnd && po.status !== "received" && po.status !== "cancelled";
@@ -84,7 +91,7 @@ export function usePurchaseOrders(filters?: {
   dateFrom?: string;
   dateTo?: string;
 }) {
-  const [orders, setOrders] = useState<(PurchaseOrder & { supplier?: Supplier; items?: PurchaseOrderItem[] })[]>([]);
+  const [orders, setOrders] = useState<(PurchaseOrder & { supplier?: Supplier })[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = useCallback(async () => {
@@ -92,7 +99,7 @@ export function usePurchaseOrders(filters?: {
     let query = supabase.from("purchase_orders").select("*").order("order_date", { ascending: false });
 
     if (filters?.status) {
-      query = query.eq("status", filters.status as any);
+      query = query.eq("status", filters.status);
     }
     if (filters?.supplierId) {
       query = query.eq("supplier_id", filters.supplierId);
@@ -133,7 +140,7 @@ export function usePurchaseOrders(filters?: {
 }
 
 export function usePurchaseOrderDetail(orderId: string | null) {
-  const [order, setOrder] = useState<(PurchaseOrder & { supplier?: Supplier; items?: (PurchaseOrderItem & { item?: InventoryItem })[] }) | null>(null);
+  const [order, setOrder] = useState<(PurchaseOrder & { supplier?: Supplier; parsedItems?: POItem[] }) | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchOrder = useCallback(async () => {
@@ -159,25 +166,13 @@ export function usePurchaseOrderDetail(orderId: string | null) {
       .eq("id", poData.supplier_id)
       .single();
 
-    // Fetch items
-    const { data: itemsData } = await supabase
-      .from("purchase_order_items")
-      .select("*")
-      .eq("purchase_order_id", orderId);
-
-    // Fetch inventory items
-    const itemIds = (itemsData || []).map((i) => i.inventory_item_id);
-    const { data: inventoryItems } = await supabase.from("inventory_items").select("*").in("id", itemIds);
-
-    const enrichedItems = (itemsData || []).map((poItem) => ({
-      ...poItem,
-      item: inventoryItems?.find((i) => i.id === poItem.inventory_item_id),
-    }));
+    // Parse items from JSONB
+    const parsedItems = (poData.items as POItem[]) || [];
 
     setOrder({
       ...poData,
       supplier: supplierData || undefined,
-      items: enrichedItems,
+      parsedItems,
     });
     setLoading(false);
   }, [orderId]);
@@ -198,7 +193,7 @@ export function usePurchaseSuggestions() {
 
     // Get all items with stock levels
     const { data: items, error } = await supabase
-      .from("inventory_items")
+      .from("inventory")
       .select("*")
       .eq("is_active", true);
 
@@ -225,7 +220,6 @@ export function usePurchaseSuggestions() {
       const maxStock = item.maximum_stock || reorderPoint * 3;
       const suggestedQty = Math.max(maxStock - currentStock, 0);
 
-      // Calculate priority
       let priority: "urgent" | "soon" | "normal" = "normal";
       if (currentStock === 0) {
         priority = "urgent";
@@ -246,7 +240,6 @@ export function usePurchaseSuggestions() {
       };
     });
 
-    // Sort by priority
     suggestionsList.sort((a, b) => {
       const priorityOrder = { urgent: 0, soon: 1, normal: 2 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
@@ -282,55 +275,37 @@ export function useMRPCalculator(dateRange: number = 30) {
     setLoading(true);
 
     // Get all inventory items
-    const { data: items } = await supabase.from("inventory_items").select("*").eq("is_active", true);
+    const { data: items } = await supabase.from("inventory").select("*").eq("is_active", true);
     
-    // Get material requirements for upcoming OTs
-    const { data: requirements } = await supabase
-      .from("material_requirements")
-      .select("*, work_orders(*)")
-      .neq("status", "consumed");
-
-    // Get pending PO items
-    const { data: poItems } = await supabase
-      .from("purchase_order_items")
-      .select("*, purchase_orders(*)")
-      .lt("quantity_ordered", 0); // Get all, filter later
-
-    // Get active PO items
-    const { data: activePOItems } = await supabase
-      .from("purchase_order_items")
-      .select("*, purchase_orders!inner(*)")
-      .not("purchase_orders.status", "in", '("received","cancelled")');
+    // Get pending POs to calculate on-order quantities
+    const { data: pendingPOs } = await supabase
+      .from("purchase_orders")
+      .select("*")
+      .not("status", "in", '("received","cancelled")');
 
     // Get suppliers
     const supplierIds = [...new Set((items || []).filter((i) => i.supplier_id).map((i) => i.supplier_id!))];
     const { data: suppliers } = await supabase.from("suppliers").select("*").in("id", supplierIds);
 
-    const now = new Date();
-    const date7d = new Date(now);
-    date7d.setDate(date7d.getDate() + 7);
-    const date30d = new Date(now);
-    date30d.setDate(date30d.getDate() + 30);
+    // Calculate on-order quantities from PO items
+    const onOrderByItem: Record<string, number> = {};
+    (pendingPOs || []).forEach((po) => {
+      const poItems = (po.items as POItem[]) || [];
+      poItems.forEach((item) => {
+        const remaining = item.quantity_ordered - (item.quantity_received || 0);
+        onOrderByItem[item.inventory_id] = (onOrderByItem[item.inventory_id] || 0) + remaining;
+      });
+    });
 
     const mrpResults = (items || []).map((item) => {
-      const itemReqs = (requirements || []).filter((r) => r.inventory_item_id === item.id);
-      
-      const required7d = itemReqs
-        .filter((r) => {
-          const wo = r.work_orders as any;
-          const deadline = wo?.delivery_date;
-          if (!deadline) return true; // Include if no deadline
-          return new Date(deadline) <= date7d;
-        })
-        .reduce((sum, r) => sum + (r.quantity_required - (r.quantity_allocated || 0)), 0);
-
-      const required30d = itemReqs.reduce((sum, r) => sum + (r.quantity_required - (r.quantity_allocated || 0)), 0);
-
-      const onOrder = (activePOItems || [])
-        .filter((poi) => poi.inventory_item_id === item.id)
-        .reduce((sum, poi) => sum + (poi.quantity_ordered - (poi.quantity_received || 0)), 0);
-
       const currentStock = item.current_stock || 0;
+      const reorderPoint = item.reorder_point || 0;
+      const onOrder = onOrderByItem[item.id] || 0;
+      
+      // Estimate requirements based on reorder point (simplified)
+      const required7d = Math.max(reorderPoint * 0.25, 0);
+      const required30d = Math.max(reorderPoint, 0);
+      
       const netNeed = Math.max(required30d - currentStock - onOrder, 0);
       const suggestedOrder = netNeed > 0 ? Math.max(netNeed, item.minimum_stock || 0) : 0;
 
@@ -339,8 +314,8 @@ export function useMRPCalculator(dateRange: number = 30) {
 
       let orderByDate: Date | null = null;
       if (netNeed > 0) {
-        orderByDate = new Date(date7d);
-        orderByDate.setDate(orderByDate.getDate() - leadTime);
+        orderByDate = new Date();
+        orderByDate.setDate(orderByDate.getDate() + 7 - leadTime);
       }
 
       return {
@@ -387,7 +362,7 @@ export function useSupplierDetails(supplierId: string | null) {
     const [supplierRes, ordersRes, itemsRes] = await Promise.all([
       supabase.from("suppliers").select("*").eq("id", supplierId).single(),
       supabase.from("purchase_orders").select("*").eq("supplier_id", supplierId).order("order_date", { ascending: false }).limit(20),
-      supabase.from("inventory_items").select("*").eq("supplier_id", supplierId),
+      supabase.from("inventory").select("*").eq("supplier_id", supplierId),
     ]);
 
     setSupplier(supplierRes.data);
@@ -405,7 +380,7 @@ export function useSupplierDetails(supplierId: string | null) {
 
 export async function createPurchaseOrder(
   supplierId: string,
-  items: { inventoryItemId: string; quantity: number; unitCost: number }[],
+  items: { inventoryItemId: string; name: string; sku: string; quantity: number; unitCost: number }[],
   options?: {
     expectedDeliveryDate?: string;
     notes?: string;
@@ -413,37 +388,33 @@ export async function createPurchaseOrder(
   }
 ) {
   const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
+  
+  // Build items JSONB array
+  const poItems: POItem[] = items.map((item) => ({
+    inventory_id: item.inventoryItemId,
+    name: item.name,
+    sku: item.sku,
+    quantity_ordered: item.quantity,
+    quantity_received: 0,
+    unit_cost: item.unitCost,
+    total_cost: item.quantity * item.unitCost,
+  }));
 
   const { data: poData, error: poError } = await supabase
     .from("purchase_orders")
     .insert([{
       supplier_id: supplierId,
-      status: (options?.status || "draft") as any,
+      status: options?.status || "draft",
       expected_delivery_date: options?.expectedDeliveryDate || null,
       notes: options?.notes || null,
       total_amount: totalAmount,
+      items: poItems as unknown as Json,
     }])
     .select()
     .single();
 
   if (poError) {
     toast.error("Error creating purchase order: " + poError.message);
-    return null;
-  }
-
-  // Create PO items
-  const poItems = items.map((item) => ({
-    purchase_order_id: poData.id,
-    inventory_item_id: item.inventoryItemId,
-    quantity_ordered: item.quantity,
-    unit_cost: item.unitCost,
-    total_cost: item.quantity * item.unitCost,
-  }));
-
-  const { error: itemsError } = await supabase.from("purchase_order_items").insert(poItems);
-
-  if (itemsError) {
-    toast.error("Error adding items: " + itemsError.message);
     return null;
   }
 
@@ -471,114 +442,50 @@ export async function updatePurchaseOrderStatus(orderId: string, status: string)
 
 export async function receiveOrderItems(
   orderId: string,
-  receivedItems: { itemId: string; quantityReceived: number; location?: string }[]
+  receivedItems: { inventoryId: string; quantityReceived: number; location?: string }[]
 ) {
-  for (const received of receivedItems) {
-    // Update PO item
-    const { data: poItem } = await supabase
-      .from("purchase_order_items")
-      .select("*")
-      .eq("purchase_order_id", orderId)
-      .eq("inventory_item_id", received.itemId)
-      .single();
-
-    if (!poItem) continue;
-
-    const newReceived = (poItem.quantity_received || 0) + received.quantityReceived;
-
-    await supabase
-      .from("purchase_order_items")
-      .update({ quantity_received: newReceived })
-      .eq("id", poItem.id);
-
-    // Create inventory transaction
-    await supabase.from("inventory_transactions").insert({
-      inventory_item_id: received.itemId,
-      transaction_type: "purchase",
-      quantity: received.quantityReceived,
-      purchase_order_id: orderId,
-      unit_cost: poItem.unit_cost,
-      notes: `Received from PO`,
-    });
-
-    // Update inventory stock
-    const { data: item } = await supabase
-      .from("inventory_items")
-      .select("current_stock")
-      .eq("id", received.itemId)
-      .single();
-
-    const newStock = (item?.current_stock || 0) + received.quantityReceived;
-    await supabase
-      .from("inventory_items")
-      .update({
-        current_stock: newStock,
-        last_purchase_date: new Date().toISOString(),
-        last_purchase_price: poItem.unit_cost,
-        location: received.location || undefined,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", received.itemId);
-  }
-
-  // Check if all items received
-  const { data: allItems } = await supabase
-    .from("purchase_order_items")
-    .select("*")
-    .eq("purchase_order_id", orderId);
-
-  const allReceived = allItems?.every((i) => (i.quantity_received || 0) >= i.quantity_ordered);
-  const partiallyReceived = allItems?.some((i) => (i.quantity_received || 0) > 0);
-
-  await supabase
+  // Get the PO
+  const { data: po, error: poError } = await supabase
     .from("purchase_orders")
-    .update({
-      status: allReceived ? "received" : "partially_received",
-      actual_delivery_date: allReceived ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", orderId);
-
-  toast.success("✅ Items received and inventory updated");
-  return true;
-}
-
-export async function createSupplier(data: Partial<Supplier>) {
-  const { data: supplier, error } = await supabase
-    .from("suppliers")
-    .insert({
-      name: data.name!,
-      contact_name: data.contact_name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      payment_terms: data.payment_terms,
-      lead_time_days: data.lead_time_days,
-      notes: data.notes,
-    })
-    .select()
+    .select("*")
+    .eq("id", orderId)
     .single();
 
-  if (error) {
-    toast.error("Error creating supplier: " + error.message);
-    return null;
-  }
-
-  toast.success("Supplier created");
-  return supplier;
-}
-
-export async function updateSupplier(supplierId: string, data: Partial<Supplier>) {
-  const { error } = await supabase
-    .from("suppliers")
-    .update({ ...data, updated_at: new Date().toISOString() })
-    .eq("id", supplierId);
-
-  if (error) {
-    toast.error("Error updating supplier: " + error.message);
+  if (poError || !po) {
+    toast.error("Error loading purchase order");
     return false;
   }
 
-  toast.success("Supplier updated");
+  const items = (po.items as POItem[]) || [];
+  
+  for (const received of receivedItems) {
+    // Update item in JSONB
+    const itemIndex = items.findIndex((i) => i.inventory_id === received.inventoryId);
+    if (itemIndex === -1) continue;
+
+    items[itemIndex].quantity_received = (items[itemIndex].quantity_received || 0) + received.quantityReceived;
+
+    // Create inventory transaction
+    await supabase.from("inventory_transactions").insert({
+      inventory_id: received.inventoryId,
+      transaction_type: "purchase",
+      quantity: received.quantityReceived,
+      purchase_order_id: orderId,
+      unit_cost: items[itemIndex].unit_cost,
+      notes: `Received from PO #${po.po_number}`,
+    });
+  }
+
+  // Check if fully received
+  const allReceived = items.every((i) => i.quantity_received >= i.quantity_ordered);
+  
+  await supabase.from("purchase_orders").update({
+    items: items as unknown as Json,
+    status: allReceived ? "received" : "partially_received",
+    actual_delivery_date: allReceived ? new Date().toISOString().split("T")[0] : null,
+    updated_at: new Date().toISOString(),
+  }).eq("id", orderId);
+
+  toast.success("Items received successfully");
   return true;
 }
