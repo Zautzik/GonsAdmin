@@ -203,7 +203,7 @@ export function useProductionReports(workOrderId?: string) {
     if (error) {
       toast.error("Error loading production reports");
     } else {
-      setReports(data || []);
+      setReports((data || []) as ProductionActivity[]);
     }
     setLoading(false);
   }, [workOrderId]);
@@ -237,7 +237,7 @@ export function useProductionIssues(resolved?: boolean) {
     if (error) {
       toast.error("Error loading issues");
     } else {
-      setIssues(data || []);
+      setIssues((data || []) as ProductionActivity[]);
     }
     setLoading(false);
   }, [resolved]);

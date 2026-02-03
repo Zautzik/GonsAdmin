@@ -45,7 +45,7 @@ export function calculateOptimalSheetFormat(
     
     // Use best orientation
     const bocas = Math.max(bocasNormal, bocasRotated);
-    const orientation = bocasNormal >= bocasRotated ? 'normal' : 'rotated';
+    const orientation: 'normal' | 'rotated' = bocasNormal >= bocasRotated ? 'normal' : 'rotated';
     
     // Calculate efficiency (% of sheet used)
     const productArea = (productWidth + margin) * (productHeight + margin);

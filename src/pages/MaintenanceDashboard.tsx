@@ -31,8 +31,9 @@ export default function MaintenanceDashboard() {
   }, []);
 
   const fetchStats = async () => {
+    // Using work_orders table with maintenance-related status
     const { data, error } = await supabase
-      .from('maintenance_work_orders')
+      .from('work_orders')
       .select('status');
 
     if (error) {
@@ -44,9 +45,9 @@ export default function MaintenanceDashboard() {
     } else {
       const orders = data || [];
       setStats({
-        pending: orders.filter(o => o.status === 'pending').length,
-        in_progress: orders.filter(o => o.status === 'in_progress').length,
-        completed: orders.filter(o => o.status === 'completed').length,
+        pending: orders.filter(o => o.status === 'draft' || o.status === 'approved').length,
+        in_progress: orders.filter(o => o.status === 'in_production').length,
+        completed: orders.filter(o => o.status === 'completed' || o.status === 'delivered').length,
         total: orders.length
       });
     }
@@ -185,18 +186,13 @@ export default function MaintenanceDashboard() {
 // Simple Calendar Component
 function MaintenanceCalendar() {
   const [workOrders, setWorkOrders] = useState<any[]>([]);
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchWorkOrders = async () => {
       const { data, error } = await supabase
-        .from('maintenance_work_orders')
-        .select(`
-          *,
-          machines(name),
-          maintenance_checklists(name, frequency)
-        `)
-        .order('scheduled_date', { ascending: true });
+        .from('work_orders')
+        .select('*')
+        .order('delivery_date', { ascending: true });
 
       if (!error) setWorkOrders(data || []);
     };
@@ -205,7 +201,8 @@ function MaintenanceCalendar() {
 
   // Group by date
   const groupedByDate = workOrders.reduce((acc, wo) => {
-    const date = new Date(wo.scheduled_date).toLocaleDateString();
+    if (!wo.delivery_date) return acc;
+    const date = new Date(wo.delivery_date).toLocaleDateString();
     if (!acc[date]) acc[date] = [];
     acc[date].push(wo);
     return acc;
@@ -213,9 +210,11 @@ function MaintenanceCalendar() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'in_progress': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'completed': 
+      case 'delivered': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'in_production': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'approved':
+      case 'draft': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -223,7 +222,7 @@ function MaintenanceCalendar() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Maintenance Schedule</h2>
+        <h2 className="text-2xl font-bold text-foreground">Delivery Schedule</h2>
         <Badge variant="outline" className="text-muted-foreground">
           {workOrders.length} scheduled
         </Badge>
@@ -233,9 +232,9 @@ function MaintenanceCalendar() {
         <Card className="p-12 border-border/40 bg-card/50 backdrop-blur">
           <div className="text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No maintenance scheduled</p>
+            <p className="text-muted-foreground">No deliveries scheduled</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Create work orders from the Checklists tab
+              Create work orders with delivery dates to see them here
             </p>
           </div>
         </Card>
@@ -252,11 +251,11 @@ function MaintenanceCalendar() {
                   <Card key={order.id} className="p-4 border-border/40 bg-card/50 backdrop-blur">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-medium">{order.machines?.name}</p>
-                        <p className="text-sm text-muted-foreground">{order.maintenance_checklists?.name}</p>
+                        <p className="font-medium">OT-{order.ot_number}</p>
+                        <p className="text-sm text-muted-foreground">{order.product_name}</p>
                       </div>
                       <Badge variant="outline" className={getStatusColor(order.status)}>
-                        {order.status.replace('_', ' ')}
+                        {order.status?.replace('_', ' ')}
                       </Badge>
                     </div>
                   </Card>

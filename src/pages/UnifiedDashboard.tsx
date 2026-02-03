@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 // Admin Components
 import ExecutiveOverview from '@/components/admin/ExecutiveOverview';
@@ -22,31 +21,22 @@ import TraceabilityReport from '@/components/manager/TraceabilityReport';
 
 // Supervisor Components
 import MachineList from '@/components/supervisor/MachineList';
-import JobList from '@/components/supervisor/JobList';
-import AddJobDialog from '@/components/supervisor/AddJobDialog';
 import WorkerRoster from '@/components/supervisor/WorkerRoster';
-import ProgressApprovalDashboard from '@/components/supervisor/ProgressApprovalDashboard';
-
-// WhatsApp Components
-import { WhatsAppManagement } from '@/components/whatsapp/WhatsAppManagement';
 
 // Reports Components
 import { CustomReportBuilder } from '@/components/reports/CustomReportBuilder';
 
-import { Button } from '@/components/ui/button';
 import { 
-  LayoutDashboard, Users, MessageSquare, TrendingUp, BarChart3, 
-  ClipboardList, UserCheck, Package, ShoppingCart, FileText, Plus
+  LayoutDashboard, Users, TrendingUp, BarChart3, 
+  ClipboardList, UserCheck, Package, ShoppingCart
 } from 'lucide-react';
 
 const UnifiedDashboard = () => {
-  const { user, role, signOut } = useAuth();
+  const { user, role } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [machines, setMachines] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [showAddJob, setShowAddJob] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -54,15 +44,7 @@ const UnifiedDashboard = () => {
       return;
     }
     
-    // Set default section based on role
-    if (role === 'supervisor') {
-      setActiveSection('overview');
-    } else if (role === 'manager') {
-      setActiveSection('overview');
-    }
-    
     fetchMachines();
-    fetchJobs();
   }, [user, role, navigate]);
 
   const fetchMachines = async () => {
@@ -76,26 +58,9 @@ const UnifiedDashboard = () => {
     }
   };
 
-  const fetchJobs = async () => {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*, machines(name)')
-      .order('created_at', { ascending: false });
-    
-    if (!error) {
-      setJobs(data || []);
-    }
-  };
-
-  const handleRefresh = () => {
-    fetchMachines();
-    fetchJobs();
-  };
-
   const getSectionIcon = () => {
     switch (activeSection) {
       case 'overview': return <LayoutDashboard className="h-5 w-5" />;
-      case 'whatsapp': return <MessageSquare className="h-5 w-5" />;
       case 'custom-reports': return <BarChart3 className="h-5 w-5" />;
       case 'costs': return <TrendingUp className="h-5 w-5" />;
       case 'workers-report': return <BarChart3 className="h-5 w-5" />;
@@ -106,7 +71,6 @@ const UnifiedDashboard = () => {
       case 'purchases': return <ShoppingCart className="h-5 w-5" />;
       case 'roster': return <Users className="h-5 w-5" />;
       case 'machines': return <Package className="h-5 w-5" />;
-      case 'jobs': return <FileText className="h-5 w-5" />;
       default: return <LayoutDashboard className="h-5 w-5" />;
     }
   };
@@ -114,8 +78,6 @@ const UnifiedDashboard = () => {
   const getSectionTitle = () => {
     switch (activeSection) {
       case 'overview': return 'Dashboard Overview';
-      case 'whatsapp': return 'WhatsApp Reports';
-      case 'whatsapp-config': return 'WhatsApp Configuration';
       case 'custom-reports': return 'Custom Report Builder';
       case 'costs': return 'Cost Analysis';
       case 'workers-report': return 'Worker Statistics';
@@ -126,7 +88,6 @@ const UnifiedDashboard = () => {
       case 'purchases': return 'Purchases Management';
       case 'roster': return 'Worker Roster';
       case 'machines': return 'Machine Status';
-      case 'jobs': return 'Production Jobs';
       default: return 'Dashboard';
     }
   };
@@ -134,8 +95,6 @@ const UnifiedDashboard = () => {
   const getSectionDescription = () => {
     switch (activeSection) {
       case 'overview': return 'Key performance indicators and system overview';
-      case 'whatsapp': return 'Review and approve worker progress submissions';
-      case 'whatsapp-config': return 'Configure WhatsApp integration settings';
       case 'custom-reports': return 'Build custom reports from any data source';
       case 'costs': return 'Analyze production costs and profitability';
       case 'workers-report': return 'View worker performance metrics';
@@ -146,14 +105,12 @@ const UnifiedDashboard = () => {
       case 'purchases': return 'Manage purchase orders and vendors';
       case 'roster': return 'Assign workers to shifts and stations';
       case 'machines': return 'Monitor equipment status';
-      case 'jobs': return 'Manage production tasks';
       default: return '';
     }
   };
 
   const renderContent = () => {
     switch (activeSection) {
-      // Overview - role-specific
       case 'overview':
         if (role === 'admin' || role === 'manager') {
           return <ExecutiveOverview />;
@@ -171,14 +128,6 @@ const UnifiedDashboard = () => {
           </div>
         );
 
-      // WhatsApp Reports
-      case 'whatsapp':
-        return <ProgressApprovalDashboard />;
-      
-      case 'whatsapp-config':
-        return <WhatsAppManagement />;
-
-      // Reports (Manager/Admin)
       case 'custom-reports':
         return <CustomReportBuilder />;
       case 'costs':
@@ -188,7 +137,6 @@ const UnifiedDashboard = () => {
       case 'traceability':
         return <TraceabilityReport />;
 
-      // Management (Admin only)
       case 'users':
         return <UserManagement onUpdate={() => {}} />;
       case 'workers':
@@ -198,7 +146,6 @@ const UnifiedDashboard = () => {
       case 'purchases':
         return <PurchasesManagement />;
 
-      // Supervisor tools
       case 'roster':
         return <WorkerRoster showActions={true} />;
       case 'machines':
@@ -209,21 +156,6 @@ const UnifiedDashboard = () => {
             helpText="Machines can be set to idle, running, maintenance, or offline"
           >
             <MachineList machines={machines} onUpdate={fetchMachines} />
-          </ContentSection>
-        );
-      case 'jobs':
-        return (
-          <ContentSection 
-            title="Production Jobs" 
-            description="Manage and track production tasks"
-            actions={
-              <Button onClick={() => setShowAddJob(true)} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Job
-              </Button>
-            }
-          >
-            <JobList jobs={jobs} machines={machines} onUpdate={fetchJobs} />
           </ContentSection>
         );
 
@@ -239,38 +171,12 @@ const UnifiedDashboard = () => {
           title={getSectionTitle()}
           description={getSectionDescription()}
           icon={getSectionIcon()}
-          actions={
-            activeSection === 'whatsapp' && (role === 'admin' || role === 'supervisor') ? (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setActiveSection('whatsapp-config')}
-              >
-                Configure WhatsApp
-              </Button>
-            ) : activeSection === 'whatsapp-config' ? (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setActiveSection('whatsapp')}
-              >
-                Back to Reports
-              </Button>
-            ) : null
-          }
         />
         
         <div className="container mx-auto px-6 py-6">
           {renderContent()}
         </div>
       </div>
-
-      <AddJobDialog
-        open={showAddJob}
-        onOpenChange={setShowAddJob}
-        machines={machines}
-        onJobAdded={fetchJobs}
-      />
     </DashboardLayout>
   );
 };

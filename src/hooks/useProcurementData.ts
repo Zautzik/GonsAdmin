@@ -167,7 +167,7 @@ export function usePurchaseOrderDetail(orderId: string | null) {
       .single();
 
     // Parse items from JSONB
-    const parsedItems = (poData.items as POItem[]) || [];
+    const parsedItems = (Array.isArray(poData.items) ? poData.items : []) as unknown as POItem[];
 
     setOrder({
       ...poData,
@@ -290,7 +290,7 @@ export function useMRPCalculator(dateRange: number = 30) {
     // Calculate on-order quantities from PO items
     const onOrderByItem: Record<string, number> = {};
     (pendingPOs || []).forEach((po) => {
-      const poItems = (po.items as POItem[]) || [];
+      const poItems = (Array.isArray(po.items) ? po.items : []) as unknown as POItem[];
       poItems.forEach((item) => {
         const remaining = item.quantity_ordered - (item.quantity_received || 0);
         onOrderByItem[item.inventory_id] = (onOrderByItem[item.inventory_id] || 0) + remaining;
@@ -456,7 +456,7 @@ export async function receiveOrderItems(
     return false;
   }
 
-  const items = (po.items as POItem[]) || [];
+  const items = (Array.isArray(po.items) ? po.items : []) as unknown as POItem[];
   
   for (const received of receivedItems) {
     // Update item in JSONB

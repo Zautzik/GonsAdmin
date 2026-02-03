@@ -220,7 +220,7 @@ export function useInventoryTransactions(itemId?: string) {
     if (error) {
       toast.error("Error loading transactions");
     } else {
-      setTransactions(data || []);
+      setTransactions((data || []) as InventoryTransaction[]);
     }
     setLoading(false);
   }, [itemId]);

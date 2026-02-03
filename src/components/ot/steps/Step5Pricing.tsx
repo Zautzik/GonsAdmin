@@ -73,7 +73,7 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
           product_description: jobInfo.productDescription,
           quantity: jobInfo.quantity,
           delivery_date: jobInfo.deliveryDate || null,
-          priority: jobInfo.priority || 'normal',
+          priority: String(jobInfo.priority || 'normal'),
           notes: jobInfo.notes,
           status,
           specifications: specsJson,
