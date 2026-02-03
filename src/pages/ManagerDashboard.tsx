@@ -23,7 +23,7 @@ const ManagerDashboard = () => {
     pending: 0,
     inProgress: 0,
   });
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
 
   useEffect(() => {
@@ -36,9 +36,9 @@ const ManagerDashboard = () => {
   }, [user, role, navigate]);
 
   const fetchData = async () => {
-    const { data: jobsData, error: jobsError } = await supabase
-      .from('jobs')
-      .select('*, machines(name)')
+    const { data: workOrdersData, error: woError } = await supabase
+      .from('work_orders')
+      .select('*')
       .order('created_at', { ascending: false });
     
     const { data: machinesData, error: machinesError } = await supabase
@@ -46,20 +46,20 @@ const ManagerDashboard = () => {
       .select('*')
       .order('name');
     
-    if (jobsError || machinesError) {
+    if (woError || machinesError) {
       toast.error('Error loading data');
       return;
     }
     
-    setJobs(jobsData || []);
+    setWorkOrders(workOrdersData || []);
     setMachines(machinesData || []);
     
-    const completed = jobsData?.filter(j => j.status === 'completed' || j.status === 'delivered').length || 0;
-    const pending = jobsData?.filter(j => j.status === 'pending').length || 0;
-    const inProgress = jobsData?.filter(j => j.status === 'in_progress').length || 0;
+    const completed = workOrdersData?.filter(wo => wo.status === 'completed' || wo.status === 'delivered').length || 0;
+    const pending = workOrdersData?.filter(wo => wo.status === 'draft' || wo.status === 'approved').length || 0;
+    const inProgress = workOrdersData?.filter(wo => wo.status === 'in_production').length || 0;
     
     setStats({
-      total: jobsData?.length || 0,
+      total: workOrdersData?.length || 0,
       completed,
       pending,
       inProgress,
@@ -110,7 +110,7 @@ const ManagerDashboard = () => {
           <Card className="border-manager/20 hover:border-manager/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('totalJobs')}
+                Total Work Orders
               </CardTitle>
               <div className="p-2 rounded-lg bg-manager/10">
                 <Package className="h-5 w-5 text-manager" />
@@ -125,7 +125,7 @@ const ManagerDashboard = () => {
           <Card className="border-supervisor/20 hover:border-supervisor/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('completedJobs')}
+                Completed
               </CardTitle>
               <div className="p-2 rounded-lg bg-supervisor/10">
                 <CheckCircle className="h-5 w-5 text-supervisor" />
@@ -140,7 +140,7 @@ const ManagerDashboard = () => {
           <Card className="border-accent/20 hover:border-accent/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('pendingJobs')}
+                Pending
               </CardTitle>
               <div className="p-2 rounded-lg bg-accent/10">
                 <Clock className="h-5 w-5 text-accent" />
@@ -208,27 +208,27 @@ const ManagerDashboard = () => {
 
               <Card className="border-manager/20">
                 <CardHeader>
-                  <CardTitle className="text-manager">{t('jobs')}</CardTitle>
+                  <CardTitle className="text-manager">Work Orders</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {jobs.map(job => (
+                    {workOrders.map(wo => (
                       <div
-                        key={job.id}
+                        key={wo.id}
                         className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                       >
                         <div className="flex-1">
-                          <p className="font-medium truncate">{job.description}</p>
+                          <p className="font-medium truncate">OT-{wo.ot_number}: {wo.product_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {job.machines?.name || t('machine')}
+                            {wo.client_name}
                           </p>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          job.status === 'completed' || job.status === 'delivered' ? 'bg-supervisor/20 text-supervisor' :
-                          job.status === 'in_progress' ? 'bg-primary/20 text-primary' :
+                          wo.status === 'completed' || wo.status === 'delivered' ? 'bg-supervisor/20 text-supervisor' :
+                          wo.status === 'in_production' ? 'bg-primary/20 text-primary' :
                           'bg-accent/20 text-accent'
                         }`}>
-                          {t(job.status)}
+                          {wo.status}
                         </span>
                       </div>
                     ))}

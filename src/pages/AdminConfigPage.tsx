@@ -24,13 +24,14 @@ interface ConfigItem {
 }
 
 interface OperationCatalog {
-  id: string;
   code: string;
   name: string;
   category: string;
-  default_cost: number;
+  default_cost: number | null;
   unit_of_measure: string;
-  is_active: boolean;
+  is_active: boolean | null;
+  description: string | null;
+  created_at: string | null;
 }
 
 export default function AdminConfigPage() {
@@ -66,15 +67,15 @@ export default function AdminConfigPage() {
       .order('category', { ascending: true })
       .order('code', { ascending: true });
     
-    if (data) setOperations(data);
+    if (data) setOperations(data as OperationCatalog[]);
     setLoading(false);
   };
 
-  const handleUpdateOperation = async (id: string, updates: { default_cost?: number; is_active?: boolean }) => {
+  const handleUpdateOperation = async (code: string, updates: { default_cost?: number; is_active?: boolean }) => {
     const { error } = await supabase
       .from('operations_catalog')
       .update(updates)
-      .eq('id', id);
+      .eq('code', code);
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -255,7 +256,7 @@ export default function AdminConfigPage() {
                   </TableHeader>
                   <TableBody>
                     {operations.map((op) => (
-                      <TableRow key={op.id}>
+                      <TableRow key={op.code}>
                         <TableCell className="font-mono">{op.code}</TableCell>
                         <TableCell>{op.name}</TableCell>
                         <TableCell>
@@ -264,8 +265,8 @@ export default function AdminConfigPage() {
                         <TableCell className="text-right">
                           <Input
                             type="number"
-                            value={op.default_cost}
-                            onChange={(e) => handleUpdateOperation(op.id, { default_cost: parseFloat(e.target.value) })}
+                            value={op.default_cost || 0}
+                            onChange={(e) => handleUpdateOperation(op.code, { default_cost: parseFloat(e.target.value) })}
                             className="w-28 text-right"
                           />
                         </TableCell>
@@ -273,7 +274,7 @@ export default function AdminConfigPage() {
                         <TableCell className="text-center">
                           <Switch
                             checked={op.is_active || false}
-                            onCheckedChange={(checked) => handleUpdateOperation(op.id, { is_active: checked })}
+                            onCheckedChange={(checked) => handleUpdateOperation(op.code, { is_active: checked })}
                           />
                         </TableCell>
                       </TableRow>

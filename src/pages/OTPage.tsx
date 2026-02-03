@@ -7,8 +7,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 const OTDashboard = lazy(() => import('@/components/ot/OTDashboard'));
 const OTCreateForm = lazy(() => import('@/components/ot/OTCreateForm'));
 const OTDetailView = lazy(() => import('@/components/ot/OTDetailView'));
-const OTPDFPage = lazy(() => import('@/components/ot/OTPDFPage'));
-const OTTemplates = lazy(() => import('@/components/ot/OTTemplates'));
 
 const PageSkeleton = () => (
   <div className="space-y-6 p-6">
@@ -28,9 +26,7 @@ export default function OTPage() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<OTDashboard />} />
           <Route path="create" element={<OTCreateForm />} />
-          <Route path="templates" element={<OTTemplates />} />
           <Route path=":id" element={<OTDetailView />} />
-          <Route path=":id/pdf" element={<OTPDFPage />} />
         </Routes>
       </Suspense>
     </DashboardLayout>

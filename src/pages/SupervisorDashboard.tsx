@@ -7,21 +7,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { LogOut, Plus, Package, FileText, Factory, MessageSquare } from 'lucide-react';
+import { LogOut, Package, FileText, Factory, MessageSquare } from 'lucide-react';
 import MachineList from '@/components/supervisor/MachineList';
-import JobList from '@/components/supervisor/JobList';
-import AddJobDialog from '@/components/supervisor/AddJobDialog';
 import WorkerRoster from '@/components/supervisor/WorkerRoster';
-import ProgressApprovalDashboard from '@/components/supervisor/ProgressApprovalDashboard';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 
 const SupervisorDashboard = () => {
   const { user, role, signOut } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [showAddJob, setShowAddJob] = useState(false);
   const [machines, setMachines] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user || role !== 'supervisor') {
@@ -30,7 +26,7 @@ const SupervisorDashboard = () => {
     }
     
     fetchMachines();
-    fetchJobs();
+    fetchWorkOrders();
   }, [user, role, navigate]);
 
   const fetchMachines = async () => {
@@ -46,16 +42,17 @@ const SupervisorDashboard = () => {
     }
   };
 
-  const fetchJobs = async () => {
+  const fetchWorkOrders = async () => {
     const { data, error } = await supabase
-      .from('jobs')
-      .select('*, machines(name)')
-      .order('created_at', { ascending: false });
+      .from('work_orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
     
     if (error) {
-      toast.error('Error loading jobs');
+      toast.error('Error loading work orders');
     } else {
-      setJobs(data || []);
+      setWorkOrders(data || []);
     }
   };
 
@@ -77,11 +74,11 @@ const SupervisorDashboard = () => {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => navigate('/workflow')}
+              onClick={() => navigate('/industry')}
               className="bg-supervisor hover:bg-supervisor/90"
             >
               <Factory className="mr-2 h-4 w-4" />
-              Workflow
+              Industry 6.0
             </Button>
             <Button
               onClick={handleLogout}
@@ -102,9 +99,9 @@ const SupervisorDashboard = () => {
               <Package className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="progress" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              WhatsApp Reports
+            <TabsTrigger value="workorders" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Work Orders
             </TabsTrigger>
           </TabsList>
 
@@ -122,39 +119,46 @@ const SupervisorDashboard = () => {
                 <MachineList machines={machines} onUpdate={fetchMachines} />
               </CardContent>
             </Card>
+          </TabsContent>
 
+          <TabsContent value="workorders" className="space-y-8">
             <Card className="border-supervisor/20 hover:shadow-lg transition-all">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader>
                 <CardTitle className="text-supervisor flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  {t('jobs')}
+                  Recent Work Orders
                 </CardTitle>
-                <Button
-                  onClick={() => setShowAddJob(true)}
-                  className="bg-supervisor hover:bg-supervisor/90"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('addJob')}
-                </Button>
               </CardHeader>
               <CardContent>
-                <JobList jobs={jobs} machines={machines} onUpdate={fetchJobs} />
+                <div className="space-y-3">
+                  {workOrders.map((wo) => (
+                    <div
+                      key={wo.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => navigate(`/ots/${wo.id}`)}
+                    >
+                      <div>
+                        <p className="font-medium">OT-{wo.ot_number}: {wo.product_name}</p>
+                        <p className="text-sm text-muted-foreground">{wo.client_name}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        wo.status === 'completed' || wo.status === 'delivered' ? 'bg-green-500/20 text-green-500' :
+                        wo.status === 'in_production' ? 'bg-blue-500/20 text-blue-500' :
+                        'bg-yellow-500/20 text-yellow-500'
+                      }`}>
+                        {wo.status}
+                      </span>
+                    </div>
+                  ))}
+                  {workOrders.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No work orders found</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
-
-          <TabsContent value="progress">
-            <ProgressApprovalDashboard />
-          </TabsContent>
         </Tabs>
       </main>
-
-      <AddJobDialog
-        open={showAddJob}
-        onOpenChange={setShowAddJob}
-        machines={machines}
-        onJobAdded={fetchJobs}
-      />
     </div>
   );
 };

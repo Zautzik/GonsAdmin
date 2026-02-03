@@ -22,7 +22,7 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalWorkers: 0,
     totalMachines: 0,
-    totalJobs: 0,
+    totalWorkOrders: 0,
   });
 
   useEffect(() => {
@@ -35,18 +35,18 @@ const AdminDashboard = () => {
   }, [user, role, navigate]);
 
   const fetchStats = async () => {
-    const [usersData, workersData, machinesData, jobsData] = await Promise.all([
+    const [usersData, workersData, machinesData, workOrdersData] = await Promise.all([
       supabase.from('user_roles').select('id', { count: 'exact', head: true }),
-      supabase.from('workers' as any).select('id', { count: 'exact', head: true }),
+      supabase.from('workers').select('id', { count: 'exact', head: true }),
       supabase.from('machines').select('id', { count: 'exact', head: true }),
-      supabase.from('jobs').select('id', { count: 'exact', head: true }),
+      supabase.from('work_orders').select('id', { count: 'exact', head: true }),
     ]);
 
     setStats({
       totalUsers: usersData.count || 0,
       totalWorkers: workersData.count || 0,
       totalMachines: machinesData.count || 0,
-      totalJobs: jobsData.count || 0,
+      totalWorkOrders: workOrdersData.count || 0,
     });
   };
 
@@ -77,13 +77,13 @@ const AdminDashboard = () => {
               Financial Report
             </Button>
             <Button
-              onClick={() => navigate('/workflow')}
+              onClick={() => navigate('/industry')}
               variant="default"
               className="bg-blue-500 hover:bg-blue-600"
-              aria-label="Navigate to Workflow Management"
+              aria-label="Navigate to Industry Module"
             >
               <Factory className="mr-2 h-4 w-4" aria-hidden="true" />
-              Workflow Management
+              Industry 6.0
             </Button>
             <Button
               onClick={() => navigate('/maintenance')}
@@ -157,14 +157,14 @@ const AdminDashboard = () => {
           <Card className="border-manager/20 hover:border-manager/40 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('totalJobs')}
+                Work Orders
               </CardTitle>
               <div className="p-2 rounded-lg bg-manager/10" aria-hidden="true">
                 <FileText className="h-5 w-5 text-manager" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-manager" aria-label={`Total jobs: ${stats.totalJobs}`}>{stats.totalJobs}</div>
+              <div className="text-4xl font-bold text-manager" aria-label={`Total work orders: ${stats.totalWorkOrders}`}>{stats.totalWorkOrders}</div>
               <p className="text-xs text-muted-foreground mt-1">All time</p>
             </CardContent>
           </Card>
