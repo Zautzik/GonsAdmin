@@ -1,7 +1,7 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOTFormStore } from '@/stores/otFormStore';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Cloud } from 'lucide-react';
 import OTFormStepper from './OTFormStepper';
 import Step1JobInfo from './steps/Step1JobInfo';
 import Step2Specifications from './steps/Step2Specifications';
@@ -10,19 +10,52 @@ import Step4Operations from './steps/Step4Operations';
 import Step5Pricing from './steps/Step5Pricing';
 
 export default function OTCreateForm() {
-  const { currentStep, setCurrentStep, resetForm, isDirty, lastSaved } = useOTFormStore();
+  const { currentStep, setCurrentStep, isDirty, lastSaved } = useOTFormStore();
   const navigate = useNavigate();
 
-  // Auto-save every 30 seconds
+  // Auto-save indicator
   useEffect(() => {
     const interval = setInterval(() => {
       if (isDirty && currentStep > 1) {
-        // Could implement auto-save draft here
         console.log('Auto-save check at', new Date());
       }
     }, 30000);
     return () => clearInterval(interval);
   }, [isDirty, currentStep]);
+
+  const getStepInfo = () => {
+    switch (currentStep) {
+      case 1:
+        return {
+          title: 'Información del Trabajo',
+          description: 'Ingrese los datos básicos del cliente y producto'
+        };
+      case 2:
+        return {
+          title: 'Especificaciones Técnicas',
+          description: 'Define las dimensiones, materiales y acabados'
+        };
+      case 3:
+        return {
+          title: 'Cálculos y Optimización',
+          description: 'Revisión automática de materiales y tiempos'
+        };
+      case 4:
+        return {
+          title: 'Operaciones',
+          description: 'Detalle de costos por operación'
+        };
+      case 5:
+        return {
+          title: 'Precio Final',
+          description: 'Márgenes, comisiones y cotización'
+        };
+      default:
+        return { title: '', description: '' };
+    }
+  };
+
+  const stepInfo = getStepInfo();
 
   const renderStep = () => {
     switch (currentStep) {
@@ -42,24 +75,39 @@ export default function OTCreateForm() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Nueva Orden de Trabajo</h1>
-        <p className="text-muted-foreground">
-          Complete los pasos para crear la OT
+    <div className="min-h-screen bg-background pb-24">
+      {/* Centered container */}
+      <div className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Nueva Orden de Trabajo</h1>
           {lastSaved && (
-            <span className="ml-2 text-xs">
-              • Guardado: {lastSaved.toLocaleTimeString()}
-            </span>
+            <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-muted-foreground">
+              <Cloud className="h-3 w-3" />
+              <span>Guardado: {lastSaved.toLocaleTimeString()}</span>
+            </div>
           )}
-        </p>
-      </div>
-      
-      <OTFormStepper currentStep={currentStep} onStepClick={(step) => step <= currentStep && setCurrentStep(step)} />
-      
-      <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+        </div>
+        
+        {/* Stepper */}
+        <OTFormStepper 
+          currentStep={currentStep} 
+          onStepClick={(step) => step <= currentStep && setCurrentStep(step)} 
+        />
+        
+        {/* Step Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-foreground">
+            {stepInfo.title}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {stepInfo.description}
+          </p>
+        </div>
+        
+        {/* Step Content */}
         {renderStep()}
-      </Suspense>
+      </div>
     </div>
   );
 }
