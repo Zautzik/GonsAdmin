@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useOTFormStore, Operation } from '@/stores/otFormStore';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { ArrowLeft, ArrowRight, Plus, Trash2, GripVertical, Calculator, Package, Wrench, Truck, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Package, Wrench, Truck, MoreHorizontal, Plus, X, Pencil, Calculator, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import OTFormActions from '../OTFormActions';
 
 interface CatalogOperation {
   code: string;
@@ -26,19 +24,19 @@ interface Step4Props {
   onPrev: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  MATERIALS: 'hsl(var(--chart-1))',
-  PREPRESS: 'hsl(var(--chart-2))',
-  PRINTING: 'hsl(var(--chart-3))',
-  FINISHING: 'hsl(var(--chart-4))',
-  THIRD_PARTY: 'hsl(var(--chart-5))',
-  OTHER: 'hsl(var(--muted-foreground))',
+const CATEGORY_LABELS: Record<string, string> = {
+  MATERIALS: 'Materiales',
+  PREPRESS: 'Preprensa',
+  PRINTING: 'Impresión',
+  FINISHING: 'Terminaciones',
+  THIRD_PARTY: 'Terceros',
+  OTHER: 'Otros',
 };
 
 const CATEGORY_ICONS: Record<string, typeof Package> = {
   MATERIALS: Package,
   PREPRESS: Calculator,
-  PRINTING: Calculator,
+  PRINTING: Printer,
   FINISHING: Wrench,
   THIRD_PARTY: Truck,
   OTHER: MoreHorizontal,
@@ -49,6 +47,7 @@ export default function Step4Operations({ onNext, onPrev }: Step4Props) {
   const [catalog, setCatalog] = useState<CatalogOperation[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCatalog();
@@ -59,6 +58,11 @@ export default function Step4Operations({ onNext, onPrev }: Step4Props) {
       generateDefaultOperations();
     }
   }, [catalog, specifications, calculations]);
+
+  // Recalculate pricing when operations change
+  useEffect(() => {
+    calculatePricing();
+  }, [operations]);
 
   const fetchCatalog = async () => {
     const { data } = await supabase
@@ -250,19 +254,13 @@ export default function Step4Operations({ onNext, onPrev }: Step4Props) {
       notes: '',
     });
     setShowAddDialog(false);
+    setSearchTerm('');
   };
 
   const handleQtyChange = (id: string, qty: number) => {
     const op = operations.find(o => o.id === id);
     if (op) {
       updateOperation(id, { quantityBudgeted: qty, totalCostBudgeted: qty * op.unitCostBudgeted });
-    }
-  };
-
-  const handleCostChange = (id: string, cost: number) => {
-    const op = operations.find(o => o.id === id);
-    if (op) {
-      updateOperation(id, { unitCostBudgeted: cost, totalCostBudgeted: op.quantityBudgeted * cost });
     }
   };
 
@@ -277,218 +275,188 @@ export default function Step4Operations({ onNext, onPrev }: Step4Props) {
 
   const totalCost = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
 
-  const pieData = Object.entries(categoryTotals).map(([category, value]) => ({
-    name: category,
-    value,
-    percent: totalCost > 0 ? (value / totalCost * 100).toFixed(1) : 0,
-  }));
-
   const filteredCatalog = catalog.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.code.includes(searchTerm)
   );
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="h-5 w-5" />
-                Operaciones del Trabajo
-              </CardTitle>
-              <CardDescription>Detalle de costos por operación</CardDescription>
-            </div>
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" /> Agregar Operación
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Agregar Operación</DialogTitle>
-                </DialogHeader>
-                <Command>
-                  <CommandInput 
-                    placeholder="Buscar por código o nombre..." 
-                    value={searchTerm}
-                    onValueChange={setSearchTerm}
-                  />
-                  <CommandList>
-                    <CommandEmpty>No se encontraron operaciones.</CommandEmpty>
-                    {['PREPRESS', 'PRINTING', 'FINISHING', 'MATERIALS', 'THIRD_PARTY', 'OTHER'].map(cat => {
-                      const catOps = filteredCatalog.filter(c => c.category === cat);
-                      if (catOps.length === 0) return null;
-                      return (
-                        <CommandGroup key={cat} heading={cat}>
-                          {catOps.map(op => (
-                            <CommandItem
-                              key={op.code}
-                              onSelect={() => handleAddOperation(op)}
-                              className="flex justify-between"
-                            >
-                              <span>{op.code} - {op.name}</span>
-                              <span className="text-muted-foreground">{formatCurrency(op.default_cost)}/{op.unit_of_measure}</span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      );
-                    })}
-                  </CommandList>
-                </Command>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead>Unidad</TableHead>
-                <TableHead className="text-right">Costo Unit.</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {operations.map((op, index) => {
-                const Icon = CATEGORY_ICONS[op.category] || Calculator;
-                return (
-                  <TableRow key={op.id}>
-                    <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-mono">{op.operationCode}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span>{op.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={op.quantityBudgeted}
-                        onChange={(e) => handleQtyChange(op.id, parseFloat(e.target.value) || 0)}
-                        className="w-24 text-right"
-                      />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{op.unitOfMeasure}</TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        step="1"
-                        value={op.unitCostBudgeted}
-                        onChange={(e) => handleCostChange(op.id, parseFloat(e.target.value) || 0)}
-                        className="w-28 text-right"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(op.totalCostBudgeted)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => removeOperation(op.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {operations.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No hay operaciones. Haz clic en "Agregar Operación" para comenzar.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Resumen por Categoría</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(categoryTotals).map(([category, value]) => (
-                <div key={category} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: CATEGORY_COLORS[category] }}
-                    />
-                    <span>{category}</span>
+    <div className="space-y-6 animate-fade-in">
+      {/* Operations List */}
+      <div className="space-y-3">
+        {operations.map((op) => {
+          const Icon = CATEGORY_ICONS[op.category] || Package;
+          const isEditing = editingId === op.id;
+          
+          return (
+            <div
+              key={op.id}
+              className="bg-card border rounded-xl p-4 space-y-3 transition-all hover:shadow-sm"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground">
-                      {totalCost > 0 ? ((value / totalCost) * 100).toFixed(1) : 0}%
-                    </span>
-                    <span className="font-medium">{formatCurrency(value)}</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {CATEGORY_LABELS[op.category] || op.category}
+                      </span>
+                      <span className="text-xs text-muted-foreground">/</span>
+                      <span className="font-medium text-foreground">{op.name}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-              <div className="border-t pt-3 flex justify-between font-bold">
-                <span>Total</span>
-                <span>{formatCurrency(totalCost)}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => removeOperation(op.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Calculation */}
+              <div className="text-sm text-muted-foreground">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={op.quantityBudgeted}
+                      onChange={(e) => handleQtyChange(op.id, parseFloat(e.target.value) || 0)}
+                      className="w-24 h-9"
+                      autoFocus
+                      onBlur={() => setEditingId(null)}
+                      onKeyDown={(e) => e.key === 'Enter' && setEditingId(null)}
+                    />
+                    <span>{op.unitOfMeasure}</span>
+                    <span>×</span>
+                    <span>{formatCurrency(op.unitCostBudgeted)}/{op.unitOfMeasure}</span>
+                  </div>
+                ) : (
+                  <span>
+                    {op.quantityBudgeted.toLocaleString('es-CL', { maximumFractionDigits: 2 })} {op.unitOfMeasure} × {formatCurrency(op.unitCostBudgeted)}/{op.unitOfMeasure}
+                  </span>
+                )}
+              </div>
+
+              {/* Total & Edit */}
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-lg">
+                  Total: {formatCurrency(op.totalCostBudgeted)}
+                </span>
+                {!isEditing && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground gap-1.5"
+                    onClick={() => setEditingId(op.id)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar cantidad
+                  </Button>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          );
+        })}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Distribución de Costos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={70}
-                    label={({ name, percent }) => `${name}: ${percent}%`}
-                    labelLine={false}
-                  >
-                    {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
+        {operations.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Package className="h-10 w-10 mx-auto mb-3 opacity-50" />
+            <p>No hay operaciones aún.</p>
+            <p className="text-sm">Las operaciones se generarán automáticamente basándose en los cálculos.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Add Operation Button */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogTrigger asChild>
+          <button className="w-full border-2 border-dashed border-muted-foreground/30 rounded-xl py-4 px-6 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-colors">
+            <Plus className="h-5 w-5" />
+            <span className="font-medium">Agregar operación</span>
+          </button>
+        </DialogTrigger>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Agregar Operación</DialogTitle>
+          </DialogHeader>
+          <Command>
+            <CommandInput 
+              placeholder="Buscar por código o nombre..." 
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
+            <CommandList className="max-h-80">
+              <CommandEmpty>No se encontraron operaciones.</CommandEmpty>
+              {['MATERIALS', 'PREPRESS', 'PRINTING', 'FINISHING', 'THIRD_PARTY', 'OTHER'].map(cat => {
+                const catOps = filteredCatalog.filter(c => c.category === cat);
+                if (catOps.length === 0) return null;
+                return (
+                  <CommandGroup key={cat} heading={CATEGORY_LABELS[cat] || cat}>
+                    {catOps.map(op => (
+                      <CommandItem
+                        key={op.code}
+                        onSelect={() => handleAddOperation(op)}
+                        className="flex justify-between cursor-pointer"
+                      >
+                        <span>{op.name}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {formatCurrency(op.default_cost)}/{op.unit_of_measure}
+                        </span>
+                      </CommandItem>
                     ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                </PieChart>
-              </ResponsiveContainer>
+                  </CommandGroup>
+                );
+              })}
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
+
+      {/* Summary Sidebar (on desktop) / Bottom on mobile */}
+      <div className="lg:fixed lg:right-8 lg:top-1/2 lg:-translate-y-1/2 lg:w-64">
+        <div className="bg-card border rounded-xl p-5 space-y-4 shadow-lg">
+          <h3 className="font-semibold text-foreground">Resumen</h3>
+          
+          <div className="space-y-3 text-sm">
+            {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
+              const value = categoryTotals[key] || 0;
+              if (value === 0) return null;
+              return (
+                <div key={key} className="flex justify-between">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-medium">{formatCurrency(value)}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">SUBTOTAL</span>
+              <span className="text-xl font-bold text-primary">{formatCurrency(totalCost)}</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={onPrev} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Anterior
-        </Button>
-        <Button onClick={() => { calculatePricing(); onNext(); }} className="gap-2">
-          Siguiente <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      {/* Spacer for fixed sidebar on desktop */}
+      <div className="hidden lg:block w-64" />
+
+      {/* Actions */}
+      <OTFormActions
+        showPrev
+        showNext
+        onPrev={onPrev}
+        onNext={onNext}
+        nextLabel="Siguiente"
+      />
     </div>
   );
 }

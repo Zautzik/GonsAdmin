@@ -74,6 +74,9 @@ export default function OTCreateForm() {
     }
   };
 
+  // Hide the default step info for Step 5 which has its own layout
+  const showStepInfo = currentStep !== 5;
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Centered container */}
@@ -96,14 +99,16 @@ export default function OTCreateForm() {
         />
         
         {/* Step Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-foreground">
-            {stepInfo.title}
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            {stepInfo.description}
-          </p>
-        </div>
+        {showStepInfo && (
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-semibold text-foreground">
+              {stepInfo.title}
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              {stepInfo.description}
+            </p>
+          </div>
+        )}
         
         {/* Step Content */}
         {renderStep()}

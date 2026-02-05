@@ -3,17 +3,60 @@ import { useNavigate } from 'react-router-dom';
 import { useOTFormStore } from '@/stores/otFormStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, FileCheck, Loader2, Calculator, BadgePercent } from 'lucide-react';
+import { Save, FileCheck, Loader2, Percent } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Step5Props {
   onPrev: () => void;
+}
+
+interface EditablePercentProps {
+  value: number;
+  onChange: (value: number) => void;
+  suffix?: string;
+}
+
+function EditablePercent({ value, onChange, suffix = '%' }: EditablePercentProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempValue, setTempValue] = useState(value.toString());
+
+  const handleSave = () => {
+    onChange(parseFloat(tempValue) || 0);
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="inline-flex items-center gap-1">
+        <Input
+          type="number"
+          step="0.5"
+          value={tempValue}
+          onChange={(e) => setTempValue(e.target.value)}
+          className="w-16 h-8 text-right text-sm"
+          autoFocus
+          onBlur={handleSave}
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+        />
+        <span className="text-muted-foreground">{suffix}</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setTempValue(value.toString());
+        setIsEditing(true);
+      }}
+      className="text-primary hover:text-primary/80 font-medium underline-offset-4 hover:underline transition-colors"
+    >
+      {value}{suffix}
+    </button>
+  );
 }
 
 export default function Step5Pricing({ onPrev }: Step5Props) {
@@ -94,8 +137,8 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
           operations.map((op, index) => ({
             work_order_id: workOrder.id,
             operation_code: op.operationCode,
-            operation_name: op.operationCode,
-            category: 'OTHER',
+            operation_name: op.name,
+            category: op.category,
             sequence_order: index,
             quantity_budgeted: op.quantityBudgeted,
             unit_cost_budgeted: op.unitCostBudgeted,
@@ -122,136 +165,125 @@ export default function Step5Pricing({ onPrev }: Step5Props) {
     }
   };
 
-  const costBreakdown = [
-    { label: 'Materiales', value: pricing.materialsCost, percent: pricing.subtotal > 0 ? (pricing.materialsCost / pricing.subtotal * 100).toFixed(1) : '0' },
-    { label: 'Mano de Obra', value: pricing.laborCost, percent: pricing.subtotal > 0 ? (pricing.laborCost / pricing.subtotal * 100).toFixed(1) : '0' },
-    { label: 'Terceros', value: pricing.thirdPartyCost, percent: pricing.subtotal > 0 ? (pricing.thirdPartyCost / pricing.subtotal * 100).toFixed(1) : '0' },
-    { label: 'Otros', value: pricing.otherCost, percent: pricing.subtotal > 0 ? (pricing.otherCost / pricing.subtotal * 100).toFixed(1) : '0' },
+  const pricingLines = [
+    { 
+      label: 'Subtotal (Costo Base)', 
+      value: pricing.subtotal, 
+      isBase: true 
+    },
+    { 
+      label: 'Margen', 
+      percentField: 'marginPercent' as const,
+      percentValue: pricing.marginPercent,
+      value: pricing.marginAmount, 
+      isAddition: true 
+    },
+    { 
+      label: 'Incremento', 
+      percentField: 'incrementPercent' as const,
+      percentValue: pricing.incrementPercent,
+      value: pricing.incrementAmount, 
+      isAddition: true 
+    },
+    { 
+      label: 'Comisión', 
+      percentField: 'commission1Percent' as const,
+      percentValue: pricing.commission1Percent,
+      value: pricing.commission1Amount, 
+      isAddition: true 
+    },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Desglose de Costos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="text-right">%</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {costBreakdown.map((item) => (
-                  <TableRow key={item.label}>
-                    <TableCell>{item.label}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(item.value)}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{item.percent}%</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="font-bold border-t-2">
-                  <TableCell>Subtotal</TableCell>
-                  <TableCell className="text-right">{formatCurrency(pricing.subtotal)}</TableCell>
-                  <TableCell className="text-right">100%</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BadgePercent className="h-5 w-5" />
-              Calculadora de Precio
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Utilidad %</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={pricing.marginPercent}
-                  onChange={(e) => handlePercentChange('marginPercent', parseFloat(e.target.value) || 0)}
+    <div className="space-y-8 animate-fade-in">
+      {/* Pricing Calculator */}
+      <div className="bg-card border rounded-2xl p-6 md:p-8 space-y-4">
+        {pricingLines.map((line, index) => (
+          <div
+            key={line.label}
+            className={cn(
+              "flex items-center justify-between py-3",
+              index !== pricingLines.length - 1 && "border-b border-border/50"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-foreground">{line.label}</span>
+              {line.percentField && (
+                <EditablePercent
+                  value={line.percentValue!}
+                  onChange={(v) => handlePercentChange(line.percentField!, v)}
                 />
-              </div>
-              <div className="col-span-2 text-right font-medium">+ {formatCurrency(pricing.marginAmount)}</div>
+              )}
             </div>
-            
-            <div className="grid grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Incremento %</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={pricing.incrementPercent}
-                  onChange={(e) => handlePercentChange('incrementPercent', parseFloat(e.target.value) || 0)}
-                />
-              </div>
-              <div className="col-span-2 text-right font-medium">+ {formatCurrency(pricing.incrementAmount)}</div>
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Comisión %</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={pricing.commission1Percent}
-                  onChange={(e) => handlePercentChange('commission1Percent', parseFloat(e.target.value) || 0)}
-                />
-              </div>
-              <div className="col-span-2 text-right font-medium">+ {formatCurrency(pricing.commission1Amount)}</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Cantidad</p>
-              <p className="text-2xl font-bold">{jobInfo.quantity.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Precio Unitario</p>
-              <p className="text-2xl font-bold text-primary">{formatCurrency(pricing.unitPrice)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total</p>
-              <p className="text-3xl font-bold text-primary">{formatCurrency(pricing.totalPrice)}</p>
+            <div className="flex items-center gap-2 text-right">
+              {line.isAddition && <span className="text-muted-foreground">+</span>}
+              <span className="font-semibold text-lg tabular-nums">
+                {formatCurrency(line.value)}
+              </span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
 
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={onPrev} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Anterior
-        </Button>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => saveWorkOrder('draft')} disabled={saving || approving} className="gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Guardar Borrador
-          </Button>
-          <Button onClick={() => saveWorkOrder('approved')} disabled={saving || approving} className="gap-2">
-            {approving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
-            Aprobar OT
-          </Button>
+        {/* Separator */}
+        <div className="border-t-2 border-foreground/20 my-4" />
+
+        {/* Total */}
+        <div className="flex items-center justify-between py-2">
+          <span className="text-xl font-bold text-foreground">TOTAL</span>
+          <span className="text-3xl md:text-4xl font-bold text-primary tabular-nums">
+            {formatCurrency(pricing.totalPrice)}
+          </span>
+        </div>
+
+        {/* Unit Price */}
+        <div className="flex items-center justify-between text-muted-foreground pt-2 border-t border-border/50">
+          <span>Precio Unitario ({jobInfo.quantity.toLocaleString()} unidades)</span>
+          <span className="font-semibold text-lg text-foreground tabular-nums">
+            {formatCurrency(pricing.unitPrice)}
+          </span>
         </div>
       </div>
+
+      {/* Action Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg z-50">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          {/* Mobile: Stack buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Desktop layout */}
+            <div className="flex-1 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/ots/dashboard')}
+                className="text-muted-foreground"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => saveWorkOrder('draft')}
+                disabled={saving || approving}
+                className="gap-2"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Guardar Borrador
+              </Button>
+            </div>
+            
+            <Button
+              size="lg"
+              onClick={() => saveWorkOrder('approved')}
+              disabled={saving || approving}
+              className="gap-2 h-12 px-8 text-base font-semibold"
+            >
+              {approving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
+              Crear Orden de Trabajo
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Spacer for fixed bottom bar */}
+      <div className="h-24" />
     </div>
   );
 }
