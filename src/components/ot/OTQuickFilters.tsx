@@ -29,17 +29,24 @@ export function OTQuickFilters({
 }: OTQuickFiltersProps) {
   const getCount = (key: string) => {
     switch (key) {
-      case 'all': return counts.all;
-      case 'draft': return counts.draft;
-      case 'in_production': return counts.inProduction;
-      case 'completed': return counts.completed;
-      case 'overdue': return counts.overdue;
-      default: return 0;
+      case 'all':
+        return counts.all;
+      case 'draft':
+        return counts.draft;
+      case 'in_production':
+        return counts.inProduction;
+      case 'completed':
+        return counts.completed;
+      case 'overdue':
+        return counts.overdue;
+      default:
+        return 0;
     }
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Filter Pills */}
       <div className="flex items-center gap-2 flex-wrap">
         {FILTERS.map((filter) => {
           const isActive = activeFilter === filter.key;
@@ -50,18 +57,19 @@ export function OTQuickFilters({
               key={filter.key}
               onClick={() => onFilterChange(filter.key)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                'border focus:outline-none focus:ring-2 focus:ring-primary/20',
+                "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
                 isActive
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-muted-foreground border border-border hover:border-primary/50 hover:bg-accent"
               )}
             >
               {filter.label}
               {count > 0 && (
                 <span className={cn(
-                  'ml-2 text-xs',
-                  isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                  "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs",
+                  isActive
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 )}>
                   {count}
                 </span>
@@ -70,7 +78,8 @@ export function OTQuickFilters({
           );
         })}
       </div>
-      
+
+      {/* Advanced Filters Link */}
       <button
         onClick={onAdvancedFilters}
         className="text-sm text-muted-foreground hover:text-foreground transition-colors"
