@@ -1,11 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -14,23 +11,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Package,
-  Scan,
+  Camera,
+  ArrowLeft,
   Plus,
   Minus,
-  Camera,
-  Volume2,
-  VolumeX,
+  Check,
+  Loader2,
+  ScanBarcode,
   ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
-import { findItemByCode, createInventoryTransaction, useSuppliers } from "@/hooks/useInventoryData";
+import { findItemByCode, createInventoryTransaction } from "@/hooks/useInventoryData";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-type ScanMode = "receive" | "usage" | "adjustment";
+type ScanMode = "receive" | "usage";
+type ViewState = "scanning" | "form" | "success";
 
-interface InventoryItem {
+interface ScannedItem {
   id: string;
   sku: string;
   name: string;
@@ -43,89 +42,54 @@ interface InventoryItem {
 }
 
 export default function ScanningInterface() {
+  const navigate = useNavigate();
+  const [viewState, setViewState] = useState<ViewState>("scanning");
   const [mode, setMode] = useState<ScanMode>("receive");
-  const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
+  const [scannedItem, setScannedItem] = useState<ScannedItem | null>(null);
   const [manualCode, setManualCode] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [quantity, setQuantity] = useState(0);
   const [otNumber, setOtNumber] = useState("");
-  const [poNumber, setPoNumber] = useState("");
-  const [location, setLocation] = useState("");
-  const [unitCost, setUnitCost] = useState("");
-  const [notes, setNotes] = useState("");
-  const [adjustmentReason, setAdjustmentReason] = useState("");
   const [loading, setLoading] = useState(false);
-  const [soundOn, setSoundOn] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [scanHistory, setScanHistory] = useState<{ code: string; item: string; time: Date }[]>([]);
   const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [newStock, setNewStock] = useState(0);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const { suppliers } = useSuppliers();
 
-  // Fetch active work orders for autocomplete
   useEffect(() => {
-    const fetchWorkOrders = async () => {
-      const { data } = await supabase
-        .from("work_orders")
-        .select("id, ot_number, client_name")
-        .neq("status", "completed")
-        .neq("status", "delivered")
-        .order("ot_number", { ascending: false })
-        .limit(50);
-      setWorkOrders(data || []);
-    };
-    fetchWorkOrders();
+    supabase
+      .from("work_orders")
+      .select("id, ot_number, client_name")
+      .neq("status", "completed")
+      .neq("status", "delivered")
+      .order("ot_number", { ascending: false })
+      .limit(50)
+      .then(({ data }) => setWorkOrders(data || []));
   }, []);
 
-  const playBeep = useCallback((success: boolean) => {
-    if (!soundOn) return;
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = success ? 800 : 300;
-      oscillator.type = "sine";
-      gainNode.gain.value = 0.3;
-      oscillator.start();
-      setTimeout(() => {
-        oscillator.stop();
-        audioContext.close();
-      }, success ? 100 : 300);
-    } catch (e) {
-      // Audio not supported
-    }
-  }, [soundOn]);
-
   const vibrate = (pattern: number | number[]) => {
-    if (navigator.vibrate) {
-      navigator.vibrate(pattern);
-    }
+    if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
   const handleScan = useCallback(async (code: string) => {
     const item = await findItemByCode(code);
     if (item) {
-      playBeep(true);
       vibrate(100);
-      setScannedItem(item as InventoryItem);
-      setUnitCost(item.unit_cost?.toString() || "");
-      setLocation(item.location || "");
-      setScanHistory(prev => [{ code, item: item.name, time: new Date() }, ...prev.slice(0, 9)]);
-      toast.success(`✅ Item encontrado: ${item.name}`);
+      setScannedItem(item as ScannedItem);
+      setQuantity(0);
+      setViewState("form");
+      toast.success(`Item encontrado: ${item.name}`);
     } else {
-      playBeep(false);
       vibrate([100, 50, 100]);
-      toast.error(`❌ Item no encontrado: ${code}`);
+      toast.error(`Item no encontrado: ${code}`);
     }
-  }, [playBeep]);
+  }, []);
 
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
-      const scanner = new Html5Qrcode("scan-camera-container");
+      const scanner = new Html5Qrcode("scan-camera-view");
       scannerRef.current = scanner;
 
       await scanner.start(
@@ -133,6 +97,7 @@ export default function ScanningInterface() {
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
           handleScan(decodedText);
+          stopCamera();
         },
         () => {}
       );
@@ -157,9 +122,7 @@ export default function ScanningInterface() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      stopCamera();
-    };
+    return () => { stopCamera(); };
   }, [stopCamera]);
 
   const handleManualSearch = async () => {
@@ -169,401 +132,263 @@ export default function ScanningInterface() {
     }
   };
 
-  const handleConfirmReceive = async () => {
-    if (!scannedItem || !quantity) {
-      toast.error("Ingresa la cantidad");
+  const handleConfirm = async () => {
+    if (!scannedItem || quantity <= 0) {
+      toast.error("Ingresa una cantidad válida");
       return;
     }
 
-    const qty = parseFloat(quantity);
-    if (isNaN(qty) || qty <= 0) {
-      toast.error("Cantidad inválida");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await createInventoryTransaction({
-        inventory_id: scannedItem.id,
-        transaction_type: "purchase",
-        quantity: qty,
-        unit_cost: parseFloat(unitCost) || undefined,
-        notes: notes || `Recepción - PO: ${poNumber || "N/A"}, Ubicación: ${location || "N/A"}`,
-        scanned_via: "barcode",
-      });
-
-      toast.success(`✅ Ingresado: ${scannedItem.name}, ${qty} ${scannedItem.unit_of_measure}. Stock: ${(scannedItem.current_stock || 0) + qty}`);
-      playBeep(true);
-      vibrate(200);
-      resetForm();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmUsage = async () => {
-    if (!scannedItem || !quantity) {
-      toast.error("Ingresa la cantidad");
-      return;
-    }
-
-    const qty = parseFloat(quantity);
-    if (isNaN(qty) || qty <= 0) {
-      toast.error("Cantidad inválida");
-      return;
-    }
-
-    if ((scannedItem.current_stock || 0) < qty) {
+    if (mode === "usage" && (scannedItem.current_stock ?? 0) < quantity) {
       toast.error("Stock insuficiente");
       return;
     }
 
     setLoading(true);
-    try {
-      // Find work order ID if provided
-      let workOrderId: string | undefined;
-      if (otNumber) {
-        const wo = workOrders.find(w => w.ot_number?.toString() === otNumber || w.ot_number === parseInt(otNumber));
-        workOrderId = wo?.id;
-      }
+    const transactionType = mode === "receive" ? "purchase" : "usage";
 
-      await createInventoryTransaction({
-        inventory_id: scannedItem.id,
-        transaction_type: "usage",
-        quantity: qty,
-        work_order_id: workOrderId,
-        notes: notes || `Uso - OT: ${otNumber || "N/A"}`,
-        scanned_via: "barcode",
-      });
+    let workOrderId: string | undefined;
+    if (mode === "usage" && otNumber) {
+      const wo = workOrders.find((w) => w.ot_number?.toString() === otNumber);
+      workOrderId = wo?.id;
+    }
 
-      const newStock = (scannedItem.current_stock || 0) - qty;
-      const reorderWarning = scannedItem.reorder_point && newStock <= scannedItem.reorder_point;
-      
-      toast.success(
-        `✅ Registrado uso: ${scannedItem.name} ${qty}${scannedItem.unit_of_measure}${otNumber ? ` para OT-${otNumber}` : ""}. Stock: ${newStock}${reorderWarning ? " (reordenar pronto)" : ""}`
-      );
-      playBeep(true);
-      vibrate(200);
-      resetForm();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
+    const result = await createInventoryTransaction({
+      inventory_id: scannedItem.id,
+      transaction_type: transactionType,
+      quantity,
+      notes: mode === "receive" ? "Recepción vía escaneo" : `Uso vía escaneo${otNumber ? ` - OT ${otNumber}` : ""}`,
+      scanned_via: "barcode",
+      work_order_id: workOrderId,
+    });
+
+    setLoading(false);
+
+    if (result) {
+      const calculatedNewStock =
+        mode === "receive"
+          ? (scannedItem.current_stock ?? 0) + quantity
+          : (scannedItem.current_stock ?? 0) - quantity;
+      setNewStock(calculatedNewStock);
+      setViewState("success");
+
+      setTimeout(() => {
+        setViewState("scanning");
+        setScannedItem(null);
+        setQuantity(0);
+        setOtNumber("");
+      }, 2500);
     }
   };
 
-  const handleConfirmAdjustment = async () => {
-    if (!scannedItem || !quantity || !adjustmentReason) {
-      toast.error("Completa todos los campos");
-      return;
-    }
-
-    const qty = parseFloat(quantity);
-    if (isNaN(qty)) {
-      toast.error("Cantidad inválida");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await createInventoryTransaction({
-        inventory_id: scannedItem.id,
-        transaction_type: "adjustment",
-        quantity: qty,
-        notes: `${adjustmentReason}: ${notes}`,
-        scanned_via: "manual",
-      });
-
-      toast.success(`✅ Ajuste aplicado: ${scannedItem.name} = ${qty} ${scannedItem.unit_of_measure}`);
-      playBeep(true);
-      vibrate(200);
-      resetForm();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
+  const goBack = () => {
+    if (viewState === "form") {
+      setViewState("scanning");
+      setScannedItem(null);
+    } else {
+      navigate(-1);
     }
   };
 
-  const resetForm = () => {
-    setScannedItem(null);
-    setQuantity("");
-    setOtNumber("");
-    setPoNumber("");
-    setLocation("");
-    setUnitCost("");
-    setNotes("");
-    setAdjustmentReason("");
-  };
+  // ─── Success View ────────────────────────────────
+  if (viewState === "success") {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center text-center p-6">
+        <div className="h-24 w-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-8 animate-in zoom-in duration-300">
+          <Check className="h-12 w-12 text-green-600" />
+        </div>
+        <h1 className="text-2xl font-semibold text-foreground mb-3">Stock Actualizado</h1>
+        <p className="text-lg text-muted-foreground">
+          {scannedItem?.name}: <span className="font-semibold text-foreground">{newStock.toLocaleString()} {scannedItem?.unit_of_measure}</span>
+        </p>
+      </div>
+    );
+  }
 
-  const getModeInfo = () => {
-    switch (mode) {
-      case "receive":
-        return { title: "📦 Recepción de Inventario", color: "bg-green-500" };
-      case "usage":
-        return { title: "🏭 Registrar Uso", color: "bg-blue-500" };
-      case "adjustment":
-        return { title: "🔄 Ajuste de Stock", color: "bg-orange-500" };
-    }
-  };
+  // ─── Form View ───────────────────────────────────
+  if (viewState === "form" && scannedItem) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4 border-b">
+          <Button variant="ghost" size="icon" onClick={goBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold text-foreground flex-1">{scannedItem.name}</h1>
+        </div>
 
-  return (
-    <div className="p-4 max-w-lg mx-auto space-y-4">
-      {/* Mode Selector */}
-      <Tabs value={mode} onValueChange={(v) => { setMode(v as ScanMode); resetForm(); }}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="receive" className="text-xs md:text-sm">📦 Recepción</TabsTrigger>
-          <TabsTrigger value="usage" className="text-xs md:text-sm">🏭 Uso</TabsTrigger>
-          <TabsTrigger value="adjustment" className="text-xs md:text-sm">🔄 Ajuste</TabsTrigger>
-        </TabsList>
-      </Tabs>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Item Info */}
+          <div className="bg-muted/50 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground font-mono mb-1">{scannedItem.sku}</p>
+            <p className="text-sm text-muted-foreground">
+              Stock actual: <span className="font-semibold text-foreground text-lg">{(scannedItem.current_stock ?? 0).toLocaleString()} {scannedItem.unit_of_measure}</span>
+            </p>
+          </div>
 
-      {/* Scanner Section */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Scan className="h-5 w-5" />
-              Escanear Item
-            </span>
-            <Button variant="ghost" size="icon" onClick={() => setSoundOn(!soundOn)}>
-              {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          {/* Mode Toggle */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={mode === "receive" ? "default" : "outline"}
+              className="h-12"
+              onClick={() => setMode("receive")}
+            >
+              Recibir
             </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Camera View */}
-          <div className="relative aspect-square w-full bg-muted rounded-lg overflow-hidden">
-            {cameraError ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                <Camera className="h-12 w-12 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">{cameraError}</p>
-              </div>
-            ) : (
-              <div id="scan-camera-container" className="w-full h-full" />
-            )}
+            <Button
+              variant={mode === "usage" ? "default" : "outline"}
+              className="h-12"
+              onClick={() => setMode("usage")}
+            >
+              Usar
+            </Button>
           </div>
 
-          <div className="flex gap-2">
-            {!isScanning ? (
-              <Button onClick={startCamera} className="flex-1">
-                <Camera className="h-4 w-4 mr-2" />
-                Iniciar Cámara
+          {/* Quantity Input */}
+          <div className="space-y-3">
+            <Label className="text-sm text-muted-foreground">Cantidad</Label>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-16 w-16 shrink-0"
+                onClick={() => setQuantity((p) => Math.max(0, p - 10))}
+                disabled={quantity < 10}
+              >
+                <Minus className="h-6 w-6" />
               </Button>
-            ) : (
-              <Button onClick={stopCamera} variant="outline" className="flex-1">
-                Detener Cámara
+              <Input
+                type="number"
+                value={quantity || ""}
+                onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                className="text-center text-5xl font-semibold h-20"
+                inputMode="numeric"
+                min={0}
+                placeholder="0"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-16 w-16 shrink-0"
+                onClick={() => setQuantity((p) => p + 10)}
+              >
+                <Plus className="h-6 w-6" />
               </Button>
-            )}
+            </div>
+            <p className="text-center text-sm text-muted-foreground">{scannedItem.unit_of_measure}</p>
+            <div className="flex gap-2">
+              {[10, 50, 100, 500].map((val) => (
+                <Button
+                  key={val}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setQuantity(val)}
+                >
+                  {val}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          {/* Manual Input */}
-          <div className="flex gap-2">
+          {/* OT for usage */}
+          {mode === "usage" && (
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">OT # (opcional)</Label>
+              <Select value={otNumber} onValueChange={setOtNumber}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Seleccionar OT..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {workOrders.map((wo) => (
+                    <SelectItem key={wo.id} value={wo.ot_number?.toString()}>
+                      OT-{wo.ot_number} — {wo.client_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        {/* Submit */}
+        <div className="p-4 border-t bg-background">
+          <Button
+            className="w-full h-14 text-lg gap-2"
+            onClick={handleConfirm}
+            disabled={loading || quantity <= 0}
+          >
+            {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+            Confirmar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Scanning View ───────────────────────────────
+  return (
+    <div className="fixed inset-0 bg-background z-50 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 p-4 border-b">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-lg font-semibold text-foreground">Escanear Inventario</h1>
+      </div>
+
+      {/* Camera Area */}
+      <div className="flex-1 relative bg-black">
+        {/* Instruction overlay */}
+        <div className="absolute top-4 left-0 right-0 z-10 text-center">
+          <p className="text-white/80 text-sm bg-black/50 inline-block px-4 py-2 rounded-full">
+            Centra el código de barras
+          </p>
+        </div>
+
+        {cameraError ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+            <Camera className="h-16 w-16 text-white/30 mb-4" />
+            <p className="text-white/60 text-sm mb-4">{cameraError}</p>
+            <Button variant="secondary" onClick={startCamera}>
+              Reintentar
+            </Button>
+          </div>
+        ) : (
+          <div id="scan-camera-view" className="w-full h-full" />
+        )}
+
+        {!isScanning && !cameraError && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Button size="lg" className="h-14 px-8 text-base gap-2" onClick={startCamera}>
+              <Camera className="h-5 w-5" />
+              Iniciar Cámara
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Manual Input */}
+      <div className="p-4 border-t bg-background">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <ScanBarcode className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="SKU / Código de barras..."
+              placeholder="Código manual..."
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+              className="pl-11 h-12 text-base"
             />
-            <Button onClick={handleManualSearch}>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Scanned Item Info */}
-      {scannedItem && (
-        <Card className="border-primary">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-lg">{scannedItem.name}</h3>
-                <p className="text-sm text-muted-foreground font-mono">{scannedItem.sku}</p>
-              </div>
-              <Badge variant="outline">{scannedItem.category}</Badge>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Stock Actual:</span>
-                <span className="ml-2 font-semibold">
-                  {scannedItem.current_stock} {scannedItem.unit_of_measure}
-                </span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Reorden:</span>
-                <span className="ml-2">{scannedItem.reorder_point || "-"}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Form Section */}
-      {scannedItem && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">{getModeInfo().title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Quantity Input - Large for mobile */}
-            <div className="space-y-2">
-              <Label className="text-lg">Cantidad</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-12 w-12"
-                  onClick={() => setQuantity((prev) => Math.max(0, parseFloat(prev || "0") - 1).toString())}
-                >
-                  <Minus className="h-5 w-5" />
-                </Button>
-                <Input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="text-center text-2xl h-12 font-bold"
-                  placeholder="0"
-                  inputMode="decimal"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-12 w-12"
-                  onClick={() => setQuantity((prev) => (parseFloat(prev || "0") + 1).toString())}
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground text-center">{scannedItem.unit_of_measure}</p>
-            </div>
-
-            {/* Mode-specific fields */}
-            {mode === "receive" && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Orden de Compra</Label>
-                    <Input
-                      value={poNumber}
-                      onChange={(e) => setPoNumber(e.target.value)}
-                      placeholder="PO-001"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Costo Unitario</Label>
-                    <Input
-                      type="number"
-                      value={unitCost}
-                      onChange={(e) => setUnitCost(e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Ubicación</Label>
-                  <Input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Bodega A, Rack 1"
-                  />
-                </div>
-              </>
-            )}
-
-            {mode === "usage" && (
-              <div className="space-y-2">
-                <Label>Número de OT</Label>
-                <Select value={otNumber} onValueChange={setOtNumber}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar OT..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workOrders.map((wo) => (
-                      <SelectItem key={wo.id} value={wo.ot_number?.toString()}>
-                        OT-{wo.ot_number} - {wo.client_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {mode === "adjustment" && (
-              <div className="space-y-2">
-                <Label>Razón del Ajuste</Label>
-                <Select value={adjustmentReason} onValueChange={setAdjustmentReason}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar razón..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Conteo físico">Conteo físico</SelectItem>
-                    <SelectItem value="Dañado">Dañado</SelectItem>
-                    <SelectItem value="Vencido">Vencido</SelectItem>
-                    <SelectItem value="Corrección de error">Corrección de error</SelectItem>
-                    <SelectItem value="Otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label>Notas (opcional)</Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Detalles adicionales..."
-                rows={2}
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={resetForm} className="flex-1">
-                Cancelar
-              </Button>
-              <Button
-                onClick={
-                  mode === "receive" ? handleConfirmReceive :
-                  mode === "usage" ? handleConfirmUsage :
-                  handleConfirmAdjustment
-                }
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? "Procesando..." : "Confirmar"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Scan History */}
-      {scanHistory.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Historial Reciente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {scanHistory.slice(0, 5).map((entry, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Package className="h-3 w-3 text-muted-foreground" />
-                    <span className="truncate max-w-[150px]">{entry.item}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {entry.time.toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          <Button className="h-12 px-4" onClick={handleManualSearch} disabled={!manualCode.trim()}>
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
