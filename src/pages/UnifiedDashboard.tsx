@@ -165,7 +165,7 @@ const UnifiedDashboard = () => {
   };
 
   return (
-    <DashboardLayout activeSection={activeSection} onSectionChange={setActiveSection}>
+    <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
         <PageHeader
           title={getSectionTitle()}
