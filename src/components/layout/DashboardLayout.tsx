@@ -1,32 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import gonsaLogo from '@/assets/gonsa-logo.jpg';
 import {
-  LayoutDashboard, Users, Package, FileText, DollarSign,
-  Factory, Wrench, MessageSquare, Settings, LogOut, ChevronLeft,
-  ChevronRight, BarChart3, ClipboardList, Clock, UserCheck,
-  ShoppingCart, TrendingUp, Bell, HelpCircle, Globe, FileStack, PieChart,
-  Activity, Boxes, Truck, LineChart, Gauge
+  Home, ClipboardList, Factory, Package, ShoppingCart,
+  BarChart3, Settings, Bell, LogOut, User, HelpCircle,
+  Check, Menu, X,
 } from 'lucide-react';
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  href?: string;
-  onClick?: () => void;
-  badge?: number;
+  href: string;
   roles: ('admin' | 'manager' | 'supervisor' | 'technician')[];
-  children?: NavItem[];
-  description?: string;
+  mobileNav?: boolean; // show in bottom nav
+}
+
+const navItems: NavItem[] = [
+  { id: 'inicio', label: 'Inicio', icon: Home, href: '/dashboard', roles: ['admin', 'manager', 'supervisor', 'technician'], mobileNav: true },
+  { id: 'ots', label: 'Órdenes de Trabajo', icon: ClipboardList, href: '/ots/dashboard', roles: ['admin', 'manager', 'supervisor'], mobileNav: true },
+  { id: 'produccion', label: 'Producción', icon: Factory, href: '/industry/production', roles: ['admin', 'manager', 'supervisor'], mobileNav: true },
+  { id: 'inventario', label: 'Inventario', icon: Package, href: '/industry/inventory', roles: ['admin', 'manager', 'supervisor', 'technician'], mobileNav: true },
+  { id: 'compras', label: 'Compras', icon: ShoppingCart, href: '/industry/procurement', roles: ['admin', 'manager'], mobileNav: true },
+  { id: 'reportes', label: 'Reportes', icon: BarChart3, href: '/analytics/costs', roles: ['admin', 'manager'] },
+  { id: 'config', label: 'Configuración', icon: Settings, href: '/admin/config', roles: ['admin'] },
+];
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  type: string | null;
 }
 
 interface DashboardLayoutProps {
@@ -35,467 +58,356 @@ interface DashboardLayoutProps {
   onSectionChange?: (section: string) => void;
 }
 
-export function DashboardLayout({ children, activeSection, onSectionChange }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, role, signOut } = useAuth();
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['industry', 'operations', 'reports']);
+  const isMobile = useIsMobile();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const filteredNav = navItems.filter(item => role && item.roles.includes(role));
+  const mobileBottomNav = filteredNav.filter(i => i.mobileNav).slice(0, 5);
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data) setNotifications(data as Notification[]);
+    };
+    fetchNotifications();
+  }, [user]);
+
+  const markAllRead = async () => {
+    if (!user) return;
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false);
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
 
   const handleLogout = async () => {
     await signOut();
     navigate('/');
   };
 
-  const toggleLanguage = () => {
-    const i18n = (window as any).i18next;
-    if (i18n) {
-      const newLang = i18n.language === 'en' ? 'es' : 'en';
-      i18n.changeLanguage(newLang);
-    }
+  const isActive = (href: string) => {
+    if (href === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/admin' || location.pathname === '/supervisor' || location.pathname === '/manager';
+    return location.pathname.startsWith(href);
   };
 
-  const navGroups: {
-    id: string;
-    label: string;
-    items: {
-      id: string;
-      label: string;
-      icon: React.ComponentType<{ className?: string }>;
-      roles: ('admin' | 'manager' | 'supervisor' | 'technician')[];
-      description: string;
-      href?: string;
-      badge?: number;
-    }[];
-  }[] = [
-    {
-      id: 'industry',
-      label: 'Industry 6.0',
-      items: [
-        {
-          id: 'control-center',
-          label: 'Control Center',
-          icon: Gauge,
-          href: '/industry/control-center',
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Real-time monitoring',
-        },
-        {
-          id: 'production',
-          label: 'Production',
-          icon: Factory,
-          href: '/industry/production',
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Production dashboard',
-        },
-        {
-          id: 'industry-inventory',
-          label: 'Inventory',
-          icon: Boxes,
-          href: '/industry/inventory',
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Warehouse management',
-        },
-        {
-          id: 'procurement',
-          label: 'Procurement',
-          icon: Truck,
-          href: '/industry/procurement',
-          roles: ['admin', 'manager'],
-          description: 'Purchase orders & MRP',
-        },
-        {
-          id: 'industry-analytics',
-          label: 'Analytics',
-          icon: LineChart,
-          href: '/industry/analytics/production',
-          roles: ['admin', 'manager'],
-          description: 'Reports & insights',
-        },
-      ],
-    },
-    {
-      id: 'ot-module',
-      label: 'Órdenes de Trabajo',
-      items: [
-        {
-          id: 'ot-dashboard',
-          label: 'OT Dashboard',
-          icon: FileStack,
-          href: '/ots/dashboard',
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Gestión de OTs',
-        },
-        {
-          id: 'ot-templates',
-          label: 'Plantillas',
-          icon: FileText,
-          href: '/ots/templates',
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Templates de OT',
-        },
-      ],
-    },
-    {
-      id: 'operations',
-      label: 'Operations',
-      items: [
-        {
-          id: 'overview',
-          label: 'Dashboard',
-          icon: LayoutDashboard,
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Overview & KPIs',
-        },
-        {
-          id: 'workflow',
-          label: 'Workflow',
-          icon: Factory,
-          href: '/workflow',
-          roles: ['admin', 'supervisor'],
-          description: 'Work orders & production',
-        },
-        {
-          id: 'whatsapp',
-          label: 'WhatsApp Reports',
-          icon: MessageSquare,
-          roles: ['admin', 'manager', 'supervisor'],
-          description: 'Approve worker submissions',
-        },
-        {
-          id: 'maintenance',
-          label: 'Maintenance',
-          icon: Wrench,
-          href: '/maintenance',
-          roles: ['admin', 'technician'],
-          description: 'Equipment care',
-        },
-      ],
-    },
-    {
-      id: 'reports',
-      label: 'Reports & Analytics',
-      items: [
-        {
-          id: 'cost-analytics',
-          label: 'Cost Analytics',
-          icon: PieChart,
-          href: '/analytics/costs',
-          roles: ['admin', 'manager'],
-          description: 'Cost analysis & metrics',
-        },
-        {
-          id: 'custom-reports',
-          label: 'Report Builder',
-          icon: BarChart3,
-          roles: ['admin', 'manager'],
-          description: 'Custom data reports',
-        },
-        {
-          id: 'financial',
-          label: 'Financial',
-          icon: DollarSign,
-          href: '/financial',
-          roles: ['admin', 'manager'],
-          description: 'Costs & revenue',
-        },
-        {
-          id: 'costs',
-          label: 'Cost Analysis',
-          icon: TrendingUp,
-          roles: ['admin', 'manager'],
-          description: 'Detailed cost breakdown',
-        },
-        {
-          id: 'workers-report',
-          label: 'Worker Stats',
-          icon: BarChart3,
-          roles: ['admin', 'manager'],
-          description: 'Performance metrics',
-        },
-        {
-          id: 'traceability',
-          label: 'Traceability',
-          icon: ClipboardList,
-          roles: ['admin', 'manager'],
-          description: 'Audit trail & history',
-        },
-      ],
-    },
-    {
-      id: 'management',
-      label: 'Management',
-      items: [
-        {
-          id: 'admin-config',
-          label: 'System Config',
-          icon: Settings,
-          href: '/admin/config',
-          roles: ['admin'],
-          description: 'Margins, waste, speeds',
-        },
-        {
-          id: 'users',
-          label: 'Users',
-          icon: Users,
-          roles: ['admin'],
-          description: 'System access',
-        },
-        {
-          id: 'workers',
-          label: 'Workers',
-          icon: UserCheck,
-          roles: ['admin'],
-          description: 'Production staff',
-        },
-        {
-          id: 'inventory',
-          label: 'Inventory',
-          icon: Package,
-          roles: ['admin'],
-          description: 'Materials & supplies',
-        },
-        {
-          id: 'purchases',
-          label: 'Purchases',
-          icon: ShoppingCart,
-          roles: ['admin'],
-          description: 'Orders & vendors',
-        },
-      ],
-    },
-    {
-      id: 'supervisor-tools',
-      label: 'Supervisor Tools',
-      items: [
-        {
-          id: 'roster',
-          label: 'Worker Roster',
-          icon: Users,
-          roles: ['supervisor', 'admin'],
-          description: 'Team assignments',
-        },
-        {
-          id: 'machines',
-          label: 'Machines',
-          icon: Package,
-          roles: ['supervisor', 'admin'],
-          description: 'Equipment status',
-        },
-        {
-          id: 'jobs',
-          label: 'Jobs',
-          icon: FileText,
-          roles: ['supervisor', 'admin'],
-          description: 'Production tasks',
-        },
-      ],
-    },
-  ];
+  const userInitials = user?.email
+    ? user.email.split('@')[0].slice(0, 2).toUpperCase()
+    : 'U';
 
-  const filteredGroups = navGroups
-    .map(group => ({
-      ...group,
-      items: group.items.filter(item => role && item.roles.includes(role)),
-    }))
-    .filter(group => group.items.length > 0);
-
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev =>
-      prev.includes(groupId)
-        ? prev.filter(id => id !== groupId)
-        : [...prev, groupId]
-    );
+  const roleLabelMap: Record<string, string> = {
+    admin: 'Administrador',
+    manager: 'Gerente',
+    supervisor: 'Supervisor',
+    technician: 'Técnico',
   };
 
-  const handleNavClick = (item: typeof navGroups[0]['items'][0]) => {
-    if (item.href) {
-      navigate(item.href);
-    } else if (onSectionChange) {
-      onSectionChange(item.id);
-    }
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Ahora';
+    if (mins < 60) return `Hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Hace ${hrs}h`;
+    return `Hace ${Math.floor(hrs / 24)}d`;
   };
 
-  const getRoleColor = () => {
-    switch (role) {
-      case 'admin': return 'text-primary border-primary/30';
-      case 'manager': return 'text-manager border-manager/30';
-      case 'supervisor': return 'text-supervisor border-supervisor/30';
-      default: return 'text-muted-foreground';
-    }
-  };
+  // ── Desktop Sidebar ──
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+        <img src={gonsaLogo} alt="Gonsa" className="h-9 w-9 rounded-lg object-cover" />
+        <div>
+          <h1 className="font-bold text-foreground text-base">Gonsa</h1>
+          <p className="text-xs text-muted-foreground">Sistema de Producción</p>
+        </div>
+      </div>
 
-  const getRoleBadge = () => {
-    switch (role) {
-      case 'admin': return 'Admin';
-      case 'manager': return 'Manager';
-      case 'supervisor': return 'Supervisor';
-      case 'technician': return 'Technician';
-      default: return 'User';
-    }
-  };
+      {/* Nav Items */}
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {filteredNav.map(item => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(item.href)}
+              className={cn(
+                'flex items-center gap-3 w-full rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* User section */}
+      <div className="border-t border-border p-4">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+              {userInitials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">
+              {user?.email?.split('@')[0]}
+            </p>
+            <p className="text-xs text-muted-foreground">{role ? roleLabelMap[role] : ''}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Notifications Panel ──
+  const NotificationsPanel = () => (
+    <Sheet open={notifOpen} onOpenChange={setNotifOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative h-10 w-10">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-[400px] sm:w-[400px] p-0">
+        <SheetHeader className="p-5 pb-3 border-b border-border">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-lg font-semibold">Notificaciones</SheetTitle>
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs" onClick={markAllRead}>
+                <Check className="h-3.5 w-3.5 mr-1" />
+                Marcar todo leído
+              </Button>
+            )}
+          </div>
+        </SheetHeader>
+        <ScrollArea className="h-[calc(100vh-80px)]">
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <Bell className="h-10 w-10 mb-3 opacity-30" />
+              <p className="text-sm">Sin notificaciones</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {notifications.map(n => (
+                <div
+                  key={n.id}
+                  className={cn(
+                    'px-5 py-4 transition-colors',
+                    !n.is_read && 'bg-primary/5'
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {!n.is_read && (
+                      <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{n.title}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{timeAgo(n.created_at)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+  );
+
+  // ── User Menu ──
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-10 gap-2 px-2">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+              {userInitials}
+            </AvatarFallback>
+          </Avatar>
+          {!isMobile && (
+            <span className="text-sm font-medium text-foreground">
+              {user?.email?.split('@')[0]}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="px-3 py-2">
+          <p className="text-sm font-medium">{user?.email?.split('@')[0]}</p>
+          <p className="text-xs text-muted-foreground">{user?.email}</p>
+          <Badge variant="outline" className="mt-1 text-xs">
+            {role ? roleLabelMap[role] : 'Usuario'}
+          </Badge>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="gap-2 cursor-pointer">
+          <User className="h-4 w-4" />
+          Mi perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setNotifOpen(true)}>
+          <Bell className="h-4 w-4" />
+          Notificaciones
+          {unreadCount > 0 && (
+            <Badge className="ml-auto h-5 px-1.5 text-xs">{unreadCount}</Badge>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2 cursor-pointer">
+          <HelpCircle className="h-4 w-4" />
+          Ayuda
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Cerrar sesión
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  // ── Top Header (shared) ──
+  const TopHeader = () => (
+    <header className="sticky top-0 z-40 h-14 border-b border-border bg-card/95 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6">
+      <div className="flex items-center gap-3">
+        {isMobile && (
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setMobileMenuOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        {isMobile && (
+          <img src={gonsaLogo} alt="Gonsa" className="h-8 w-8 rounded-lg object-cover" />
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        <NotificationsPanel />
+        <UserMenu />
+      </div>
+    </header>
+  );
+
+  // ── Mobile Full Menu (sheet) ──
+  const MobileMenu = () => (
+    <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+      <SheetContent side="left" className="w-[280px] p-0">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+          <img src={gonsaLogo} alt="Gonsa" className="h-9 w-9 rounded-lg object-cover" />
+          <div>
+            <h1 className="font-bold text-foreground text-base">Gonsa</h1>
+            <p className="text-xs text-muted-foreground">Sistema de Producción</p>
+          </div>
+          <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={() => setMobileMenuOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <nav className="px-3 py-4 space-y-1">
+          {filteredNav.map(item => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  navigate(item.href);
+                  setMobileMenuOpen(false);
+                }}
+                className={cn(
+                  'flex items-center gap-3 w-full rounded-lg px-4 py-3 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+
+  // ── Bottom Nav (mobile) ──
+  const BottomNav = () => (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm safe-area-bottom">
+      <div className="flex items-center justify-around h-16">
+        {mobileBottomNav.map(item => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(item.href)}
+              className={cn(
+                'flex flex-col items-center gap-0.5 px-2 py-1 min-w-0 transition-colors',
+                active ? 'text-primary' : 'text-muted-foreground'
+              )}
+            >
+              <Icon className={cn('h-5 w-5', active && 'stroke-[2.5]')} />
+              <span className={cn(
+                'text-[10px] truncate max-w-[64px]',
+                active ? 'font-bold' : 'font-medium'
+              )}>
+                {item.label.split(' ')[0]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-300',
-          collapsed ? 'w-16' : 'w-64'
-        )}
-      >
-        {/* Logo & Brand */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b">
-          <img src={gonsaLogo} alt="Gonsa" className="h-10 w-10 rounded-lg object-cover" />
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <h1 className="font-bold text-foreground truncate">Gonsa</h1>
-              <p className="text-xs text-muted-foreground truncate">Production System</p>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-        </div>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <aside className="fixed inset-y-0 left-0 z-50 w-60 border-r border-border bg-card flex flex-col">
+          <SidebarContent />
+        </aside>
+      )}
 
-        {/* Navigation */}
-        <ScrollArea className="flex-1 py-4">
-          <nav className="space-y-6 px-3">
-            {filteredGroups.map(group => (
-              <div key={group.id}>
-                {!collapsed && (
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="flex items-center justify-between w-full px-2 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                  >
-                    {group.label}
-                    <ChevronRight
-                      className={cn(
-                        'h-3 w-3 transition-transform',
-                        expandedGroups.includes(group.id) && 'rotate-90'
-                      )}
-                    />
-                  </button>
-                )}
-                {(collapsed || expandedGroups.includes(group.id)) && (
-                  <div className="space-y-1">
-                    {group.items.map(item => {
-                      const Icon = item.icon;
-                      const isActive = activeSection === item.id || location.pathname === item.href;
-                      
-                      const button = (
-                        <button
-                          key={item.id}
-                          onClick={() => handleNavClick(item)}
-                          className={cn(
-                            'flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                            'hover:bg-muted/80',
-                            isActive && 'bg-primary/10 text-primary',
-                            !isActive && 'text-muted-foreground hover:text-foreground',
-                            collapsed && 'justify-center px-2'
-                          )}
-                        >
-                          <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary')} />
-                          {!collapsed && (
-                            <span className="truncate">{item.label}</span>
-                          )}
-                          {!collapsed && item.badge && (
-                            <Badge variant="secondary" className="ml-auto text-xs">
-                              {item.badge}
-                            </Badge>
-                          )}
-                        </button>
-                      );
+      {/* Mobile Menu Sheet */}
+      {isMobile && <MobileMenu />}
 
-                      if (collapsed) {
-                        return (
-                          <Tooltip key={item.id} delayDuration={0}>
-                            <TooltipTrigger asChild>{button}</TooltipTrigger>
-                            <TooltipContent side="right" className="flex flex-col gap-1">
-                              <span className="font-medium">{item.label}</span>
-                              {item.description && (
-                                <span className="text-xs text-muted-foreground">{item.description}</span>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      }
-                      return button;
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
-        </ScrollArea>
+      {/* Main area */}
+      <div className={cn('flex-1 flex flex-col min-w-0', !isMobile && 'ml-60')}>
+        <TopHeader />
+        <main className={cn('flex-1', isMobile && 'pb-16')}>
+          {children}
+        </main>
+      </div>
 
-        {/* Footer */}
-        <div className="border-t p-3 space-y-2">
-          {!collapsed && (
-            <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-muted/50">
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <Users className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user?.email?.split('@')[0]}</p>
-                <Badge variant="outline" className={cn('text-xs', getRoleColor())}>
-                  {getRoleBadge()}
-                </Badge>
-              </div>
-            </div>
-          )}
-          
-          <div className={cn('flex gap-1', collapsed ? 'flex-col' : 'flex-row')}>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleLanguage}>
-                  <Globe className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side={collapsed ? 'right' : 'top'}>Switch Language</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side={collapsed ? 'right' : 'top'}>Help & Documentation</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-destructive hover:bg-destructive/10"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side={collapsed ? 'right' : 'top'}>Logout</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main
-        className={cn(
-          'flex-1 transition-all duration-300',
-          collapsed ? 'ml-16' : 'ml-64'
-        )}
-      >
-        {children}
-      </main>
+      {/* Mobile Bottom Nav */}
+      {isMobile && <BottomNav />}
     </div>
   );
 }
